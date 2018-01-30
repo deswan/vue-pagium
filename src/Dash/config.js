@@ -1,28 +1,28 @@
 //表单组件
 export default [
-    // {
-    //     name: 'cols',
-    //     label:'设置列',
-    //     value: 'Array[Object]',
-    //     item: {
-    //         fixed: {
-    //             name: '是否固定',
-    //             value: Boolean
-    //         },
-    //         label: {
-    //             name: '列名',
-    //             value: String
-    //         },
-    //         prop: {
-    //             name: 'prop',
-    //             value: String
-    //         },
-    //         width: {
-    //             name: '宽度',
-    //             value: String
-    //         }
-    //     }
-    // }, 
+    {
+        name: 'cols',
+        label:'设置列',
+        value: [Object],
+        format: [{
+                name: 'fixed',
+                label:'是否固定',
+                value: Boolean
+            },{
+                name: 'label',
+                label:'列名',
+                value: String
+            },{
+                name: 'prop',
+                label:'prop',
+                value: String
+            },{
+                name: 'width',
+                label:'宽度',
+                value: String
+            }
+        ]
+    }, 
     {
         name: 'tableName',
         label: '表格名称',

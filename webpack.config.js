@@ -18,11 +18,38 @@ module.exports = (options = {}) => ({
   module: {
     rules: [{
         test: /\.vue$/,
-        use: ['vue-loader']
+        use: [{
+          loader: 'vue-loader',
+          options: {
+            loaders: {
+              js: {
+                loader: 'babel-loader',
+                options: {
+                  presets: ['babel-preset-env'],
+                  plugins: [
+                    ["transform-object-rest-spread", {
+                      "useBuiltIns": true
+                    }]
+                  ]
+                }
+              }
+            }
+          }
+        }]
       },
       {
         test: /\.js$/,
-        use: ['babel-loader'],
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['babel-preset-env'],
+            plugins: [
+              ["transform-object-rest-spread", {
+                "useBuiltIns": true
+              }]
+            ]
+          }
+        },
         exclude: /node_modules/
       },
       {
@@ -46,6 +73,9 @@ module.exports = (options = {}) => ({
     }),
     new HtmlWebpackPlugin({
       template: 'src/index.html'
+    }),
+    new webpack.HotModuleReplacementPlugin({
+      // Options...
     })
   ],
   resolve: {

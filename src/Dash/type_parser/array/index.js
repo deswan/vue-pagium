@@ -1,10 +1,7 @@
-import component from './boolean.vue';
+import component from './array.vue';
 import config2Components from '../../config2Components.js';
-const pass = ['default','on'];
+const pass = ['default'];
 const configStrategy = {
-    on(config){
-        return config2Components(config)
-    }
 }
 export default function (config) {
     const props = {};
@@ -14,6 +11,7 @@ export default function (config) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
+    props._itemCOM = config2Components([{...config,value:config.value[0],label:null}])
     
     return {
         name:config.name,

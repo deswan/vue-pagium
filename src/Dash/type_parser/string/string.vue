@@ -1,13 +1,17 @@
 <template>
-    <el-form-item :label="label">
-        <el-input v-model="input" size="small"></el-input>
+    <el-form-item :label="label" v-if="label">
+        <el-input v-model="input" :size="size"></el-input>
     </el-form-item>
+    <el-input v-else v-model="input" :size="size"></el-input>
 </template>
 <script>
 export default {
     props:{
         default:{
             type:String
+        },
+        size:{
+            default:'small'
         },
         label:{}
     },

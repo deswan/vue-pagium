@@ -1,8 +1,8 @@
-import component from './boolean.vue';
+import component from './object.vue';
 import config2Components from '../../config2Components.js';
-const pass = ['default','on'];
+const pass = ['label','default','format'];
 const configStrategy = {
-    on(config){
+    format(config){
         return config2Components(config)
     }
 }

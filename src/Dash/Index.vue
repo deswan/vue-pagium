@@ -28,12 +28,13 @@ export default {
 <style scoped>
 .detail{
   box-sizing: border-box;
-  padding: 20px 30px;
+  padding: 20px 30px 100px;
   width: 500px;
   background: white;
   position: fixed;
   right: 0;
   top:60px;
   height: 100%;
+  overflow: auto
 }
 </style>

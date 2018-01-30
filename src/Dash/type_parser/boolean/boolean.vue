@@ -3,8 +3,10 @@
         <el-form-item :label="label">
             <el-switch v-model="input"></el-switch>
         </el-form-item>
-        <div v-if="on && on.length && input">
-            <component v-for="item in on" :key="item.name" :label="item.label" :is="item.component" v-bind="item.props"></component>
+        <div class="expand">
+          <div v-if="on && on.length && input">
+              <component v-for="item in on" :key="item.name" :label="item.label" :is="item.component" v-bind="item.props"></component>
+          </div>
         </div>
     </div>
 </template>
@@ -27,3 +29,7 @@ export default {
   }
 };
 </script>
+<style scoped>
+.expand{
+}
+</style>

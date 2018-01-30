@@ -1,7 +1,9 @@
 import string from './type_parser/string'
 import boolean from './type_parser/boolean'
+import object from './type_parser/object'
+import array from './type_parser/array'
 const components = {
-    string,boolean
+    string,boolean,object,array
 }
 export default function(config){
     let coms = [];
@@ -12,10 +14,9 @@ export default function(config){
     return coms
 }
 function getLoader(type){
-    let arrExp =  /^Array\[(.*)\]$/;
     if(typeof type === 'function'){
         return components[type.name.toLowerCase()];
-    }else if(arrExp.test(type)){
-        
+    }else if(Array.isArray(type) && type.length == 1){
+        return components.array;
     }
 }
