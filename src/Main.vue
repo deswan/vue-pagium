@@ -4,9 +4,9 @@
     <my-dash></my-dash>
     
     <div id="main">
-      <my-tool></my-tool>
       <draw-board></draw-board>
     </div>
+      <my-tool></my-tool>
   </div>
 </template>
 
@@ -32,11 +32,13 @@ export default {
   z-index: 999;
 }
 #main{
-  position: relative;
-  margin-right: 500px;
-  margin-left: 100px;
-  padding-top: 60px;
   box-sizing: border-box;
-  height: 100vh
+  position: absolute;
+  top:60px;
+  left: 100px;
+  right: 500px;
+  height: calc(100vh - 60px);
+  background-color: whitesmoke;
+  overflow:auto;
 }
 </style>
