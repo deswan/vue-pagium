@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-table :data="data" class="pg-com">
+        <el-table :data="data">
             <el-table-column v-for="(col,idx) in cols" :key="idx" v-bind="col"></el-table-column>
         </el-table>
     </div>
@@ -8,7 +8,7 @@
 <script>
 export default {
   name: 'Table',
-  props:['cols'],
+  props:['cols','active'],
   data() {
     return {
       data:[]

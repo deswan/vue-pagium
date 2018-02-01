@@ -1,33 +1,44 @@
 <template>
-  <div class="draw-board">
-      <components :is="comMap[com.name]" v-bind="com.props" v-for="(com,idx) in $store.state.components" :key="idx"></components>
+<div class="board-wrapper">
+  <div class="main-board">
+      <com-wrapper :com="com" v-for="(com,idx) in $store.state.components" :key="idx"></com-wrapper>
   </div>
+<com-wrapper :com="com"  v-for="(com,idx) in $store.state.dialogs" :key="idx"></com-wrapper>
+</div>
 </template>
 
 <script>
-import Table from '../Components/Table/Table.vue';
-const comMap = {
-    Table
-}
+import COMWrapper from "./COMWrapper.vue";
 export default {
-  created(){
+  components: {
+      'comWrapper':COMWrapper
   },
-  data(){
-    return {
-        comMap
-    }
+  created() {},
+  data() {
+    return {};
   }
-}
+};
 </script>
 
 <style>
-.draw-board{
+.main-board {
+  position: absolute;
+  top: 40px;
+  left: 200px;
+  width: 600px;
+  height: 800px;
+  background-color: white;
+}
+.board-wrapper{
+    position: relative;
+    height: 2000px;
+    width: 2000px;
+}
+.dialog-board{
     position: absolute;
-    top:100px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    height: 600px;
+    left: 850px;
+    width: 400px;
+    height: 300px;
     background-color: white;
 }
 </style>
