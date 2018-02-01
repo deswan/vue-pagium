@@ -15,7 +15,9 @@ const store = new Vuex.Store({
         },
         activateCOM(state,com){
             state.activeCOM = com;
-            console.log(com.COM)
+        },
+        inputArg(state,arg){
+            Vue.set(state.activeCOM.props,arg.name,arg.value);
         }
     }
 })

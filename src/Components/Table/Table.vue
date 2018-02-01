@@ -11,20 +11,18 @@ export default {
   props:['cols','active'],
   data() {
     return {
-      data:[]
+      data:['','','']
     };
   },
   created(){
-    if(this.cols && this.cols.length){
-      let data = {};
-      let props = this.cols.forEach(col=>{
-        data[col.prop] = 'mock';
-      })
-      this.data = new Array(4).fill(data);
-    }
   },
   methods:{
      
+  },
+  watch:{
+    cols(){
+      console.log(this.cols)
+    }
   }
 };
 </script>

@@ -11,7 +11,7 @@ export default function (config) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
-    props._itemCOM = config2Components([{...config,value:config.value[0],label:null}])
+    props._itemCOM = config2Components([{...config,value:config.value[0],label:null}])[0]
     
     return {
         name:config.name,

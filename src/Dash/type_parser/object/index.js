@@ -1,6 +1,6 @@
 import component from './object.vue';
 import config2Components from '../../config2Components.js';
-const pass = ['label','default','format'];
+const pass = ['label','format'];
 const configStrategy = {
     format(config){
         return config2Components(config)
@@ -14,7 +14,7 @@ export default function (config) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
-    
+
     return {
         name:config.name,
         label:config.label,

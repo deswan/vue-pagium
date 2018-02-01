@@ -2,7 +2,7 @@
   <div class="detail">
       组件详情
       <el-form :model="form" label-suffix="：" v-if="$store.state.activeCOM">
-            <component v-for="item in config2Components(config[$store.state.activeCOM.name])" :key="item.name" :label="item.label" :is="item.component" v-bind="item.props"></component>
+            <component v-for="item in config2Components(config[$store.state.activeCOM.name])" :value="config2Default(item.config)" :key="item.name" :label="item.label" :name="item.name" :is="item.component" v-bind="item.props"></component>
       </el-form>
   </div>
 </template>
@@ -11,6 +11,7 @@
 import TableConfig from '../Components/Table/config'
 import DialogConfig from '../Components/Dialog/config'
 import config2Components from './config2Components'
+import config2Default from './config2Default'
 const config = {
   Table:TableConfig,
   Dialog:DialogConfig
@@ -18,7 +19,7 @@ const config = {
 export default {
   data(){
     return {
-      config,config2Components,
+      config,config2Components,config2Default,
       form:{
 
       }
