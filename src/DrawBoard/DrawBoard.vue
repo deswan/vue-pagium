@@ -30,7 +30,4 @@ export default {
     height: 600px;
     background-color: white;
 }
-.pg-com:hover{
-    
-}
 </style>
