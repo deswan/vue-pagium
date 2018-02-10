@@ -1,5 +1,5 @@
 <template>
-      <components :is="comObj.com" v-bind="comObj.props" class="pg-com" :active="$store.state.activedComponent === comObj">
+      <components :is="comObj.com" v-bind="comObj.props" class="pg-com" :active="$store.state.activedComponent === comObj" :id="comObj.id">
           <template v-if="comObj.subCom && comObj.subCom.length">
             <com-wrapper :com-obj="subCom" v-for="subCom in com.subCOM" :key="subCom.id"></com-wrapper>
           </template>
@@ -15,6 +15,7 @@ export default {
         }
     },
   created(){
+      console.log(this.com)
   },
   data(){
     return {

@@ -1,7 +1,7 @@
 <template>
     <div>
         <el-form-item :label="label">
-            <el-switch v-model="input"></el-switch>
+            <el-switch v-model="input" @change="valChange"></el-switch>
         </el-form-item>
         <div class="expand">
           <div v-if="on && on.length && input">
@@ -20,12 +20,29 @@ export default {
     on: {
       type: Array
     },
-    label: {}
+    label: {},
+    name:String,
+    pgChild:Boolean
   },
   data() {
     return {
       input: this.default || false
     };
+  },
+  methods:{
+    valChange() {
+      if (this.pgChild) {
+        this.$emit("inputArg", {
+          name: this.name,
+          value: this.input
+        });
+      }else{
+          this.$store.commit("inputArg", {
+            name: this.name || '',
+            value: this.input
+          });
+      }
+    }
   }
 };
 </script>

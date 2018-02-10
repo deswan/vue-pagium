@@ -1,24 +1,41 @@
 <template>
     <el-form-item :label="label" v-if="label">
-        <el-input v-model="input" :size="size"></el-input>
+        <el-input v-model="_value" :size="size" @change="valChange">></el-input>
     </el-form-item>
-    <el-input v-else v-model="input" :size="size"></el-input>
+    <el-input v-else v-model="_value" :size="size" @change="valChange"></el-input>
 </template>
 <script>
 export default {
-    props:{
-        default:{
-            type:String
-        },
-        size:{
-            default:'small'
-        },
-        label:{}
+  props: {
+    value: {
+      type: String
     },
-    data(){
-        return {
-            input: this.default || ''
-        }
+    size: {
+      default: "small"
+    },
+    label: {},
+    name: String,
+    pgChild: Boolean
+  },
+  data() {
+    return {
+      _value: this.value
+    };
+  },
+  methods: {
+    valChange() {
+      if (this.pgChild) {
+        this.$emit("inputArg", {
+          name: this.name,
+          value: this._value
+        });
+      }else{
+          this.$store.commit("inputArg", {
+            name: this.name || '',
+            value: this._value
+          });
+      }
     }
-}
+  }
+};
 </script>

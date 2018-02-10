@@ -11,6 +11,7 @@
 
 <script>
 import COMWrapper from "./COMWrapper.vue";
+import {on,off} from "element-ui/src/utils/dom";
 export default {
   components: {
     comWrapper: COMWrapper

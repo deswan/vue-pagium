@@ -1,5 +1,16 @@
 <template>
-    <el-dialog :title="title" :visible.sync="show" :modal="false" :lock-scroll="false"></el-dialog>
+    <el-dialog 
+    class="pg-dialog-wrapper"
+    :title="title" 
+    :visible.sync="show" 
+    :modal="false" 
+    :modal-append-to-body="false"
+    :lock-scroll="false"
+    width="700px"
+    custom-class="pg-dialog"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    :show-close="false"></el-dialog>
 </template>
 <script>
 export default {
@@ -25,6 +36,12 @@ export default {
   }
 };
 </script>
-<style scoped>
+<style>
+.pg-dialog{
+  margin-left: 250px;
+}
+.pg-dialog-wrapper{
+  left: 100px;
+}
 </style>
 

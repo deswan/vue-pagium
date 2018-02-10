@@ -24,13 +24,21 @@
 
 <script>
 import Table from "../Components/Table/Table.vue";
+import TableConfig from "../Components/Table/config";
 import Dialog from "../Components/Dialog/Dialog.vue";
+import DialogConfig from "../Components/Dialog/config";
+
 import LayerItem from "./LayerItem.vue";
 import LayerFolder from "./LayerFolder.vue";
+
+import config2Default from "./config2Default.js";
 const allComs = {
   Table,
   Dialog
 };
+const allComsConfig = {
+  Table:TableConfig, Dialog:DialogConfig
+}
 export default {
   components: {
     LayerItem,
@@ -47,7 +55,7 @@ export default {
         id: +new Date(),
         name: com.name,
         type: com.name,
-        props: {},
+        props: config2Default(allComsConfig[COM.name]),
         com,
         subCom: null
       });

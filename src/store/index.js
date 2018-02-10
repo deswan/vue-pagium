@@ -16,6 +16,9 @@ const store = new Vuex.Store({
         activateComponent(state,comObj){
             state.activedComponent = comObj;
             console.log('active:',comObj)
+        },
+        inputArg(state,arg){
+            Vue.set(state.activedComponent.props,arg.name,arg.value);
         }
     }
 })
