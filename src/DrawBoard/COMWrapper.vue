@@ -1,7 +1,7 @@
 <template>
-      <components :is="com.COM" v-bind="com.props" class="pg-com" :active="$store.state.activeCOM === com">
-          <template v-if="com.subCOM && com.subCOM.length">
-            <com-wrapper :com="subCOM" v-for="(subCOM,idx) in com.subCOM" :key="idx"></com-wrapper>
+      <components :is="comObj.com" v-bind="comObj.props" class="pg-com" :active="$store.state.activedComponent === comObj">
+          <template v-if="comObj.subCom && comObj.subCom.length">
+            <com-wrapper :com-obj="subCom" v-for="subCom in com.subCOM" :key="subCom.id"></com-wrapper>
           </template>
       </components>
 </template>
@@ -10,7 +10,7 @@
 export default {
     name:'comWrapper',
     props:{
-        com:{
+        comObj:{
             required:true
         }
     },

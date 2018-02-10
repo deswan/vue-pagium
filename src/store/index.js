@@ -5,17 +5,17 @@ Vue.use(Vuex)
 const store = new Vuex.Store({
     state: {
         components: [],
-        activeCOM:null,
+        activedComponent:null,
         dialogs:[]
     },
     mutations: {
-        addCOM(state,com){
-            (com.name == 'Dialog' ? state.dialogs : state.components).push(com);
-            this.commit('activateCOM',com)
+        addComponent(state,comObj){
+            (comObj.type == 'Dialog' ? state.dialogs : state.components).push(comObj);
+            this.commit('activateComponent',comObj)
         },
-        activateCOM(state,com){
-            state.activeCOM = com;
-            console.log(com.COM)
+        activateComponent(state,comObj){
+            state.activedComponent = comObj;
+            console.log('active:',comObj)
         }
     }
 })

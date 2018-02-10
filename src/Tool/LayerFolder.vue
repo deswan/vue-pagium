@@ -16,7 +16,7 @@ export default {
   },
   methods: {
       onClick(){
-          this.$store.commit('activateCOM',this.com)
+          this.$store.commit('activateComponent',this.com)
       }
   }
 };

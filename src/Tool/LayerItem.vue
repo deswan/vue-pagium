@@ -1,18 +1,18 @@
 <template>
   <div class="layer-li" @click="onClick">
-      {{com.name}}
+      {{comObj.name}}
   </div>
 </template>
 
 <script>
 export default {
-  props: ["com"],
+  props: ["comObj"],
   data() {
     return {};
   },
   methods: {
       onClick(){
-          this.$store.commit('activateCOM',this.com)
+          this.$store.commit('activateComponent',this.comObj)
       }
   }
 };

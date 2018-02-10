@@ -1,8 +1,9 @@
 <template>
-  <div class="detail">
-      组件详情
-      <el-form :model="form" label-suffix="：" v-if="$store.state.activeCOM">
-            <component v-for="item in config2Components(config[$store.state.activeCOM.name])" :key="item.name" :label="item.label" :is="item.component" v-bind="item.props"></component>
+  <div class="setting">
+      <el-form :model="form" label-suffix="：" v-if="$store.state.activedComponent">
+        <el-form-item :label="label" v-for="item in scheme2Input(config[$store.state.activedComponent.type])" :key="item.name">
+            <component :is="item.input" v-bind="item.props"></component>
+        </el-form-item>
       </el-form>
   </div>
 </template>
@@ -10,7 +11,7 @@
 <script>
 import TableConfig from '../Components/Table/config'
 import DialogConfig from '../Components/Dialog/config'
-import config2Components from './config2Components'
+import scheme2Input from './scheme2Input'
 const config = {
   Table:TableConfig,
   Dialog:DialogConfig
@@ -18,7 +19,7 @@ const config = {
 export default {
   data(){
     return {
-      config,config2Components,
+      config,scheme2Input,
       form:{
 
       }
@@ -28,7 +29,7 @@ export default {
 </script>
 
 <style scoped>
-.detail{
+.setting{
   box-sizing: border-box;
   padding: 20px 30px 100px;
   width: 500px;

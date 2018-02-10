@@ -1,9 +1,9 @@
-import component from './object.vue';
-import config2Components from '../../config2Components.js';
-const pass = ['label','default','format'];
+import input from './boolean.vue';
+import scheme2Input from '../../scheme2Input.js';
+const pass = ['default','on'];
 const configStrategy = {
-    format(config){
-        return config2Components(config)
+    on(config){
+        return scheme2Input(config)
     }
 }
 export default function (config) {
@@ -14,11 +14,10 @@ export default function (config) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
-    
     return {
         name:config.name,
         label:config.label,
-        component,
+        input,
         props,
         config
     }

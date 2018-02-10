@@ -2,21 +2,25 @@ import string from './type_parser/string'
 import boolean from './type_parser/boolean'
 import object from './type_parser/object'
 import array from './type_parser/array'
-const components = {
+const TYPES = {
     string,boolean,object,array
 }
 export default function(config){
-    let coms = [];
+    let inputs = [];
     config.forEach((item)=>{
         let loader = getLoader(item.value)
-        coms = coms.concat(loader(item))
+        inputs = inputs.concat(loader(item))
     })
-    return coms
+    return inputs
 }
+/**
+ * @param {*} type 输入类型
+ * @return Loader
+ */
 function getLoader(type){
     if(typeof type === 'function'){
-        return components[type.name.toLowerCase()];
+        return TYPES[type.name.toLowerCase()];
     }else if(Array.isArray(type) && type.length == 1){
-        return components.array;
+        return TYPES.array;
     }
 }

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="header"></div>
-    <my-dash></my-dash>
+    <setting-board></setting-board>
     
     <div id="main">
       <draw-board></draw-board>
@@ -11,12 +11,12 @@
 </template>
 
 <script>
-import Dash from './Dash/Index.vue';
+import SettingBoard from './SettingBoard/SettingBoard.vue';
 import DrawBoard from './DrawBoard/DrawBoard.vue';
 import Tool from './Tool/Tool.vue';
 export default {
     components:{
-        myDash:Dash,
+        SettingBoard,
         DrawBoard,
         myTool:Tool
     }

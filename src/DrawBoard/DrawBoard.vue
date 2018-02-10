@@ -1,9 +1,11 @@
 <template>
 <div class="board-wrapper">
   <div class="main-board">
-      <com-wrapper :com="com" v-for="(com,idx) in $store.state.components" :key="idx"></com-wrapper>
+      <com-wrapper :com-obj="comObj" v-for="comObj in $store.state.components" :key="comObj.id"></com-wrapper>
   </div>
-<com-wrapper :com="com"  v-for="(com,idx) in $store.state.dialogs" :key="idx"></com-wrapper>
+
+  <!-- Dialogs -->
+  <com-wrapper :com-obj="comObj"  v-for="comObj in $store.state.dialogs" :key="comObj.id"></com-wrapper>
 </div>
 </template>
 
@@ -11,9 +13,8 @@
 import COMWrapper from "./COMWrapper.vue";
 export default {
   components: {
-      'comWrapper':COMWrapper
+    comWrapper: COMWrapper
   },
-  created() {},
   data() {
     return {};
   }
@@ -29,16 +30,16 @@ export default {
   height: 800px;
   background-color: white;
 }
-.board-wrapper{
-    position: relative;
-    height: 2000px;
-    width: 2000px;
+.board-wrapper {
+  position: relative;
+  height: 2000px;
+  width: 2000px;
 }
-.dialog-board{
-    position: absolute;
-    left: 850px;
-    width: 400px;
-    height: 300px;
-    background-color: white;
+.dialog-board {
+  position: absolute;
+  left: 850px;
+  width: 400px;
+  height: 300px;
+  background-color: white;
 }
 </style>
