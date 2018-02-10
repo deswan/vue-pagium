@@ -1,52 +1,40 @@
 <template>
-    <div>
-        <el-form-item :label="label">
-            <el-switch v-model="input" @change="valChange"></el-switch>
-        </el-form-item>
-        <div class="expand">
-          <div v-if="on && on.length && input">
-              <component v-for="item in on" :key="item.name" :label="item.label" :is="item.component" v-bind="item.props"></component>
-          </div>
-        </div>
-    </div>
+  <div>
+    <el-switch v-model="input" @change="valChange"></el-switch>
+  </div>
 </template>
+
 <script>
-export default {
-  name: "Boolean",
-  props: {
-    default: {
-      type: Boolean
+  export default {
+    name: "Boolean",
+    props: {
+      name: String,
+      pgChild: Boolean
     },
-    on: {
-      type: Array
+    data() {
+      return {
+        input: this.value
+      };
     },
-    label: {},
-    name:String,
-    pgChild:Boolean
-  },
-  data() {
-    return {
-      input: this.default || false
-    };
-  },
-  methods:{
-    valChange() {
-      if (this.pgChild) {
-        this.$emit("inputArg", {
-          name: this.name,
-          value: this.input
-        });
-      }else{
-          this.$store.commit("inputArg", {
-            name: this.name || '',
-            value: this.input
-          });
+    created() {
+      if (!this.pgChild) {
+        this.input = this.$store.state.activeComponent.props[this.name]
+      }
+    },
+    methods: {
+      valChange(input) {
+        if(this.pgChild){
+          this.$emit('input',input);
+        }else{
+          this.$store.commit('input',{
+            name: this.name,
+            value: input
+          })
+        }
       }
     }
-  }
-};
+  };
 </script>
+
 <style scoped>
-.expand{
-}
 </style>

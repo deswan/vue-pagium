@@ -5,7 +5,7 @@ Vue.use(Vuex)
 const store = new Vuex.Store({
     state: {
         components: [],
-        activedComponent:null,
+        activeComponent:null,
         dialogs:[]
     },
     mutations: {
@@ -14,11 +14,11 @@ const store = new Vuex.Store({
             this.commit('activateComponent',comObj)
         },
         activateComponent(state,comObj){
-            state.activedComponent = comObj;
+            state.activeComponent = comObj;
             console.log('active:',comObj)
         },
-        inputArg(state,arg){
-            Vue.set(state.activedComponent.props,arg.name,arg.value);
+        input(state,payLoad){
+            Vue.set(state.activeComponent.props,payLoad.name,payLoad.value);
         }
     }
 })

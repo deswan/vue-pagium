@@ -1,10 +1,7 @@
 import input from './boolean.vue';
 import scheme2Input from '../../scheme2Input.js';
-const pass = ['default','on'];
+const pass = [];
 const configStrategy = {
-    on(config){
-        return scheme2Input(config)
-    }
 }
 export default function (config) {
     const props = {};
@@ -14,11 +11,13 @@ export default function (config) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
-    return {
+    let com = {
         name:config.name,
         label:config.label,
         input,
         props,
         config
     }
+    config.on && (com.subInput = scheme2Input(config.on))
+    return com;
 }

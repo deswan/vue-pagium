@@ -1,7 +1,7 @@
 <template>
-  <div class="layer-li" @click="onClick">
+  <li class="layer-li" @click="onClick" @mousedown="onMouseDown">
       {{comObj.name}}
-  </div>
+  </li>
 </template>
 
 <script>
@@ -13,6 +13,9 @@ export default {
   methods: {
       onClick(){
           this.$store.commit('activateComponent',this.comObj)
+      },
+      onMouseDown(e){
+        this.$emit('mousedown',e)
       }
   }
 };

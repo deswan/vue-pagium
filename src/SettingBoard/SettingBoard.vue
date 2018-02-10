@@ -1,16 +1,14 @@
 <template>
-<<<<<<< HEAD:src/SettingBoard/SettingBoard.vue
   <div class="setting">
-      <el-form :model="form" label-suffix="：" v-if="$store.state.activedComponent">
-        <el-form-item :label="label" v-for="item in scheme2Input(config[$store.state.activedComponent.type])" :key="item.name">
-            <component :is="item.input" v-bind="item.props"></component>
+      <el-form label-suffix="：" v-if="$store.state.activeComponent">
+        <el-form-item :label="item.label" v-for="item in scheme2Input(schemes[$store.state.activeComponent.type].props)" :key="item.name">
+            <component :is="item.input" v-bind="item.props" :name="item.name"></component>
+            <div class="expand" v-if="item.subInput && item.subInput.length && $store.state.activeComponent.props[item.name]">
+                <el-form-item v-for="subInput in item.subInput" :label="subInput.label" :key="subInput.name">
+                  <component :is="subInput.input" v-bind="subInput.props" :name="subInput.name"></component>
+                </el-form-item>            
+            </div>
         </el-form-item>
-=======
-  <div class="detail">
-      组件详情
-      <el-form :model="form" label-suffix="：" v-if="$store.state.activeCOM">
-            <component v-for="item in config2Components(config[$store.state.activeCOM.name])" :value="config2Default(item.config)" :key="item.name" :label="item.label" :name="item.name" :is="item.component" v-bind="item.props"></component>
->>>>>>> d04c78f2fff0f593a01ad31590aa24a8ad894278:src/Dash/Index.vue
       </el-form>
   </div>
 </template>
@@ -18,24 +16,15 @@
 <script>
 import TableConfig from '../Components/Table/config'
 import DialogConfig from '../Components/Dialog/config'
-<<<<<<< HEAD:src/SettingBoard/SettingBoard.vue
 import scheme2Input from './scheme2Input'
-=======
-import config2Components from './config2Components'
-import config2Default from './config2Default'
->>>>>>> d04c78f2fff0f593a01ad31590aa24a8ad894278:src/Dash/Index.vue
-const config = {
+const schemes = {
   Table:TableConfig,
   Dialog:DialogConfig
 }
 export default {
   data(){
     return {
-<<<<<<< HEAD:src/SettingBoard/SettingBoard.vue
-      config,scheme2Input,
-=======
-      config,config2Components,config2Default,
->>>>>>> d04c78f2fff0f593a01ad31590aa24a8ad894278:src/Dash/Index.vue
+      schemes,scheme2Input,
       form:{
 
       }

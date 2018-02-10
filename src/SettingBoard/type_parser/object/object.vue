@@ -1,100 +1,123 @@
 <template>
-    <div>
-        <el-form-item :label="label">
-            <div v-if="!format">
-                <el-table :data="input" size="mini">
-                    <el-table-column width="60">
-                        <el-button slot-scope="scope" size="mini" type="danger" @click="delRow(scope.$index)"> - </el-button>
-                    </el-table-column>
-                    <el-table-column label="label" min-width="30">
-                        <el-input size="mini" v-model="scope.row.name" slot-scope="scope" @inputArg="handleChange(scope.$index,arguments[0].value,'name')"></el-input>
-                    </el-table-column>
-                    <el-table-column label="value" min-width="60">
-                        <el-input size="mini" v-model="scope.row.value" slot-scope="scope" @inputArg="handleChange(scope.$index,arguments[0].value,'value')"></el-input>
-                    </el-table-column>
-                </el-table>
-                <div class="add-row" @click="addRow">
-                    <i class="el-icon-plus"></i>
-                </div>
-            </div>
-            <div v-else>
-                <el-table :data="input" size="mini">
-                    <el-table-column label="label" min-width="30">
-                        <span slot-scope="scope">{{scope.row.label}}</span>
-                    </el-table-column>
-                    <el-table-column label="value" min-width="60">
-                        <template slot-scope="scope">
-                            <component size="mini" @inputArg="handleChange(scope.$index,arguments[0].value,'value')" pg-child :is="scope.row.c.component" v-bind="scope.row.c.props"></component>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-        </el-form-item>
+  <div>
+    <div v-if="format" key="1">
+      <el-table :data="input" size="mini">
+        <el-table-column label="label" min-width="30">
+          <span slot-scope="scope">{{scope.row.label}}</span>
+        </el-table-column>
+        <el-table-column label="value" min-width="40">
+          <component size="mini" slot-scope="scope" @input="handleChange" v-model="scope.row.value" pg-child :is="scope.row.com.input" v-bind="scope.row.com.props"></component>
+        </el-table-column>
+      </el-table>
     </div>
+    <div v-else key="2">
+      <el-table :data="input" size="mini">
+        <el-table-column width="60">
+          <el-button slot-scope="scope" size="mini" type="danger" @click="delRow(scope.$index)"> - </el-button>
+        </el-table-column>
+        <el-table-column label="label" min-width="30">
+          <el-input size="mini" v-model="scope.row.name" slot-scope="scope" @change="handleChange"></el-input>
+        </el-table-column>
+        <el-table-column label="value" min-width="60">
+          <el-input size="mini" v-model="scope.row.value" slot-scope="scope" @change="handleChange"></el-input>
+        </el-table-column>
+      </el-table>
+      <div class="add-row" @click="addRow">
+        <i class="el-icon-plus"></i>
+      </div>
+    </div>
+  </div>
 </template>
+
 <script>
-export default {
-  name: "Object",
-  props: {
-    value: {
-      type: Object
+  export default {
+    name: "Object",
+    props: {
+      value: Object,
+      format: Array,
+      name: String,
+      pgChild: Boolean
     },
-    format: {
-      type: Array
+    data() {
+      return {
+        input: this.value
+      };
     },
-    label: {},
-    name: String,
-    pgChild: Boolean
-  },
-  data() {
-    return {
-      _value: this.value
-    };
-  },
-  created() {},
-  methods: {
-    addRow() {
-      this._value.push({ label: "", name: "", value: "" });
+    created() {
+      if (!this.pgChild) {
+        this.input = this.obj2Array(this.$store.state.activeComponent.props[this.name])
+      }else{
+        this.input = this.obj2Array(this.value)
+      }
     },
-    delRow(index) {
-      this._value.splice(index, 1);
-      this.inputArg();
-    },
-    handleChange(idx, val, type) {
-      type == 'name' && (this._value[idx].name = val);
-      type == 'value' && (this._value[idx].value = val);
-      this.inputArg();
-    },
-    inputArg() {
-      let obj = {};
-      this._value.forEach(item => {
-        if (!item.name) return;
-        obj[item.name] = item.value;
-      });
-      if (this.pgChild) {
-        this.$emit("inputArg", {
-          name: this.name,
-          value: obj
+    methods: {
+      obj2Array(obj){
+        let arr = [];
+        for(let key in obj){
+          let arrItem = {
+            label: key,
+            name: key,
+            value: obj[key]
+          }
+          if(this.format){
+            this.format.some(item=>{
+              if(arrItem.name === item.name){
+                arrItem.label = item.label
+                arrItem.com = item
+                return true
+              }
+            })
+          }
+          arr.push(arrItem);
+        }
+        return arr;
+      },
+      arr2Obj(arr){
+        return arr.reduce((obj,arrItem)=>{
+          obj[arrItem.name] = arrItem.value;
+          return obj;
+        },{})
+      },
+      //自由格式对象
+      addRow() {
+        this.input.push({
+          label: "",
+          name: "",
+          value: ""
         });
-      } else {
-        this.$store.commit("inputArg", {
-          name: this.name,
-          value: obj
-        });
+      },
+      //自由格式对象
+      delRow(index) {
+        this.input.splice(index, 1);
+        this.inputArg();
+      },
+      handleChange() {
+        this.inputArg();
+      },
+      inputArg() {
+        if(this.pgChild){
+          this.$emit('input',this.arr2Obj(this.input));
+        }else{
+          this.$store.commit('input',{
+            name: this.name,
+            value: this.arr2Obj(this.input)
+          })
+        }
       }
     }
-  }
-};
+  };
 </script>
+
 <style scoped>
-.add-row {
-  height: 30px;
-  line-height: 30px;
-  transition: all 0.5s ease;
-  cursor: pointer;
-}
-.add-row:hover {
-  background-color: whitesmoke;
-}
+  .add-row {
+    height: 30px;
+    line-height: 30px;
+    transition: all 0.5s ease;
+    cursor: pointer;
+  }
+  
+  .add-row:hover {
+    background-color: whitesmoke;
+  }
 </style>
 

@@ -7,6 +7,7 @@
     :modal-append-to-body="false"
     :lock-scroll="false"
     width="700px"
+    top="100px"
     custom-class="pg-dialog"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
@@ -38,10 +39,11 @@ export default {
 </script>
 <style>
 .pg-dialog{
-  margin-left: 250px;
+  margin-left: 20px;
 }
 .pg-dialog-wrapper{
   left: 100px;
+  right: 500px;
 }
 </style>
 

@@ -6,7 +6,7 @@
     <div id="main">
       <draw-board></draw-board>
     </div>
-      <my-tool></my-tool>
+    <my-tool></my-tool>
   </div>
 </template>
 

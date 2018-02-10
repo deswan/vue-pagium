@@ -1,8 +1,9 @@
 <template>
-    <el-form-item :label="label" v-if="label">
-        <el-input v-model="_value" :size="size" @change="valChange">></el-input>
-    </el-form-item>
-    <el-input v-else v-model="_value" :size="size" @change="valChange"></el-input>
+    <el-select v-model="input" :size="size" @change="valChange" v-if="options && options.length" placeholder="">
+      <el-option v-for="option in options" :key="option.key" :value="option.key" :label="option.value"></el-option>
+    </el-select>
+    <el-input v-model="input" :size="size" @change="valChange" v-else></el-input>
+    
 </template>
 <script>
 export default {
@@ -13,27 +14,29 @@ export default {
     size: {
       default: "small"
     },
-    label: {},
+    options:Array,
     name: String,
     pgChild: Boolean
   },
   data() {
     return {
-      _value: this.value
+      input: this.value
     };
   },
+  created(){
+      if (!this.pgChild) {
+        this.input = this.$store.state.activeComponent.props[this.name]
+      }
+  },
   methods: {
-    valChange() {
-      if (this.pgChild) {
-        this.$emit("inputArg", {
-          name: this.name,
-          value: this._value
-        });
+    valChange(input) {
+      if(this.pgChild){
+        this.$emit('input',input);
       }else{
-          this.$store.commit("inputArg", {
-            name: this.name || '',
-            value: this._value
-          });
+        this.$store.commit('input',{
+          name: this.name,
+          value: input
+        })
       }
     }
   }

@@ -1,7 +1,7 @@
 <template>
     <div>
-        <el-table :data="data">
-            <el-table-column v-for="(col,idx) in cols" :key="idx" v-bind="col"></el-table-column>
+        <el-table :data="data" border>
+            <el-table-column v-for="(col,idx) in cols" :key="idx" v-bind="col" :resizable="false"></el-table-column>
         </el-table>
     </div>
 </template>
