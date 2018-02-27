@@ -36,11 +36,6 @@ export default {
             ]
         }, 
         {
-            name: 'tableName',
-            label: '表格名称',
-            value: String     // data中的名称/ref值
-        }
-        , {
             name: 'load',
             label: '数据加载',
             value: Boolean,

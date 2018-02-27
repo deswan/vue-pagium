@@ -36,7 +36,7 @@ export default {
   position: absolute;
   top:60px;
   left: 100px;
-  right: 500px;
+  right: 460px;
   height: calc(100vh - 60px);
   background-color: whitesmoke;
   overflow:auto;

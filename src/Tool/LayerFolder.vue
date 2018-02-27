@@ -1,6 +1,6 @@
 <template>
-  <ul class="layer-ul" :data-name="com.name" @click="onClick">
-      {{com.name}}
+  <ul class="layer-ul" :data-name="comObj.name" @click="onClick">
+      {{comObj.name}}
   </ul>
 </template>
 
@@ -10,13 +10,13 @@ export default {
   components: {
     LayerItem
   },
-  props: ["com"],
+  props: ["comObj"],
   data() {
     return {};
   },
   methods: {
       onClick(){
-          this.$store.commit('activateComponent',this.com)
+          this.$store.commit('activateComponent',this.comObj)
       }
   }
 };

@@ -49,7 +49,7 @@ export default {
 }
 
 .col {
-  flex: 0 0 141px;
+  flex: 0 0 calc(100% / 2 - 1px);
   box-sizing: border-box;
   padding-right: 10px;
 }
