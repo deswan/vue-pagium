@@ -2,33 +2,101 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 Vue.use(Vuex)
 
+const getName = (()=>{
+    const counter = {}
+    return (name)=>{
+        if(counter[name]){
+            return name + counter[name]++
+        }else{
+            counter[name] = 1
+            return name
+        }
+    }
+})()
+
+
 const store = new Vuex.Store({
     state: {
         components: [],
-        activeComponent:null,
-        dialogs:[]
+        activeComponent: null,
+        dialogs: [],
+        uuid:1
+    },
+    getters:{
+        components(state){
+            return state.components;
+        }
     },
     mutations: {
-        addComponent(state,comObj){
-            (comObj.type == 'Dialog' ? state.dialogs : state.components).push(comObj);
-            this.commit('activateComponent',comObj)
+        nodeChange(state, {
+            drag,
+            drop
+        }) {
+            let holder = {}
+            let [comObj] = drag.p.subCom.splice(drag.i, 1, holder);
+
+            if (!drop.p.subCom) {
+                Vue.set(drop.p, 'subCom', []);
+            }
+            drop.p.subCom.splice(drop.i, 0, comObj)
+            drag.p.subCom.splice(drag.p.subCom.indexOf(holder), 1);
         },
-        activateComponent(state,comObj){
-            state.activeComponent = comObj;
-            console.log('active:',comObj)
+
+        /**
+         * 
+         * @param {父对象} list 
+         * @param {要删除的子对象} node 
+         */
+        delComponent(state, {
+            list,
+            node
+        }) {
+            function del(list, node) {
+                if (!list) return;
+                if (~list.indexOf(node)) {
+                    list.splice(list.indexOf(node), 1);
+                    return true;
+                } else {
+                    list.some(e => {
+                        return del(e.subCom, node)
+                    })
+                }
+            }
+            del(list.subCom, node)
         },
-        input(state,payLoad){
-            if(payLoad.name === 'name'){
+
+        /**
+         * 
+         * @param {父对象} node 
+         * @param {要添加的子对象} comObj 
+         */
+        addComponent(state, {
+            node,
+            comObj
+        }) {
+            if (!node.subCom) {
+                Vue.set(node, 'subCom', [])
+            }
+            const name = getName(comObj.type);
+            Vue.set(comObj,'name',name);
+            Vue.set(comObj,'id',state.uuid++);
+            Vue.set(comObj.props,'name',name);
+            node.subCom.push(comObj);
+
+            this.commit('activateComponent', {comObj})
+        },
+        activateComponent(state, {
+            comObj
+        }) {
+            Vue.set(state,'activeComponent',comObj)
+            // state.activeComponent = Object.assign({},comObj);   //直接赋comObj会从原位置中删除？？？？？
+        },
+        input(state, payLoad) {
+            //组件名称
+            if (payLoad.name === 'name') {
                 state.activeComponent.name = payLoad.value;
             }
-            Vue.set(state.activeComponent.props,payLoad.name,payLoad.value);
-        },
-        sort(state,{comObj,relateComObj,relateDirection}){
-            let list = ~state.components.indexOf(comObj) ? state.components : state.dialogs;
-            let listRelate = ~state.components.indexOf(relateComObj) ? state.components : state.dialogs;
-            list.splice(list.indexOf(comObj),1);
-            let idxRelate = listRelate.indexOf(relateComObj)
-            listRelate.splice(relateDirection == 'before' ? idxRelate : idxRelate + 1,0,comObj)
+            Vue.set(state.activeComponent.props, payLoad.name, payLoad.value);
         }
     }
 })

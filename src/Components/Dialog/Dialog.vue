@@ -11,7 +11,9 @@
     custom-class="pg-dialog"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
-    :show-close="false"></el-dialog>
+    :show-close="false">
+    <slot></slot>
+    </el-dialog>
 </template>
 <script>
 export default {
@@ -23,7 +25,7 @@ export default {
     };
   },
   created(){
-    
+      this.show = this.active;
   },
   methods:{
      activate(){
@@ -42,7 +44,7 @@ export default {
   margin-left: 20px;
 }
 .pg-dialog-wrapper{
-  left: 100px;
+  left: 220px;
   right: 500px;
 }
 </style>
