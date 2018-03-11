@@ -8,6 +8,7 @@
   export default {
     name: "Boolean",
     props: {
+      value:Boolean,
       name: String,
       pgChild: Boolean
     },
@@ -17,20 +18,10 @@
       };
     },
     created() {
-      if (!this.pgChild) {
-        this.input = this.$store.state.activeComponent.props[this.name]
-      }
     },
     methods: {
       valChange(input) {
-        if(this.pgChild){
           this.$emit('input',input);
-        }else{
-          this.$store.commit('input',{
-            name: this.name,
-            value: input
-          })
-        }
       }
     }
   };

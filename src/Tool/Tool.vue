@@ -12,9 +12,9 @@
       type="components"
       >
       </hierarchy-tree>      
-    
+
       <hierarchy-tree 
-      @on-node-row-click="nodeClick" 
+      @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
       :all-coms="allComs" 
@@ -30,27 +30,15 @@
 
 <script>
 import Table from "../Components/Table/Table.vue";
-import TableConfig from "../Components/Table/config";
 import Dialog from "../Components/Dialog/Dialog.vue";
-import DialogConfig from "../Components/Dialog/config";
 import Hierarchy from "./Hierarchy";
 
-import LayerItem from "./LayerItem.vue";
-import LayerFolder from "./LayerFolder.vue";
-
-import scheme2Default from "./scheme2Default.js";
 const allComs = {
   Table,
   Dialog
 };
-const allComsConfig = {
-  Table: TableConfig,
-  Dialog: DialogConfig
-};
 export default {
   components: {
-    LayerItem,
-    LayerFolder,
     HierarchyTree: Hierarchy
   },
   data() {
@@ -83,20 +71,8 @@ export default {
     delCom(root, node) {
       this.$store.commit("delComponent", { list: root, node });
     },
-    addCom({ com, node }) {
-      let config = allComsConfig[com.name];
-      this.$store.commit("addComponent", {
-        node,
-        comObj: {
-          pg:0,
-          type: com.name,
-          nestable: config.nestable,
-          isDialog: config.isDialog,
-          props: { ...scheme2Default(config.props) },
-          com,
-          subCom: []
-        }
-      });
+    addCom({ comVm, node }) {
+      this.$store.commit("addComponent", { node, comVm });
     }
   }
 };
@@ -118,7 +94,5 @@ export default {
 
 .add-btn {
   margin-left: 10px;
-}
-.hierarchy {
 }
 </style>

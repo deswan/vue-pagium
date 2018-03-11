@@ -1,17 +1,17 @@
 <template>
       <components :is="comObj.com" v-bind="comObj.props" class="pg-com" 
-      :active="$store.state.activeComponent === comObj" 
+      :active="$store.state.activeComponent.pg === comObj.pg" 
       :subActive="subActive"
       :pg="comObj.pg">
           <template v-if="comObj.subCom && comObj.subCom.length">
-            <com-wrapper :com-obj="subCom" v-for="subCom in comObj.subCom" :key="subCom.pg"></com-wrapper>
+            <pg-com :com-obj="subCom" v-for="subCom in comObj.subCom" :key="subCom.pg"></pg-com>
           </template>
       </components>
 </template>
 
 <script>
 export default {
-  name: "comWrapper",
+  name: "pgCom",
   props: {
     comObj: {
       required: true
@@ -23,7 +23,7 @@ export default {
       function find(list, node) {
         if (!list) return false;
         return list.some(e => {
-          if ((e.pg = node.pg)) {
+          if ((e.pg === node.pg)) {
             return true;
           } else {
             return find(e.subCom, node);

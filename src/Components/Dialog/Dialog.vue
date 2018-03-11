@@ -18,14 +18,14 @@
 <script>
 export default {
   name: 'Dialog',
-  props:['title','active'],
+  props:['title','active','subActive'],
   data() {
     return {
       show:true
     };
   },
   created(){
-      this.show = this.active;
+      this.show = this.active || this.subActive;
   },
   methods:{
      activate(){
@@ -34,7 +34,10 @@ export default {
   },
   watch:{
     active(){
-      this.show = this.active;
+      this.show = this.active || this.subActive;
+    },
+    subActive(){
+      this.show = this.active || this.subActive;
     }
   }
 };

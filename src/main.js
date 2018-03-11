@@ -4,7 +4,7 @@ import 'element-ui/lib/theme-chalk/index.css'
 import App from './App.vue'
 import store from './store'
 import VueDragTree from 'vue-drag-tree'
-import './el-font-awesome.css'
+import './assets/el-font-awesome.css'
 
 Vue.component('vue-drag-tree', VueDragTree)
 Vue.use(ElementUI)

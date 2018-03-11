@@ -1,20 +1,20 @@
 <template>
 <div class="board-wrapper">
   <div class="main-board">
-      <com-wrapper :com-obj="comObj" v-for="comObj in $store.state.components" :key="comObj.pg"></com-wrapper>
+      <pg-com :com-obj="comObj" v-for="comObj in $store.getters.components" :key="comObj.pg"></pg-com>
   </div>
 
   <!-- Dialogs -->
-  <com-wrapper :com-obj="comObj"  v-for="comObj in $store.state.dialogs" :key="comObj.pg"></com-wrapper>
+  <pg-com :com-obj="comObj"  v-for="comObj in $store.getters.dialogs" :key="comObj.pg"></pg-com>
 </div>
 </template>
 
 <script>
-import COMWrapper from "./COMWrapper.vue";
+import COM from "./COM.vue";
 import {on,off} from "element-ui/src/utils/dom";
 export default {
   components: {
-    comWrapper: COMWrapper
+    pgCom: COM
   },
   data() {
     return {};

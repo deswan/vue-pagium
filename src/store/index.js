@@ -1,36 +1,51 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import TableConfig from "../Components/Table/config";
+import DialogConfig from "../Components/Dialog/config";
+
+import scheme2Default from "../utils/scheme2Default.js";
+
 Vue.use(Vuex)
 
-const getName = (()=>{
+const getName = (() => {
     const counter = {}
-    return (name)=>{
-        if(counter[name]){
+    return (name) => {
+        if (counter[name]) {
             return name + counter[name]++
-        }else{
+        } else {
             counter[name] = 1
             return name
         }
     }
 })()
 
+const allComsConfig = {
+    Table: TableConfig,
+    Dialog: DialogConfig
+};
+
+let uuid = 1;
 
 const store = new Vuex.Store({
     state: {
         components: [],
         activeComponent: null,
         dialogs: [],
-        uuid:1
     },
-    getters:{
-        components(state){
+    getters: {
+        components(state) {
             return state.components;
         },
-        dialogs(state){
+        dialogs(state) {
             return state.dialogs;
         }
     },
     mutations: {
+        /**
+         * 
+         * @param { {p,i} } drag 被拖拽对象
+         * @param { {p,i} } drop 目标对象
+         */
         nodeChange(state, {
             drag,
             drop
@@ -43,9 +58,9 @@ const store = new Vuex.Store({
         },
 
         /**
-         * 
-         * @param {父对象} list 
-         * @param {要删除的子对象} node 
+         * 删除组件
+         * @param { comObj } list 父对象
+         * @param { comObj } node 要删除的子对象
          */
         delComponent(state, {
             list,
@@ -66,34 +81,59 @@ const store = new Vuex.Store({
         },
 
         /**
-         * 
-         * @param {父对象} node 
-         * @param {要添加的子对象} comObj 
+         * 添加组件
+         * @param { comObj } node 父对象
+         * @param { vm } comVm 要添加的组件实例
          */
         addComponent(state, {
             node,
-            comObj
+            comVm
         }) {
-            const name = getName(comObj.type);
-            Vue.set(comObj,'name',name);
-            comObj.pg = 'pg' + state.uuid++;
-            // Vue.set(comObj.props,'name',name);
+            const type = comVm.name; //vm.options.name
+            const config = allComsConfig[type];
+            const name = getName(type);
+            let comObj = {
+                pg: uuid++,
+                name,
+                type,
+                nestable: config.nestable,
+                isDialog: config.isDialog,
+                props: { ...scheme2Default(config.props),
+                    name
+                },
+                com: comVm,
+                subCom: []
+            }
             node.subCom.push(comObj);
 
-            this.commit('activateComponent', {comObj})
+            this.commit('activateComponent', {
+                comObj
+            })
         },
+
+        /**
+         * 激活组件
+         * @param { comObj } comObj 要激活的对象
+         */
         activateComponent(state, {
             comObj
         }) {
-            Vue.set(state,'activeComponent',Object.assign({},comObj))
-            // state.activeComponent = comObj;   //直接赋comObj会从原位置中删除？？？？？
+            state.activeComponent = comObj;
         },
-        input(state, payLoad) {
-            //组件名称
-            if (payLoad.name === 'name') {
-                state.activeComponent.name = payLoad.value;
+
+        /**
+         * 输入setting参数
+         * @param { String } name 字段名称
+         * @param { Any } value 字段值
+         */
+        input(state, {
+            name,
+            value
+        }) {
+            if (name === 'name') {
+                state.activeComponent.name = value;
             }
-            Vue.set(state.activeComponent.props, payLoad.name, payLoad.value);
+            Vue.set(state.activeComponent.props, name, value);
         }
     }
 })

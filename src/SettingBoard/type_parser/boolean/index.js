@@ -3,21 +3,21 @@ import scheme2Input from '../../scheme2Input.js';
 const pass = [];
 const configStrategy = {
 }
-export default function (config) {
+export default function (conf) {
     const props = {};
     pass.forEach((name)=>{
         let v;
-        if((v = config[name]) !== undefined){
+        if((v = conf[name]) !== undefined){
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
     let com = {
-        name:config.name,
-        label:config.label,
+        name:conf.name,
+        label:conf.label,
         input,
         props,
-        config
+        conf
     }
-    config.on && (com.subInput = scheme2Input(config.on))
+    conf.on && (com.subInput = scheme2Input(conf.on))
     return com;
 }

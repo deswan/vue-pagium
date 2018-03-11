@@ -14,12 +14,12 @@
       <div @click="emitEvent('nodeRow')">
         <span>
           <span class="el-tree-node__label">{{ node.name }}</span>
-          <i v-if="node.name && node.subCom && node.subCom.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
+          <i @click="emitEvent('nodeName')" v-if="node.name && node.subCom && node.subCom.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
         </span>
         <span class="tree-node-action" v-if="node.name">
-          <el-popover placement="right-end" trigger="click" v-if="idx === undefined || node.nestable">
+          <el-popover placement="right-end" trigger="click" v-if="idx === undefined || node.nestable" v-model="showComlib">  
             <div class="com-lib">
-              <div @click="emitEvent('addCom',{com,node})" class="com-lib-item" v-for="(com,key) in allComs" :key="key">{{com.name}}</div>
+              <div @click="emitEvent('addCom',{comVm,node})" class="com-lib-item" v-for="(comVm,key) in allComs" :key="key">{{comVm.name}}</div>
             </div>      
             <i class="el-icon-fa-plus" slot="reference" @click.stop="emitEvent('add')"></i>
           </el-popover>
@@ -57,7 +57,8 @@ export default {
   data: function() {
     return {
       hideChildren: false,
-      unwatchRootNode: () => {}
+      unwatchRootNode: () => {},
+      showComlib:false
     };
   },
   beforeDestroy() {
@@ -113,16 +114,20 @@ export default {
         this.isMeOrMyAncestor ||
         this.notNestable || 
         this.isDialogToComponents || 
-        this.isComponentsToDialogsRoot
+        this.isComponentsToDialogsRoot ||
+        this.isDialogNest
       );
     },
-    notNestable() {
+    notNestable() { //非nestable元素不可含有子组件
       return this.node.name && !this.node.nestable;
     },
-    isDialogToComponents(){
+    isDialogNest(){ //dialog不可作为其他组件的子组件
+      return this.value.node.isDialog && !this.$parent.node.isRoot ||  this.value.node.isDialog && this.node.name;
+    },
+    isDialogToComponents(){ //dialog不可移入“组件”Hierarchy里
       return this.type == 'components' && this.value.node.isDialog;
     },
-    isComponentsToDialogsRoot(){
+    isComponentsToDialogsRoot(){  //普通组件不可作为“对话框”Hierarchy的根组件
       return !this.node.name && this.$parent.node.isRoot && this.type == 'dialogs' && !this.value.node.isDialog;
     }
   },
@@ -134,13 +139,11 @@ export default {
     handleDragStart(ev) {
       if (this.idx === undefined) return;
       this.valueModel = this; // 设置本组件为当前正在拖动的实例，此举将同步 sync 到所有 TreeNode 实例
-      this.$el.style.backgroundColor = "silver";
       ev.dataTransfer.effectAllowed = "move";
     },
     handleDrop() {
       this.clearBgColor(); // 此时 this 为目的地节点，vm 才是被拖动节点
       if (!this.isAllowToDrop) return;
-      console.log('handleDrop')
 
       var dragParentNode = this.value.$parent.node;
       let dragIndex = dragParentNode.subCom.indexOf(this.value.node);
@@ -246,6 +249,7 @@ export default {
     emitEvent(type, node) {
       switch (type) {
         case "addCom":
+          this.showComlib = false;
           this.onAddCom(node);
           break; //{com,node}
         case "add":
@@ -265,7 +269,6 @@ export default {
           this.onNodeRowClick(this.node);
           break;
         case "nodeName":
-          if(this.idx === undefined) return;
           this.hideChildren = !this.hideChildren;
           this.onNodeNameClick(this.node);
           break;
