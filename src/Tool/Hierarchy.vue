@@ -12,12 +12,12 @@
        @dragend.prevent="handleDragEnd">
     <div class="tree-node-name" :style="{'padding-left': level * 16 + 10 + 'px'}" :class="[{'has-name': node.name}, 'idx_' + idx ]">
       <div @click="emitEvent('nodeRow')">
-        <span @click="emitEvent('nodeName')">
+        <span>
           <span class="el-tree-node__label">{{ node.name }}</span>
           <i v-if="node.name && node.subCom && node.subCom.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
         </span>
         <span class="tree-node-action" v-if="node.name">
-          <el-popover placement="right-end" trigger="click">
+          <el-popover placement="right-end" trigger="click" v-if="idx === undefined || node.nestable">
             <div class="com-lib">
               <div @click="emitEvent('addCom',{com,node})" class="com-lib-item" v-for="(com,key) in allComs" :key="key">{{com.name}}</div>
             </div>      
@@ -33,6 +33,7 @@
         v-for="(child, $index) in children" :key="$index"
         v-model="valueModel" :node="child" :idx="$index" :level="level+1"
         :all-coms="allComs"
+        :type="type"
         >
       </tree-node>
     </div>
@@ -50,7 +51,8 @@ export default {
       type: Number,
       default: 0
     }, // 层级
-    allComs: Object
+    allComs: Object,
+    type:String
   },
   data: function() {
     return {
@@ -109,12 +111,19 @@ export default {
         this.isParent ||
         this.isNextToMe ||
         this.isMeOrMyAncestor ||
-        !this.isNestable
+        this.notNestable || 
+        this.isDialogToComponents || 
+        this.isComponentsToDialogsRoot
       );
     },
-    isNestable() {
-      // 上述拖放限制条件的综合
-      return this.node.name && this.node.nestable;
+    notNestable() {
+      return this.node.name && !this.node.nestable;
+    },
+    isDialogToComponents(){
+      return this.type == 'components' && this.value.node.isDialog;
+    },
+    isComponentsToDialogsRoot(){
+      return !this.node.name && this.$parent.node.isRoot && this.type == 'dialogs' && !this.value.node.isDialog;
     }
   },
   methods: {
@@ -131,6 +140,7 @@ export default {
     handleDrop() {
       this.clearBgColor(); // 此时 this 为目的地节点，vm 才是被拖动节点
       if (!this.isAllowToDrop) return;
+      console.log('handleDrop')
 
       var dragParentNode = this.value.$parent.node;
       let dragIndex = dragParentNode.subCom.indexOf(this.value.node);

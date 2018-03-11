@@ -1,11 +1,11 @@
 <template>
 <div class="board-wrapper">
   <div class="main-board">
-      <com-wrapper :com-obj="comObj" v-for="comObj in $store.state.components" :key="comObj.id"></com-wrapper>
+      <com-wrapper :com-obj="comObj" v-for="comObj in $store.state.components" :key="comObj.pg"></com-wrapper>
   </div>
 
   <!-- Dialogs -->
-  <com-wrapper :com-obj="comObj"  v-for="comObj in $store.state.dialogs" :key="comObj.id"></com-wrapper>
+  <com-wrapper :com-obj="comObj"  v-for="comObj in $store.state.dialogs" :key="comObj.pg"></com-wrapper>
 </div>
 </template>
 

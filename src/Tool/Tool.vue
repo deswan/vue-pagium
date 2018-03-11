@@ -9,6 +9,7 @@
       @addCom="addCom" 
       @on-change="nodeChange"
       @on-del-btn-click="delCom(data_com,$event)"
+      type="components"
       >
       </hierarchy-tree>      
     
@@ -21,6 +22,7 @@
       @addCom="addCom" 
       @on-change="nodeChange"
       @on-del-btn-click="delCom(data_dialog,$event)"
+      type="dialogs"
       >
       </hierarchy-tree> 
   </div>
@@ -67,36 +69,32 @@ export default {
     };
     this.data_dialog = {
       name: "对话框",
-      subCom: this.$store.state.dialogs,
+      subCom: this.$store.getters.dialogs,
       isRoot: true
     };
-  },
-  watch: {
-    "$store.state.components"(v) {
-      console.log("this.$store.state.components", v);
-    }
   },
   methods: {
     nodeChange(e) {
       this.$store.commit("nodeChange", e);
     },
-    nodeClick(e) {
-      this.$store.commit("activateComponent", {
-        comObj: e
-      });
+    nodeClick(comObj) {
+      this.$store.commit("activateComponent", { comObj });
     },
     delCom(root, node) {
       this.$store.commit("delComponent", { list: root, node });
     },
     addCom({ com, node }) {
+      let config = allComsConfig[com.name];
       this.$store.commit("addComponent", {
         node,
         comObj: {
+          pg:0,
           type: com.name,
-          nestable: allComsConfig[com.name].nestable,
-          props: { ...scheme2Default(allComsConfig[com.name].props) },
+          nestable: config.nestable,
+          isDialog: config.isDialog,
+          props: { ...scheme2Default(config.props) },
           com,
-          subCom: null
+          subCom: []
         }
       });
     }

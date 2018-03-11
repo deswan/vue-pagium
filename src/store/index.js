@@ -25,6 +25,9 @@ const store = new Vuex.Store({
     getters:{
         components(state){
             return state.components;
+        },
+        dialogs(state){
+            return state.dialogs;
         }
     },
     mutations: {
@@ -35,9 +38,6 @@ const store = new Vuex.Store({
             let holder = {}
             let [comObj] = drag.p.subCom.splice(drag.i, 1, holder);
 
-            if (!drop.p.subCom) {
-                Vue.set(drop.p, 'subCom', []);
-            }
             drop.p.subCom.splice(drop.i, 0, comObj)
             drag.p.subCom.splice(drag.p.subCom.indexOf(holder), 1);
         },
@@ -74,13 +74,10 @@ const store = new Vuex.Store({
             node,
             comObj
         }) {
-            if (!node.subCom) {
-                Vue.set(node, 'subCom', [])
-            }
             const name = getName(comObj.type);
             Vue.set(comObj,'name',name);
-            Vue.set(comObj,'id',state.uuid++);
-            Vue.set(comObj.props,'name',name);
+            comObj.pg = 'pg' + state.uuid++;
+            // Vue.set(comObj.props,'name',name);
             node.subCom.push(comObj);
 
             this.commit('activateComponent', {comObj})
@@ -88,8 +85,8 @@ const store = new Vuex.Store({
         activateComponent(state, {
             comObj
         }) {
-            Vue.set(state,'activeComponent',comObj)
-            // state.activeComponent = Object.assign({},comObj);   //直接赋comObj会从原位置中删除？？？？？
+            Vue.set(state,'activeComponent',Object.assign({},comObj))
+            // state.activeComponent = comObj;   //直接赋comObj会从原位置中删除？？？？？
         },
         input(state, payLoad) {
             //组件名称

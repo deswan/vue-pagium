@@ -1,10 +1,10 @@
 <template>
   <div class="setting">
       <el-form label-suffix="：" v-if="$store.state.activeComponent">
-        <el-form-item label="组件名称" :key="$store.state.activeComponent.id">
+        <el-form-item label="组件名称" :key="$store.state.activeComponent.pg">
             <component :is="StringInput" name="name"></component>
         </el-form-item>
-        <el-form-item :label="item.label" v-for="(item,idx) in scheme2Input(schemes[$store.state.activeComponent.type].props)" :key="'' + $store.state.activeComponent.id + idx">
+        <el-form-item :label="item.label" v-for="(item,idx) in scheme2Input(schemes[$store.state.activeComponent.type].props)" :key="'' + $store.state.activeComponent.pg + idx">
             <component :is="item.input" v-bind="item.props" :name="item.name"></component>
             <div class="expand" v-if="item.subInput && item.subInput.length && $store.state.activeComponent.props[item.name]">
                 <el-form-item v-for="subInput in item.subInput" :label="subInput.label" :key="subInput.name">
