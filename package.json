@@ -12,9 +12,10 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "art-template": "^4.12.2",
+    "axios": "^0.18.0",
     "ejs": "^2.5.7",
     "element-ui": "^2.0.11",
-    "express": "^4.16.2",
     "pagium": "^1.0.7",
     "vue": "^2.5.2",
     "vue-drag-tree": "^1.0.11",
@@ -39,6 +40,7 @@
     "chalk": "^2.0.1",
     "copy-webpack-plugin": "^4.0.1",
     "css-loader": "^0.28.0",
+    "express": "^4.16.3",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^1.1.4",
     "friendly-errors-webpack-plugin": "^1.6.1",
@@ -46,6 +48,7 @@
     "jest": "^22.0.4",
     "jest-serializer-vue": "^0.3.0",
     "less-loader": "^4.0.6",
+    "mockjs": "^1.0.1-beta3",
     "node-notifier": "^5.1.2",
     "node-sass": "^4.7.2",
     "optimize-css-assets-webpack-plugin": "^3.2.0",

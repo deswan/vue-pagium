@@ -1,0 +1,103 @@
+<template>
+    <div>
+        <el-table 
+        :data="@@items" 
+        border
+        v-loading="@@loading"
+        >
+            {{{each cols}}}
+            <el-table-column 
+            {{{if $value.fixed !== undefined}}} fixed="{{{$value.fixed}}}" {{{/if}}}  
+            {{{if $value.prop}}} prop="{{{$value.prop}}}" {{{/if}}}  
+            {{{if $value['min-width']}}} min-width="{{{$value['min-width']}}}" {{{/if}}}  
+            {{{if $value.label}}} label="{{{$value.label}}}" {{{/if}}}  
+            >
+            {{{if $value.slot}}} //可传组件、字符串
+              <template slot-scope="scope">
+                $value.slot 
+              </template> 
+            {{{/if}}}  
+            </el-table-column>
+            {{{/each}}}
+        </el-table>
+        
+        {{{if pagination}}}
+          <el-pagination 
+            @size-change="@@handleSizeChange"
+            @current-change="@@handleCurrentChange"
+            {{{if pageSizes }}} :page-sizes="{{{pageSizes}}}" {{{/if}}}  
+            :current-page="@@page"
+            :page-size="@@pageSize"
+            {{{if paginationlayout }}} layout="{{{paginationlayout}}}" {{{/if}}}  
+            :total="@@total">
+          </el-pagination>
+        {{{/if}}}
+    </div>
+</template>
+<script>
+export default {
+  name: 'Table',
+  data() {
+    return {
+      loading:false,
+      items:['','',''],
+      total: 0,
+      {{{if pagination}}}
+        page: 1,
+        pageSize: 50
+      {{{/if}}}
+    };
+  },
+  created(){
+    this.@@loadList();
+  },
+  methods:{
+    {{{if load}}}
+     loadList(){
+        this.@@loading = true;
+        <% include('../http.art',{
+          method:$imports.valuelize(method),
+          url:$imports.valuelize(url),
+          params:pagination ? {
+            [pageName]:'this.@@page',
+            [pageSizeName]:'this.@@pageSize'
+          } : {
+
+          }
+        }) %> 
+        .then((response)=>{
+          let data = response.data;
+          this.@@total = data.{{{ totalName }}};
+          this.@@items = data.{{{itemsName}}};
+          this.@@loading = false;
+        }).catch((err)=>{
+          this.@@loading = false;
+        })
+     },
+    {{{/if}}}
+
+    {{{if pagination}}}
+      handleCurrentChange(page) {
+        this.@@page = page;
+        {{{if load}}}
+          this.@@loadList();
+        {{{/if}}}
+      },
+
+      handleSizeChange(size) {
+        this.table.pageSize = size;
+        if (this.table.page == 1) {
+          {{{if load}}}
+            this.@@loadList();
+          {{{/if}}}
+        } else {
+          this.table.page = 1;
+        }
+      },
+    {{{/if}}}
+  }
+};
+</script>
+<style scoped>
+</style>
+

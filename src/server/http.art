@@ -1,0 +1,17 @@
+{{{set successMsg = 'response.msg'}}}
+{{{set errorMsg = 'response.msg'}}}
+this.$http({
+  method: {{{method}}},
+  url: {{{url}}},
+  data: {
+    {{{each params}}}
+    {{{$index}}}:{{{$value}}},
+    {{{/each}}}
+  }
+}).then((response)=>{
+    this.$message.success({{{successMsg}}} || 'success')
+    return response;
+}).catch((err)=>{
+    this.$message.error({{{errorMsg}}} || 'error')
+    return err;
+})
