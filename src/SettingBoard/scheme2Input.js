@@ -7,6 +7,7 @@ const TYPES = {
 }
 export default function(config){
     let inputs = [];
+    console.log(config)
     config.forEach((item)=>{
         let loader = getLoader(item.value)
         inputs = inputs.concat(loader(item))

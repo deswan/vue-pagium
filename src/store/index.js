@@ -38,6 +38,12 @@ const store = new Vuex.Store({
         },
         dialogs(state) {
             return state.dialogs;
+        },
+        data(state){
+            return {
+                components:state.components,
+                dialogs:state.dialogs
+            }
         }
     },
     mutations: {

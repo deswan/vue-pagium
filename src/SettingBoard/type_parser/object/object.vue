@@ -30,94 +30,83 @@
 </template>
 
 <script>
-  export default {
-    name: "Object",
-    props: {
-      value: Object,
-      format: Array,
-      name: String,
-      pgChild: Boolean
-    },
-    data() {
-      return {
-        input: this.value
-      };
-    },
-    created() {
-      if (!this.pgChild) {
-        this.input = this.obj2Array(this.$store.state.activeComponent.props[this.name])
-      }else{
-        this.input = this.obj2Array(this.value)
-      }
-    },
-    methods: {
-      obj2Array(obj){
-        let arr = [];
-        for(let key in obj){
-          let arrItem = {
-            label: key,
-            name: key,
-            value: obj[key]
-          }
-          if(this.format){
-            this.format.some(item=>{
-              if(arrItem.name === item.name){
-                arrItem.label = item.label
-                arrItem.com = item
-                return true
-              }
-            })
-          }
-          arr.push(arrItem);
+export default {
+  name: "Object",
+  props: {
+    value: Object,
+    format: Array,
+    name: String,
+    pgChild: Boolean
+  },
+  data() {
+    return {
+      input: []
+    };
+  },
+  created() {
+    this.input = this.obj2Array(this.value);
+  },
+  methods: {
+    obj2Array(obj) {
+      let arr = [];
+      for (let key in obj) {
+        let arrItem = {
+          label: key,
+          name: key,
+          value: obj[key]
+        };
+        if (this.format) {
+          this.format.some(item => {
+            if (arrItem.name === item.name) {
+              arrItem.label = item.label;
+              arrItem.com = item;
+              return true;
+            }
+          });
         }
-        return arr;
-      },
-      arr2Obj(arr){
-        return arr.reduce((obj,arrItem)=>{
-          obj[arrItem.name] = arrItem.value;
-          return obj;
-        },{})
-      },
-      //自由格式对象
-      addRow() {
-        this.input.push({
-          label: "",
-          name: "",
-          value: ""
-        });
-      },
-      //自由格式对象
-      delRow(index) {
-        this.input.splice(index, 1);
-        this.inputArg();
-      },
-      handleChange() {
-        this.inputArg();
-      },
-      inputArg() {
-        if(this.pgChild){
-          this.$emit('input',this.arr2Obj(this.input));
-        }else{
-          this.$store.commit('input',{
-            name: this.name,
-            value: this.arr2Obj(this.input)
-          })
-        }
+        arr.push(arrItem);
       }
+      return arr;
+    },
+    arr2Obj(arr) {
+      return arr.reduce((obj, arrItem) => {
+        obj[arrItem.name] = arrItem.value;
+        return obj;
+      }, {});
+    },
+    //自由格式对象
+    addRow() {
+      this.input.push({
+        label: "",
+        name: "",
+        value: ""
+      });
+    },
+    //自由格式对象
+    delRow(index) {
+      this.input.splice(index, 1);
+      this.inputArg();
+    },
+    handleChange() {
+      this.inputArg();
+    },
+    inputArg() {
+      this.$emit("input", this.arr2Obj(this.input));
     }
-  };
+  }
+};
 </script>
 
 <style scoped>
-  .add-row {
-    height: 30px;
-    line-height: 30px;
-    transition: all 0.5s ease;
-    cursor: pointer;
-  }
-  
-  .add-row:hover {
-    background-color: whitesmoke;
-  }
+.add-row {
+  height: 30px;
+  line-height: 30px;
+  transition: all 0.5s ease;
+  cursor: pointer;
+}
+
+.add-row:hover {
+  background-color: whitesmoke;
+}
 </style>
 

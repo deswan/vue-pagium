@@ -45,7 +45,8 @@ export default {
     handleInput(name, value) {
       this.$store.commit("input", { name, value });
     }
-  }
+  },
+  
 };
 </script>
 

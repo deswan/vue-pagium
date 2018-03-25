@@ -1,7 +1,12 @@
 <template>
     <div class="row">
         <div class="col" v-for="(item,idx) in input" :key="idx">
-            <component :is="_itemCOM.input" v-bind="_itemCOM.props" pg-child v-model="input[idx]" @input="handleChange"></component>
+            <component 
+            :is="_itemCOM.input" 
+            v-bind="_itemCOM.props" 
+            pg-child 
+            v-model="input[idx]" 
+            @input="handleChange"></component>
         </div>
         <div class="col add" @click="add"><i class="el-icon-plus"></i></div>
     </div>
@@ -12,29 +17,29 @@ let defaultValue;
 export default {
   name: "Array",
   props: {
-    _itemCOM:Object,
-    name:String
-  },
-  created() {
-    if (!this.pgChild) {
-        defaultValue = JSON.stringify(this.$store.state.activeComponent.props[this.name][0])
-        this.input = this.$store.state.activeComponent.props[this.name]
-    }
+    value: Array,
+    _itemCOM: Object,
+    name: String
   },
   data() {
     return {
-      input: ["", "", ""]
+      input: this.value,
+      defaultValue: ""
     };
+  },
+  created() {
+    defaultValue = JSON.stringify(this.value[0]);
   },
   methods: {
     add() {
       this.input.push(JSON.parse(defaultValue));
+      handleChange()
     },
-    handleChange(val) {
-        this.$store.commit('input',{
-            name: this.name,
-            value: this.input
-        })
+    handleChange() {
+      this.$store.commit("input", {
+        name: this.name,
+        value: this.input
+      });
     }
   }
 };

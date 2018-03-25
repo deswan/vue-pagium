@@ -24,17 +24,10 @@ export default {
 
 <style>
 .main-board {
-  position: absolute;
-  top: 40px;
-  left: 200px;
-  width: 600px;
-  height: 800px;
+  width: 400px;
+  height: 500px;
+  margin:100px auto 0;
   background-color: white;
-}
-.board-wrapper {
-  position: relative;
-  height: 2000px;
-  width: 2000px;
 }
 .dialog-board {
   position: absolute;

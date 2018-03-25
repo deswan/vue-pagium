@@ -1,0 +1,26 @@
+<template>
+<div>
+    {{{html}}}
+</div>
+</template>
+<script>
+export default {
+    name: 'PG Page',
+    data() {
+        return {
+            {{{data}}}
+        };
+    },
+    {{{each hooks}}}
+        {{{$index}}}() {
+            {{{$value}}}
+        },
+    {{{/each}}}
+    methods: {
+        {{{methods}}}
+    }
+};
+</script>
+<style scoped>
+</style>
+

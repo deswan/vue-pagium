@@ -1,0 +1,148 @@
+[Sat Mar 24 2018 18:43:15 GMT+0800 (CST)] DEBUG renameMethods script { handleCurrentChange: 'Table1HandleCurrentChange',
+  handleSizeChange: 'Table1HandleSizeChange' }
+[Sat Mar 24 2018 18:43:15 GMT+0800 (CST)] DEBUG renameMethods script <template>
+    <div>
+        <el-table :data="@@items" border v-loading="@@loading"
+        >
+            
+            <el-table-column 
+              
+              
+              
+              
+            >
+              
+            </el-table-column>
+            
+            <el-table-column 
+              
+              
+              
+              
+            >
+              
+            </el-table-column>
+            
+        </el-table>
+        
+        
+          <el-pagination 
+            @size-change="@@Table1HandleSizeChange"
+            @current-change="@@Table1HandleCurrentChange"
+              
+            :current-page="@@page"
+            :page-size="@@pageSize"
+              
+            :total="@@total">
+          </el-pagination>
+        
+    </div>
+</template>
+<script>
+export default {
+  name: 'Table',
+  data() {
+    return {
+      loading: false,
+      items: [{}, {}, {}],
+      total: 0,
+
+      page: 1,
+      pageSize: 50
+
+    };
+  },
+  created() {},
+  methods: {
+
+    Table1HandleCurrentChange(page) {
+      this.@@page = page;
+    },
+
+    Table1HandleSizeChange(size) {
+      this.table.pageSize = size;
+      if (this.table.page == 1) {} else {
+        this.table.page = 1;
+      }
+    }
+
+  }
+};</script>
+<style scoped>
+</style>
+
+
+[Sun Mar 25 2018 17:50:00 GMT+0800 (CST)] DEBUG renameMethods script { handleCurrentChange: 'Table1HandleCurrentChange',
+  handleSizeChange: 'Table1HandleSizeChange' }
+[Sun Mar 25 2018 17:50:00 GMT+0800 (CST)] DEBUG renameMethods script <template>
+    <div>
+        <el-table :data="@@items" border v-loading="@@loading"
+        >
+            
+            <el-table-column 
+              
+              
+              
+              
+            >
+              
+            </el-table-column>
+            
+            <el-table-column 
+              
+              
+              
+              
+            >
+              
+            </el-table-column>
+            
+        </el-table>
+        
+        
+          <el-pagination 
+            @size-change="@@Table1HandleSizeChange"
+            @current-change="@@Table1HandleCurrentChange"
+              
+            :current-page="@@page"
+            :page-size="@@pageSize"
+              
+            :total="@@total">
+          </el-pagination>
+        
+    </div>
+</template>
+<script>
+export default {
+  name: 'Table',
+  data() {
+    return {
+      loading: false,
+      items: [{}, {}, {}],
+      total: 0,
+
+      page: 1,
+      pageSize: 50
+
+    };
+  },
+  created() {},
+  methods: {
+
+    Table1HandleCurrentChange(page) {
+      this.@@page = page;
+    },
+
+    Table1HandleSizeChange(size) {
+      this.table.pageSize = size;
+      if (this.table.page == 1) {} else {
+        this.table.page = 1;
+      }
+    }
+
+  }
+};</script>
+<style scoped>
+</style>
+
+

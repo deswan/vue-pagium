@@ -1,13 +1,10 @@
 <template>
     <div>
-        <el-table 
-        :data="@@items" 
-        border
-        v-loading="@@loading"
+        <el-table :data="@@items" border v-loading="@@loading"
         >
             {{{each cols}}}
             <el-table-column 
-            {{{if $value.fixed !== undefined}}} fixed="{{{$value.fixed}}}" {{{/if}}}  
+            {{{if $value.fixed}}} fixed="{{{$value.fixed}}}" {{{/if}}}  
             {{{if $value.prop}}} prop="{{{$value.prop}}}" {{{/if}}}  
             {{{if $value['min-width']}}} min-width="{{{$value['min-width']}}}" {{{/if}}}  
             {{{if $value.label}}} label="{{{$value.label}}}" {{{/if}}}  
@@ -40,7 +37,7 @@ export default {
   data() {
     return {
       loading:false,
-      items:['','',''],
+      items:[{},{},{}],
       total: 0,
       {{{if pagination}}}
         page: 1,
@@ -49,7 +46,9 @@ export default {
     };
   },
   created(){
+    {{{if load}}}
     this.@@loadList();
+    {{{/if}}}
   },
   methods:{
     {{{if load}}}
