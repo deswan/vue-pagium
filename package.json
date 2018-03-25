@@ -57,6 +57,7 @@
     "jest-serializer-vue": "^0.3.0",
     "less-loader": "^4.0.6",
     "log": "^1.4.0",
+    "log4js": "^2.5.3",
     "mockjs": "^1.0.1-beta3",
     "node-notifier": "^5.1.2",
     "node-sass": "^4.7.2",

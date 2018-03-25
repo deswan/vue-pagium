@@ -31,11 +31,13 @@
 <script>
 import Table from "../Components/Table/Table.vue";
 import Dialog from "../Components/Dialog/Dialog.vue";
+import Form from "../Components/Form/Form.vue";
 import Hierarchy from "./Hierarchy";
 
 const allComs = {
   Table,
-  Dialog
+  Dialog,
+  Form
 };
 export default {
   components: {

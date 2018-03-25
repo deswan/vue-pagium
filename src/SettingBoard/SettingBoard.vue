@@ -26,11 +26,13 @@
 <script>
 import TableConfig from "../Components/Table/config";
 import DialogConfig from "../Components/Dialog/config";
+import FormConfig from "../Components/Form/config";
 import scheme2Input from "./scheme2Input";
 import StringInput from "./type_parser/string/string.vue";
 const Configs = {
   Table: TableConfig,
-  Dialog: DialogConfig
+  Dialog: DialogConfig,
+  Form: FormConfig
 };
 export default {
   data() {

@@ -1,5 +1,5 @@
 //表单组件
-export default {
+module.exports = {
     nestable:true,
     isDialog:true,
     props:[

@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import TableConfig from "../Components/Table/config";
 import DialogConfig from "../Components/Dialog/config";
+import FormConfig from "../Components/Form/config";
 
 import scheme2Default from "../utils/scheme2Default.js";
 
@@ -21,7 +22,8 @@ const getName = (() => {
 
 const allComsConfig = {
     Table: TableConfig,
-    Dialog: DialogConfig
+    Dialog: DialogConfig,
+    Form: FormConfig
 };
 
 let uuid = 1;
