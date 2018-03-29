@@ -1,0 +1,825 @@
+[2018-03-29T23:37:36.733] [INFO] my - {
+  "components": [
+    {
+      "comObj": {
+        "pg": 1,
+        "name": "Table",
+        "type": "Table",
+        "nestable": false,
+        "props": {
+          "pageSizes": "",
+          "paginationLayout": "",
+          "method": "get",
+          "url": "",
+          "params": {
+            "name": "",
+            "value": ""
+          },
+          "totalName": "total",
+          "itemsName": "items",
+          "pageName": "page",
+          "pageSizeName": "pageSize",
+          "cols": [
+            {
+              "fixed": "",
+              "label": "",
+              "prop": "",
+              "min-width": ""
+            },
+            {
+              "fixed": "",
+              "label": "",
+              "prop": "",
+              "min-width": ""
+            }
+          ],
+          "pagination": true,
+          "load": false,
+          "name": "Table"
+        },
+        "com": {
+          "name": "Table",
+          "props": {
+            "active": {
+              "type": null
+            },
+            "cols": {
+              "type": null
+            }
+          },
+          "methods": {},
+          "watch": {},
+          "staticRenderFns": [],
+          "_compiled": true,
+          "_scopeId": "data-v-2946b5cd",
+          "beforeCreate": [
+            null,
+            null
+          ],
+          "__file": "src/Components/Table/Table.vue",
+          "beforeDestroy": [
+            null
+          ],
+          "_Ctor": {}
+        },
+        "subCom": []
+      },
+      "dataKeys": [
+        "loading",
+        "items",
+        "total",
+        "page",
+        "pageSize"
+      ],
+      "methodsKeys": [
+        "handleCurrentChange",
+        "handleSizeChange"
+      ],
+      "compiled": "<template>\n    <div>\n        <el-table :data=\"@@items\" border v-loading=\"@@loading\"\n        >\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n        </el-table>\n        \n        \n          <el-pagination \n            @size-change=\"@@handleSizeChange\"\n            @current-change=\"@@handleCurrentChange\"\n              \n            :current-page=\"@@page\"\n            :page-size=\"@@pageSize\"\n              \n            :total=\"@@total\">\n          </el-pagination>\n        \n    </div>\n</template>\n<script>\nexport default {\n  name: 'Table',\n  data() {\n    return {\n      loading:false,\n      items:[{},{},{}],\n      total: 0,\n      \n        page: 1,\n        pageSize: 50\n      \n    };\n  },\n  created(){\n    \n  },\n  methods:{\n    \n\n    \n      handleCurrentChange(page) {\n        this.@@page = page;\n        \n      },\n\n      handleSizeChange(size) {\n        this.table.pageSize = size;\n        if (this.table.page == 1) {\n          \n        } else {\n          this.table.page = 1;\n        }\n      },\n    \n  }\n};\n</script>\n<style scoped>\n</style>\n\n",
+      "children": []
+    }
+  ],
+  "dialogs": [
+    {
+      "comObj": {
+        "pg": 2,
+        "name": "Dialog",
+        "type": "Dialog",
+        "nestable": true,
+        "isDialog": true,
+        "props": {
+          "title": "",
+          "name": "Dialog"
+        },
+        "com": {
+          "name": "Dialog",
+          "props": {
+            "subActive": {
+              "type": null
+            },
+            "active": {
+              "type": null
+            },
+            "title": {
+              "type": null
+            }
+          },
+          "methods": {},
+          "watch": {},
+          "staticRenderFns": [],
+          "_compiled": true,
+          "beforeCreate": [
+            null,
+            null
+          ],
+          "__file": "src/Components/Dialog/Dialog.vue",
+          "beforeDestroy": [
+            null
+          ],
+          "_Ctor": {}
+        },
+        "subCom": [
+          {
+            "pg": 3,
+            "name": "Table1",
+            "type": "Table",
+            "nestable": false,
+            "props": {
+              "pageSizes": "",
+              "paginationLayout": "",
+              "method": "get",
+              "url": "",
+              "params": {
+                "name": "",
+                "value": ""
+              },
+              "totalName": "total",
+              "itemsName": "items",
+              "pageName": "page",
+              "pageSizeName": "pageSize",
+              "cols": [
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                },
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                }
+              ],
+              "pagination": true,
+              "load": false,
+              "name": "Table1"
+            },
+            "com": {
+              "name": "Table",
+              "props": {
+                "active": {
+                  "type": null
+                },
+                "cols": {
+                  "type": null
+                }
+              },
+              "methods": {},
+              "watch": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-2946b5cd",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Table/Table.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          },
+          {
+            "pg": 4,
+            "name": "Form",
+            "type": "Form",
+            "nestable": true,
+            "props": {
+              "name": "Form"
+            },
+            "com": {
+              "name": "Form",
+              "methods": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-5c07fbef",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Form/Form.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          }
+        ]
+      },
+      "dataKeys": [
+        "show"
+      ],
+      "methodsKeys": [
+        "open"
+      ],
+      "compiled": "<template>\n    <el-dialog \n    :title=\"\" \n    :visible.sync=\"@@show\">\n    _____pg_chilren_____\n    </el-dialog>\n</template>\n<script>\nexport default {\n  name: 'dialog',\n  data() {\n    return {\n      show:true\n    };\n  },\n  created(){\n  },\n  methods:{\n      open(){\n          this.@@show = true;\n      }\n  },\n};\n</script>\n<style>\n</style>\n\n",
+      "children": [
+        {
+          "comObj": {
+            "pg": 3,
+            "name": "Table1",
+            "type": "Table",
+            "nestable": false,
+            "props": {
+              "pageSizes": "",
+              "paginationLayout": "",
+              "method": "get",
+              "url": "",
+              "params": {
+                "name": "",
+                "value": ""
+              },
+              "totalName": "total",
+              "itemsName": "items",
+              "pageName": "page",
+              "pageSizeName": "pageSize",
+              "cols": [
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                },
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                }
+              ],
+              "pagination": true,
+              "load": false,
+              "name": "Table1"
+            },
+            "com": {
+              "name": "Table",
+              "props": {
+                "active": {
+                  "type": null
+                },
+                "cols": {
+                  "type": null
+                }
+              },
+              "methods": {},
+              "watch": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-2946b5cd",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Table/Table.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          },
+          "dataKeys": [
+            "loading",
+            "items",
+            "total",
+            "page",
+            "pageSize"
+          ],
+          "methodsKeys": [
+            "handleCurrentChange",
+            "handleSizeChange"
+          ],
+          "compiled": "<template>\n    <div>\n        <el-table :data=\"@@items\" border v-loading=\"@@loading\"\n        >\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n        </el-table>\n        \n        \n          <el-pagination \n            @size-change=\"@@handleSizeChange\"\n            @current-change=\"@@handleCurrentChange\"\n              \n            :current-page=\"@@page\"\n            :page-size=\"@@pageSize\"\n              \n            :total=\"@@total\">\n          </el-pagination>\n        \n    </div>\n</template>\n<script>\nexport default {\n  name: 'Table',\n  data() {\n    return {\n      loading:false,\n      items:[{},{},{}],\n      total: 0,\n      \n        page: 1,\n        pageSize: 50\n      \n    };\n  },\n  created(){\n    \n  },\n  methods:{\n    \n\n    \n      handleCurrentChange(page) {\n        this.@@page = page;\n        \n      },\n\n      handleSizeChange(size) {\n        this.table.pageSize = size;\n        if (this.table.page == 1) {\n          \n        } else {\n          this.table.page = 1;\n        }\n      },\n    \n  }\n};\n</script>\n<style scoped>\n</style>\n\n",
+          "children": []
+        },
+        {
+          "comObj": {
+            "pg": 4,
+            "name": "Form",
+            "type": "Form",
+            "nestable": true,
+            "props": {
+              "name": "Form"
+            },
+            "com": {
+              "name": "Form",
+              "methods": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-5c07fbef",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Form/Form.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          },
+          "dataKeys": [
+            "show"
+          ],
+          "methodsKeys": [],
+          "compiled": "<template>\n    <el-form label-width=\"80px\">{{@@show}}\n    </el-form>\n</template>\n<script>\nexport default {\n  name: \"form\",\n  data() {\n    return {\n        show:true\n    };\n  },\n  created() {},\n  methods: {},\n};\n</script>\n<style scoped>\n\n</style>\n\n",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+[2018-03-29T23:37:36.735] [DEBUG] my - renameMethods: AllMethodsKey[
+  "handleCurrentChange",
+  "handleSizeChange",
+  "open",
+  "Table1HandleCurrentChange",
+  "Table1HandleSizeChange"
+]
+[2018-03-29T23:37:36.735] [DEBUG] my - renameMethods: toRename[
+  {
+    "node": {
+      "comObj": {
+        "pg": 3,
+        "name": "Table1",
+        "type": "Table",
+        "nestable": false,
+        "props": {
+          "pageSizes": "",
+          "paginationLayout": "",
+          "method": "get",
+          "url": "",
+          "params": {
+            "name": "",
+            "value": ""
+          },
+          "totalName": "total",
+          "itemsName": "items",
+          "pageName": "page",
+          "pageSizeName": "pageSize",
+          "cols": [
+            {
+              "fixed": "",
+              "label": "",
+              "prop": "",
+              "min-width": ""
+            },
+            {
+              "fixed": "",
+              "label": "",
+              "prop": "",
+              "min-width": ""
+            }
+          ],
+          "pagination": true,
+          "load": false,
+          "name": "Table1"
+        },
+        "com": {
+          "name": "Table",
+          "props": {
+            "active": {
+              "type": null
+            },
+            "cols": {
+              "type": null
+            }
+          },
+          "methods": {},
+          "watch": {},
+          "staticRenderFns": [],
+          "_compiled": true,
+          "_scopeId": "data-v-2946b5cd",
+          "beforeCreate": [
+            null,
+            null
+          ],
+          "__file": "src/Components/Table/Table.vue",
+          "beforeDestroy": [
+            null
+          ],
+          "_Ctor": {}
+        },
+        "subCom": []
+      },
+      "dataKeys": [
+        "loading",
+        "items",
+        "total",
+        "page",
+        "pageSize"
+      ],
+      "methodsKeys": [
+        "Table1HandleCurrentChange",
+        "Table1HandleSizeChange"
+      ],
+      "compiled": "<template>\n    <div>\n        <el-table :data=\"@@items\" border v-loading=\"@@loading\"\n        >\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n        </el-table>\n        \n        \n          <el-pagination \n            @size-change=\"@@handleSizeChange\"\n            @current-change=\"@@handleCurrentChange\"\n              \n            :current-page=\"@@page\"\n            :page-size=\"@@pageSize\"\n              \n            :total=\"@@total\">\n          </el-pagination>\n        \n    </div>\n</template>\n<script>\nexport default {\n  name: 'Table',\n  data() {\n    return {\n      loading:false,\n      items:[{},{},{}],\n      total: 0,\n      \n        page: 1,\n        pageSize: 50\n      \n    };\n  },\n  created(){\n    \n  },\n  methods:{\n    \n\n    \n      handleCurrentChange(page) {\n        this.@@page = page;\n        \n      },\n\n      handleSizeChange(size) {\n        this.table.pageSize = size;\n        if (this.table.page == 1) {\n          \n        } else {\n          this.table.page = 1;\n        }\n      },\n    \n  }\n};\n</script>\n<style scoped>\n</style>\n\n",
+      "children": []
+    },
+    "keys": {
+      "handleCurrentChange": "Table1HandleCurrentChange",
+      "handleSizeChange": "Table1HandleSizeChange"
+    }
+  }
+]
+[2018-03-29T23:37:36.744] [DEBUG] my - renameData: pg_map{
+  "components": [
+    {
+      "comObj": {
+        "pg": 1,
+        "name": "Table",
+        "type": "Table",
+        "nestable": false,
+        "props": {
+          "pageSizes": "",
+          "paginationLayout": "",
+          "method": "get",
+          "url": "",
+          "params": {
+            "name": "",
+            "value": ""
+          },
+          "totalName": "total",
+          "itemsName": "items",
+          "pageName": "page",
+          "pageSizeName": "pageSize",
+          "cols": [
+            {
+              "fixed": "",
+              "label": "",
+              "prop": "",
+              "min-width": ""
+            },
+            {
+              "fixed": "",
+              "label": "",
+              "prop": "",
+              "min-width": ""
+            }
+          ],
+          "pagination": true,
+          "load": false,
+          "name": "Table"
+        },
+        "com": {
+          "name": "Table",
+          "props": {
+            "active": {
+              "type": null
+            },
+            "cols": {
+              "type": null
+            }
+          },
+          "methods": {},
+          "watch": {},
+          "staticRenderFns": [],
+          "_compiled": true,
+          "_scopeId": "data-v-2946b5cd",
+          "beforeCreate": [
+            null,
+            null
+          ],
+          "__file": "src/Components/Table/Table.vue",
+          "beforeDestroy": [
+            null
+          ],
+          "_Ctor": {}
+        },
+        "subCom": []
+      },
+      "dataKeys": [
+        "loading",
+        "items",
+        "total",
+        "page",
+        "pageSize"
+      ],
+      "methodsKeys": [
+        "handleCurrentChange",
+        "handleSizeChange"
+      ],
+      "compiled": "<template>\n    <div>\n        <el-table :data=\"@@items\" border v-loading=\"@@loading\"\n        >\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n        </el-table>\n        \n        \n          <el-pagination \n            @size-change=\"@@handleSizeChange\"\n            @current-change=\"@@handleCurrentChange\"\n              \n            :current-page=\"@@page\"\n            :page-size=\"@@pageSize\"\n              \n            :total=\"@@total\">\n          </el-pagination>\n        \n    </div>\n</template>\n<script>\nexport default {\n  name: 'Table',\n  data() {\n    return {\n      loading:false,\n      items:[{},{},{}],\n      total: 0,\n      \n        page: 1,\n        pageSize: 50\n      \n    };\n  },\n  created(){\n    \n  },\n  methods:{\n    \n\n    \n      handleCurrentChange(page) {\n        this.@@page = page;\n        \n      },\n\n      handleSizeChange(size) {\n        this.table.pageSize = size;\n        if (this.table.page == 1) {\n          \n        } else {\n          this.table.page = 1;\n        }\n      },\n    \n  }\n};\n</script>\n<style scoped>\n</style>\n\n",
+      "children": []
+    }
+  ],
+  "dialogs": [
+    {
+      "comObj": {
+        "pg": 2,
+        "name": "Dialog",
+        "type": "Dialog",
+        "nestable": true,
+        "isDialog": true,
+        "props": {
+          "title": "",
+          "name": "Dialog"
+        },
+        "com": {
+          "name": "Dialog",
+          "props": {
+            "subActive": {
+              "type": null
+            },
+            "active": {
+              "type": null
+            },
+            "title": {
+              "type": null
+            }
+          },
+          "methods": {},
+          "watch": {},
+          "staticRenderFns": [],
+          "_compiled": true,
+          "beforeCreate": [
+            null,
+            null
+          ],
+          "__file": "src/Components/Dialog/Dialog.vue",
+          "beforeDestroy": [
+            null
+          ],
+          "_Ctor": {}
+        },
+        "subCom": [
+          {
+            "pg": 3,
+            "name": "Table1",
+            "type": "Table",
+            "nestable": false,
+            "props": {
+              "pageSizes": "",
+              "paginationLayout": "",
+              "method": "get",
+              "url": "",
+              "params": {
+                "name": "",
+                "value": ""
+              },
+              "totalName": "total",
+              "itemsName": "items",
+              "pageName": "page",
+              "pageSizeName": "pageSize",
+              "cols": [
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                },
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                }
+              ],
+              "pagination": true,
+              "load": false,
+              "name": "Table1"
+            },
+            "com": {
+              "name": "Table",
+              "props": {
+                "active": {
+                  "type": null
+                },
+                "cols": {
+                  "type": null
+                }
+              },
+              "methods": {},
+              "watch": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-2946b5cd",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Table/Table.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          },
+          {
+            "pg": 4,
+            "name": "Form",
+            "type": "Form",
+            "nestable": true,
+            "props": {
+              "name": "Form"
+            },
+            "com": {
+              "name": "Form",
+              "methods": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-5c07fbef",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Form/Form.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          }
+        ]
+      },
+      "dataKeys": [
+        "show"
+      ],
+      "methodsKeys": [
+        "open"
+      ],
+      "compiled": "<template>\n    <el-dialog \n    :title=\"\" \n    :visible.sync=\"@@show\">\n    _____pg_chilren_____\n    </el-dialog>\n</template>\n<script>\nexport default {\n  name: 'dialog',\n  data() {\n    return {\n      show:true\n    };\n  },\n  created(){\n  },\n  methods:{\n      open(){\n          this.@@show = true;\n      }\n  },\n};\n</script>\n<style>\n</style>\n\n",
+      "children": [
+        {
+          "comObj": {
+            "pg": 3,
+            "name": "Table1",
+            "type": "Table",
+            "nestable": false,
+            "props": {
+              "pageSizes": "",
+              "paginationLayout": "",
+              "method": "get",
+              "url": "",
+              "params": {
+                "name": "",
+                "value": ""
+              },
+              "totalName": "total",
+              "itemsName": "items",
+              "pageName": "page",
+              "pageSizeName": "pageSize",
+              "cols": [
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                },
+                {
+                  "fixed": "",
+                  "label": "",
+                  "prop": "",
+                  "min-width": ""
+                }
+              ],
+              "pagination": true,
+              "load": false,
+              "name": "Table1"
+            },
+            "com": {
+              "name": "Table",
+              "props": {
+                "active": {
+                  "type": null
+                },
+                "cols": {
+                  "type": null
+                }
+              },
+              "methods": {},
+              "watch": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-2946b5cd",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Table/Table.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          },
+          "dataKeys": [
+            "loading",
+            "items",
+            "total",
+            "page",
+            "pageSize"
+          ],
+          "methodsKeys": [
+            "Table1HandleCurrentChange",
+            "Table1HandleSizeChange"
+          ],
+          "compiled": "<template>\n    <div>\n        <el-table :data=\"@@items\" border v-loading=\"@@loading\"\n        >\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n            <el-table-column \n              \n              \n              \n              \n            >\n              \n            </el-table-column>\n            \n        </el-table>\n        \n        \n          <el-pagination \n            @size-change=\"@@Table1HandleSizeChange\"\n            @current-change=\"@@Table1HandleCurrentChange\"\n              \n            :current-page=\"@@page\"\n            :page-size=\"@@pageSize\"\n              \n            :total=\"@@total\">\n          </el-pagination>\n        \n    </div>\n</template>\n<script>\nexport default {\n  name: 'Table',\n  data() {\n    return {\n      loading: false,\n      items: [{}, {}, {}],\n      total: 0,\n\n      page: 1,\n      pageSize: 50\n\n    };\n  },\n  created() {},\n  methods: {\n\n    Table1HandleCurrentChange(page) {\n      this.@@page = page;\n    },\n\n    Table1HandleSizeChange(size) {\n      this.table.pageSize = size;\n      if (this.table.page == 1) {} else {\n        this.table.page = 1;\n      }\n    }\n\n  }\n};</script>\n<style scoped>\n</style>\n\n",
+          "children": []
+        },
+        {
+          "comObj": {
+            "pg": 4,
+            "name": "Form",
+            "type": "Form",
+            "nestable": true,
+            "props": {
+              "name": "Form"
+            },
+            "com": {
+              "name": "Form",
+              "methods": {},
+              "staticRenderFns": [],
+              "_compiled": true,
+              "_scopeId": "data-v-5c07fbef",
+              "beforeCreate": [
+                null,
+                null
+              ],
+              "__file": "src/Components/Form/Form.vue",
+              "beforeDestroy": [
+                null
+              ],
+              "_Ctor": {}
+            },
+            "subCom": []
+          },
+          "dataKeys": [
+            "show"
+          ],
+          "methodsKeys": [],
+          "compiled": "<template>\n    <el-form label-width=\"80px\">{{@@show}}\n    </el-form>\n</template>\n<script>\nexport default {\n  name: \"form\",\n  data() {\n    return {\n        show:true\n    };\n  },\n  created() {},\n  methods: {},\n};\n</script>\n<style scoped>\n\n</style>\n\n",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+[2018-03-29T23:37:36.744] [DEBUG] my - renameData: toRename[
+  {
+    "node": {
+      "comObj": {
+        "pg": 4,
+        "name": "Form",
+        "type": "Form",
+        "nestable": true,
+        "props": {
+          "name": "Form"
+        },
+        "com": {
+          "name": "Form",
+          "methods": {},
+          "staticRenderFns": [],
+          "_compiled": true,
+          "_scopeId": "data-v-5c07fbef",
+          "beforeCreate": [
+            null,
+            null
+          ],
+          "__file": "src/Components/Form/Form.vue",
+          "beforeDestroy": [
+            null
+          ],
+          "_Ctor": {}
+        },
+        "subCom": []
+      },
+      "dataKeys": [
+        "show"
+      ],
+      "methodsKeys": [],
+      "compiled": "<template>\n    <el-form label-width=\"80px\">{{@@show}}\n    </el-form>\n</template>\n<script>\nexport default {\n  name: \"form\",\n  data() {\n    return {\n        show:true\n    };\n  },\n  created() {},\n  methods: {},\n};\n</script>\n<style scoped>\n\n</style>\n\n",
+      "children": []
+    },
+    "value": "FormShow",
+    "raw": "show"
+  }
+]
+[2018-03-29T23:37:36.745] [DEBUG] my - after renameData: compiled<template>
+    <el-form label-width="80px">{{@@FormShow}}
+    </el-form>
+</template>
+<script>
+export default {
+  name: "form",
+  data() {
+    return {
+      FormShow: true
+    };
+  },
+  created() {},
+  methods: {}
+};</script>
+<style scoped>
+
+</style>
+
+

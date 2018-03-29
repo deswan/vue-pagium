@@ -19,6 +19,8 @@ const babel_generator = require('babel-generator').default;
 
 const log4js = require('log4js');
 
+const CHILDREN_PLACEHOLDER = '_____pg_chilren_____';
+
 log4js.configure({
     appenders: {
         my: {
@@ -88,86 +90,118 @@ function beautify(vue) {
 }
 
 function merge() {
-    let html = '';
-    let data = '';
-    let methods = '';
-    let hooks = {};
-
     renameMethods()
 
-    function renameData(comName, key) {
-        if (~AllMethodsKey.indexOf(key)) {
-            key = comObj.name + key.replace(/^./, (val) => {
-                return val.toUpperCase();
-            });
-            while (~AllMethodsKey.indexOf(key)) {
-                key = key + '$'
-            }
-            return key;
-        } else {
-            return false
-        }
-    }
+    renameData();
 
-    function doMerge(pg_com) {
+    function doMerge(list){
+        let html = '';
+        let data = '';
+        let methods = '';
+        let hooks = {};
+        list.forEach(pg_com=>{
+            let parsed = parse(pg_com);
+            if(pg_com.children && pg_com.children.length){
+                let childParsed = doMerge(pg_com.children);
+                parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER,childParsed.html);
+                parsed.data += childParsed.data               
+                parsed.methods += childParsed.methods   
+                Object.keys(childParsed.hooks).forEach(hook=>{
+                    parsed.hooks[hook] += childParsed.hooks[hook];
+                })
+            }
+            html += parsed.html;
+            data += parsed.data;
+            methods += parsed.methods;
+            Object.keys(parsed.hooks).forEach(hook=>{
+                hooks[hook] += parsed.hooks[hook];
+            })
+        })
+        
+        return {
+            html,
+            data,
+            methods,
+            hooks
+        }
+    }    
+
+    function parse(pg_com) {
         let {
             comObj,
             compiled,
-            methodsKeys
+            methodsKeys,
+            children
         } = pg_com;
 
-
-
-        //重命名methods
-        let methodsNeedRename = {}
-        let newMethods = [];
-        methodsKeys.forEach((key) => {
-            let newKey;
-            if (newKey = renameMethodKey(comObj, key)) {
-                methodsNeedRename[key] = newKey
-            } else {
-                newKey = key
-            }
-            newMethods.push(newKey);
-        })
-        pg_com.methodsKeys = newMethods;
-        AllMethodsKey = AllMethodsKey.concat(newMethods)
-        let renamed = renameMethods(compiled, methodsNeedRename)
+        let html = '';
+        let data = '';
+        let methods = '';
+        let hooks = {};
 
         //替换标识符
-        let replaced = replaceIdentifier(renamed, comObj);
+        let replaced = replaceIdentifier(compiled, comObj);
 
         //生成产出的数据结构
+        //templace
         html += getHtml(replaced);
+
+        //data
         let scriptData = getScriptData(replaced);
         if (scriptData.data.body.trim()) {
             if (scriptData.data.keys.length > 1) {
                 scriptData.data.body.trimRight().slice(-1) == ',' && (scriptData.data.body = scriptData.data.body.trimRight().slice(0, -1))
                 data += `${comObj.name}:{${scriptData.data.body}},`
-            } else {
+            } else {    //单属性data
                 scriptData.data.body.trimRight().slice(-1) != ',' && (scriptData.data.body = scriptData.data.body.trimRight() + ',')
                 data += scriptData.data.body
             }
         }
+
+        //methods
         if (scriptData.methods.body.trim()) {
             scriptData.methods.body.trimRight().slice(-1) != ',' && (scriptData.methods.body = scriptData.methods.body.trimRight() + ',')
             methods += scriptData.methods.body
         }
+
+        //hooks
         Object.keys(scriptData.hooks).forEach((hook) => {
             if (scriptData.hooks[hook].body.trim()) {
                 hooks[hook] === undefined && (hooks[hook] = '');
                 hooks[hook] += scriptData.hooks[hook].body
             }
         })
+
+        return {
+            html,
+            data,
+            methods,
+            hooks
+        }
     }
+    let comp = doMerge(pg_map.components)
+    let dialog = doMerge(pg_map.dialogs)
+    // let dialog = {
+    //         html:'',
+    //         data:'',
+    //         methods:'',
+    //         hooks:{}
+    //     }
+    let hooks = {};
+    Object.keys(dialog.hooks).forEach(hook=>{
+        comp.hooks[hook] += dialog.hooks[hook];
+    })
 
-    // pg_map.components.forEach(doMerge)
-    // pg_map.dialogs.forEach(doMerge)
-
+    return {
+        html:comp.html + dialog.html,
+        data:comp.data + dialog.data,
+        methods:comp.methods + dialog.methods,
+        hooks
+    }
     // return {
-    //     html,
-    //     data,
-    //     methods,
+    //     html:'',
+    //     data:'',
+    //     methods:'',
     //     hooks
     // }
 
@@ -224,13 +258,13 @@ function renameMethods() {
 
     function traverse(list) {
         if (!list || !list.length) return;
-        let t = {};
         list.forEach(e => {
-            let newMethodsKey = []
+            let t = {};
+            let newMethodsKey = [] //该组件的methosKey集合
             e.methodsKeys.forEach(key => {
                 let newKey = key;
                 if (~AllMethodsKey.indexOf(key)) {
-                    newKey = prefixComName(comObj, key)
+                    newKey = prefixComName(e.comObj, key)
                     while (~AllMethodsKey.indexOf(newKey)) {
                         newKey = newKey + '$'
                     }
@@ -238,7 +272,7 @@ function renameMethods() {
                 }
                 newMethodsKey.push(newKey)
             })
-            e.methodsKeys = newMethodsKey;
+            e.methodsKeys = newMethodsKey; //修改pg_map中的methodsKey
             AllMethodsKey = AllMethodsKey.concat(newMethodsKey);
             if (Object.keys(t).length) {
                 toRename.push({
@@ -250,6 +284,7 @@ function renameMethods() {
         })
     }
     traverse(pg_map.components);
+    traverse(pg_map.dialogs);
     logger.debug('renameMethods: AllMethodsKey' + JSON.stringify(AllMethodsKey, null, 2))
     logger.debug('renameMethods: toRename' + JSON.stringify(toRename, null, 2))
 
@@ -300,138 +335,157 @@ function renameMethods() {
         node.compiled = newVue.replace(new RegExp('@@(' + Object.keys(keys).join('|') + ')', 'g'), (val, word) => {
             return '@@' + keys[word];
         })
-
     })
-    logger.debug('renameMethods: pg_map', JSON.stringify(pg_map, null, 2))
 }
 
 function prefixComName(comObj, key) {
-    return comObj + key[0].toUpperCase() + key.slice(1);
+    return comObj.name + key[0].toUpperCase() + key.slice(1);
 }
 
-function renameDatas() {
-    let AllMethodsKey = [];
+function renameData() {
     let toRename = []
 
     function traverse(list) {
-        if (!list || !list.length) return;
-        let keys = [];
+        let result = [];
         list.forEach(e => {
             let children = traverse(e.children);
-            children.forEach(child => {
-                if (child.isComName) { //更改本组件data
-                    if (~e.dataKeys.indexOf(child.key)) {
-                        let idx = e.dataKeys.indexOf(child.key)
-                        let newKey = e.dataKeys[idx] + '$';
-
-                        e.dataKeys.splice(idx, 1);//防止加上后缀后与当前组件的data重名
-                        while (~e.dataKeys.indexOf(newKey)) { 
-                            newKey = newKey + '$';
-                        }
-                        e.dataKeys.splice(idx, 0, newKey);
-
-                        toRename.push({
-                            node: e,
-                            key: {
-                                [child.key]: newKey
-                            }
-                        })
-                    }
-                } else { //更改子组件data
-                    if (~e.dataKeys.indexOf(child.key)) {
-                        let newKey = child.key + '$';
-                        while(~e.dataKeys.indexOf(newKey)){
-                            newKey = newKey + '$';
-                        }
-                        toRename.push({
-                            node: child.node,
-                            key: {
-                                [child.key]: newKey
-                            }
-                        })
-                        child.key = newKey
-                    }
+            let local = e.dataKeys.map(key => {
+                return {
+                    node: e,
+                    value: key,
+                    raw: key
                 }
             })
-            children = children.map(val=>{
-                return val.key
-            }).concat(e.dataKeys)
-            if (children.length > 1) {
-                keys.push({
-                    node: e,
-                    key: comObj.name,
-                    isComName: true
-                })
-            } else {
-                toRename.push({
-                    node: e,
-                    key: {
-                        [children[0]]: prefixComName(comObj, children[0])
+
+            let nodes = local.concat(children);
+
+            if (!nodes.length) return;
+
+            let keys = nodes.map(node => {
+                return node.value
+            })
+
+            if (children.length) { //push to toRename
+                let childIndexStart = nodes.indexOf(children[0]);
+
+                for (let i = childIndexStart; i < nodes.length; i++) {
+                    if (nodes[i].raw === '') { //以组件名称命名的key
+                        let t = keys[i];
+                        delete keys[i];
+                        while (~keys.indexOf(t)) {
+                            keys[keys.indexOf(t)] = keys[keys.indexOf(t)] + '$';
+                        }
+                        keys[i] = t;
+                    } else {
+                        let t = keys[i];
+                        delete keys[i];
+                        while (~keys.indexOf(t)) {
+                            t = t + '$';
+                        }
+                        keys[i] = t;
+                    }
+                }
+
+                nodes.map(node => {
+                    return node.value
+                }).forEach((key, idx) => {
+                    if (key !== keys[idx]) {
+                        toRename.push({
+                            node: nodes[idx].node,
+                            value: keys[idx],
+                            raw: nodes[idx].raw
+                        })
                     }
                 })
-                keys.push({
+            }
+
+            if (nodes.length > 1) {
+                result.push({
                     node: e,
-                    key: prefixComName(comObj, children[0]),
-                    isComName: false
+                    value: e.comObj.name,
+                    raw: ''
                 })
+            } else if (nodes.length == 1) {
+                if (nodes[0].node === e) { //是本组件的单属性
+                    result.push({
+                        node: e,
+                        value: prefixComName(e.comObj, nodes[0].value),
+                        raw: nodes[0].value
+                    })
+                    toRename.push({
+                        node: e,
+                        value: prefixComName(e.comObj, nodes[0].value),
+                        raw: nodes[0].value
+                    })
+                } else { //非本组件（是子组件）的单属性
+                    result.push(nodes[0]);
+                }
             }
         })
-        return keys;
+        return result;
     }
     traverse(pg_map.components);
-    logger.debug('renameMethods: AllMethodsKey' + JSON.stringify(AllMethodsKey, null, 2))
-    logger.debug('renameMethods: toRename' + JSON.stringify(toRename, null, 2))
+    traverse(pg_map.dialogs);
+    logger.debug('renameData: pg_map' + JSON.stringify(pg_map, null, 2))
+    logger.debug('renameData: toRename' + JSON.stringify(toRename, null, 2))
 
     if (!toRename.length) return;
 
-    //compiled -> methodRenamed
-    // toRename.forEach(({
-    //     node,
-    //     keys
-    // }) => {
-    //     let script = getScript(node.compiled);
+    toRename.forEach(({
+        node,
+        value,
+        raw
+    }) => {
+        //修改pg_map
+        if (~node.dataKeys[node.dataKeys.indexOf(raw)]) {
+            node.dataKeys[node.dataKeys.indexOf(raw)] = value;
+        }
 
-    //     //替换掉@@为合法标识符
-    //     const pgHash = 'pg______' + Date.now();
-    //     script = script.replace(/@@/g, pgHash)
+        let script = getScript(node.compiled);
 
-    //     var ast = babylon.parse(script, {
-    //         sourceType: 'module'
-    //     });
+        //替换掉@@为合法标识符
+        const pgHash = 'pg______' + Date.now();
+        script = script.replace(/@@/g, pgHash)
 
-    //     let p = ast.program.body; //找出export语句
-    //     for (let i = 0; i < p.length; i++) {
-    //         if (p[i].type == 'ExportDefaultDeclaration') {
-    //             p = p[i].declaration.properties; //属性遍历找出methods
-    //             for (let i = 0; i < p.length; i++) {
-    //                 if (p[i].key.name == 'methods') {
-    //                     list = p[i].value.properties;
-    //                     list.forEach(val => {
-    //                         if (keys[val.key.name]) {
-    //                             val.key.name = keys[val.key.name];
-    //                         }
-    //                     })
-    //                     break;
-    //                 };
-    //             }
-    //             break;
-    //         }
-    //     }
-    //     script = script.replace(new RegExp(pgHash, 'g'), '@@');
+        var ast = babylon.parse(script, {
+            sourceType: 'module'
+        });
 
-    //     let newScript = babel_generator(ast).code;
-    //     newScript = newScript.replace(new RegExp(pgHash, 'g'), '@@');
+        let p = ast.program.body; //找出export语句
+        for (let i = 0; i < p.length; i++) {
+            if (p[i].type == 'ExportDefaultDeclaration') {
+                p = p[i].declaration.properties; //属性遍历找出methods
+                for (let i = 0; i < p.length; i++) {
+                    if (p[i].key.name == 'data') {
+                        p = p[i].body.body; //找出return语句
+                        for (let i = 0; i < p.length; i++) {
+                            if (p[i].type == 'ReturnStatement') {
+                                let properties = p[i].argument.properties;
+                                properties.forEach(val => {
+                                    if (val.key.name === raw) {
+                                        val.key.name = value;
+                                    }
+                                })
+                            };
+                        }
+                        break;
+                    };
+                }
+                break;
+            }
+        }
+        script = script.replace(new RegExp(pgHash, 'g'), '@@');
 
-    //     //替换原script部分
-    //     newVue = node.compiled.replace(script, newScript);
+        let newScript = babel_generator(ast).code;
+        newScript = newScript.replace(new RegExp(pgHash, 'g'), '@@');
 
-    //     //替换compiled
-    //     node.compiled = newVue.replace(new RegExp('@@(' + Object.keys(keys).join('|') + ')', 'g'), (val, word) => {
-    //         return '@@' + keys[word];
-    //     })
+        //替换原script部分
+        newVue = node.compiled.replace(script, newScript);
 
-    // })
-    // logger.debug('renameMethods: pg_map', JSON.stringify(pg_map,null,2))
+        //替换@@data
+        node.compiled = newVue.replace(new RegExp('@@(' + raw + ')', 'g'), '@@' + value)
+        logger.debug('after renameData: compiled' + node.compiled)
+    })
 }
 
 /**
@@ -564,7 +618,7 @@ function initMap(states) {
             subCom.forEach(comObj => {
                 doCompile(comObj, children)
             })
-            return '_____pg_chilren_____';
+            return CHILDREN_PLACEHOLDER;
         }
         let compiled = compile(comObj);
         let scriptData = getScriptData(compiled);
@@ -582,11 +636,10 @@ function initMap(states) {
     states.dialogs.forEach((comObj) => {
         doCompile(comObj, pg_map.dialogs)
     })
-    // logger.info(JSON.stringify(pg_mp, null, 2))
+    logger.info(JSON.stringify(pg_map, null, 2))
 }
 
 module.exports = (states) => {
     initMap(states);
-    merge();
-    // return render(merge())
+    return render(merge())
 }
