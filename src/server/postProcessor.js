@@ -44,23 +44,30 @@ let pg_map = {
 }
 
 //全局替换标识符 @@varName -> varName
-function replaceIdentifier(vueText, comObj) {
-    let {
-        data,
-        methods
-    } = getScriptData(vueText);
-    let comName = comObj.name;
+function replaceIdentifier() {
     let regExp = /@@(\D[$\w]*)/g;
-    let replacedVueText = vueText.replace(regExp, (match, word) => {
-        if (!~data.keys.indexOf(word) && !~methods.keys.indexOf(word)) {
-            throw new Error('data 或 methods 标识符不存在：' + match)
-        } else if (~data.keys.indexOf(word)) { //data
-            return comName + '.' + word;
-        } else { //methods
-            return word;
-        }
-    })
-    return replacedVueText
+    function doReplace(list,wrapper = ''){
+        if(!list || !list.length) return;
+        list.forEach((pg_com)=>{
+            let comWrapper = pg_com.setDataWrapper ? pg_com.comObj.name : '';
+            if(comWrapper){
+                wrapper = wrapper+comWrapper + '.';
+            }
+            let replaced = pg_com.compiled.replace(regExp, (match, word) => {
+                if (!pg_com.dataKeys.includes(word) && !pg_com.methodsKeys.includes(word)) {
+                    throw new Error('data 或 methods 标识符不存在：' + match)
+                } else if (pg_com.dataKeys.includes(word)) { //data
+                    return wrapper + word;
+                } else { //methods
+                    return word;
+                }
+            })
+            pg_com.replaced = replaced;
+            doReplace(pg_com.children,wrapper)
+        })
+    }
+    doReplace(pg_map.components);
+    doReplace(pg_map.dialogs);
 }
 
 /**
@@ -94,6 +101,8 @@ function merge() {
 
     renameData();
 
+    replaceIdentifier();
+
     function doMerge(list){
         let html = '';
         let data = '';
@@ -104,6 +113,7 @@ function merge() {
             if(pg_com.children && pg_com.children.length){
                 let childParsed = doMerge(pg_com.children);
                 parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER,childParsed.html);
+                parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
                 parsed.data += childParsed.data               
                 parsed.methods += childParsed.methods   
                 Object.keys(childParsed.hooks).forEach(hook=>{
@@ -111,7 +121,13 @@ function merge() {
                 })
             }
             html += parsed.html;
-            data += parsed.data;
+            if (pg_com.setDataWrapper) {
+                parsed.data.trimRight().slice(-1) == ',' && (parsed.data = parsed.data.trimRight().slice(0, -1))
+                data += `${pg_com.comObj.name}:{${parsed.data}},`
+            } else {    //单属性data
+                parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
+                data += parsed.data
+            }
             methods += parsed.methods;
             Object.keys(parsed.hooks).forEach(hook=>{
                 hooks[hook] += parsed.hooks[hook];
@@ -130,6 +146,7 @@ function merge() {
         let {
             comObj,
             compiled,
+            dataKeys,
             methodsKeys,
             children
         } = pg_com;
@@ -139,24 +156,24 @@ function merge() {
         let methods = '';
         let hooks = {};
 
-        //替换标识符
-        let replaced = replaceIdentifier(compiled, comObj);
-
         //生成产出的数据结构
         //templace
+        let replaced = pg_com.replaced;
         html += getHtml(replaced);
 
         //data
         let scriptData = getScriptData(replaced);
-        if (scriptData.data.body.trim()) {
-            if (scriptData.data.keys.length > 1) {
-                scriptData.data.body.trimRight().slice(-1) == ',' && (scriptData.data.body = scriptData.data.body.trimRight().slice(0, -1))
-                data += `${comObj.name}:{${scriptData.data.body}},`
-            } else {    //单属性data
-                scriptData.data.body.trimRight().slice(-1) != ',' && (scriptData.data.body = scriptData.data.body.trimRight() + ',')
-                data += scriptData.data.body
-            }
-        }
+        data += scriptData.data.body
+        
+        // if (dataKeys.length) {
+        //     if (pg_com.setDataWrapper) {
+        //         scriptData.data.body.trimRight().slice(-1) == ',' && (scriptData.data.body = scriptData.data.body.trimRight().slice(0, -1))
+        //         data += `${comObj.name}:{${scriptData.data.body}},`
+        //     } else {    //单属性data
+        //         scriptData.data.body.trimRight().slice(-1) != ',' && (scriptData.data.body = scriptData.data.body.trimRight() + ',')
+        //         data += scriptData.data.body
+        //     }
+        // }
 
         //methods
         if (scriptData.methods.body.trim()) {
@@ -368,6 +385,7 @@ function renameData() {
             if (children.length) { //push to toRename
                 let childIndexStart = nodes.indexOf(children[0]);
 
+                //去重
                 for (let i = childIndexStart; i < nodes.length; i++) {
                     if (nodes[i].raw === '') { //以组件名称命名的key
                         let t = keys[i];
@@ -386,6 +404,7 @@ function renameData() {
                     }
                 }
 
+                //检测新数组和原数组的不一致，添加入toRename
                 nodes.map(node => {
                     return node.value
                 }).forEach((key, idx) => {
@@ -405,6 +424,7 @@ function renameData() {
                     value: e.comObj.name,
                     raw: ''
                 })
+                e.setDataWrapper = true;
             } else if (nodes.length == 1) {
                 if (nodes[0].node === e) { //是本组件的单属性
                     result.push({
@@ -431,6 +451,9 @@ function renameData() {
 
     if (!toRename.length) return;
 
+    //TODO:合并raw值相同、node相同的toRename item
+
+    //修改pg_map && 修改compiled
     toRename.forEach(({
         node,
         value,
