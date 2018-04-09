@@ -9,9 +9,9 @@
             {{{if $value['min-width']}}} min-width="{{{$value['min-width']}}}" {{{/if}}}  
             {{{if $value.label}}} label="{{{$value.label}}}" {{{/if}}}  
             >
-            {{{if $value.slot}}} //可传组件、字符串
+            {{{if $value.scope}}}
               <template slot-scope="scope">
-                $value.slot 
+                {{{$imports.insertSlot($value.scope)}}}
               </template> 
             {{{/if}}}  
             </el-table-column>

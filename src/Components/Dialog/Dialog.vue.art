@@ -1,16 +1,17 @@
 <template>
     <el-dialog 
-    :title="{{{title}}}" 
+    {{{if title}}} title="{{{title}}}" {{{/if}}}  
+    {{{if showClose}}} show-close {{{/if}}}  
+    {{{if center}}} center {{{/if}}}  
     :visible.sync="@@show">
     {{{$imports.insertChildren()}}}
     </el-dialog>
 </template>
 <script>
 export default {
-  name: 'dialog',
   data() {
     return {
-      show:true
+      show:false
     };
   },
   created(){

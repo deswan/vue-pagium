@@ -1,19 +1,26 @@
 <template>
-    <el-form :model="form" label-width="80px">
-    </el-form>
+      <el-form v-bind="$props">
+        <slot></slot>
+      </el-form>
 </template>
 <script>
 export default {
   name: "Form",
+  props: [
+    "inline",
+    "labelPosition",
+    "labelWidth",
+    "labelSuffix",
+    "statusIcon",
+    "size"
+  ],
   data() {
     return {
-      form: {
-
-      }
+      form: {}
     };
   },
   created() {},
-  methods: {},
+  methods: {}
 };
 </script>
 <style scoped>

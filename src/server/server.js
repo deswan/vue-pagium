@@ -2,7 +2,6 @@ const express = require('express');
 var bodyParser = require('body-parser');
 const app = express()
 
-
 const path = require('path');
 const fs = require('fs');
 const template = require('./art');
@@ -18,6 +17,8 @@ app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 const outputDir = path.join(__dirname, 'dist');
+
+Error.stackTraceLimit = 100;
 
 let props = {
     cols: [{

@@ -1,8 +1,8 @@
-import input from './boolean.vue';
-import scheme2Input from '../../scheme2Input';
-const pass = [];
+import input from './new-component.vue';
 const configStrategy = {
+   
 }
+const pass = []
 export default function (conf) {
     const props = {};
     pass.forEach((name)=>{
@@ -11,13 +11,11 @@ export default function (conf) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
-    let com = {
+    return {
         name:conf.name,
         label:conf.label,
         input,
         props,
         conf
     }
-    conf.on && (com.subInput = scheme2Input(conf.on))
-    return com;
 }

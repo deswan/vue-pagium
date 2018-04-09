@@ -3,8 +3,19 @@ import Vuex from 'vuex'
 import TableConfig from "../Components/Table/config";
 import DialogConfig from "../Components/Dialog/config";
 import FormConfig from "../Components/Form/config";
+import ButtonConfig from "../Components/Button/config";
+import InputConfig from "../Components/Input/config";
+import TagConfig from "../Components/Tag/config";
+
+import Table from "../Components/Table/Table.vue";
+import Dialog from "../Components/Dialog/Dialog.vue";
+import Form from "../Components/Form/Form.vue";
+import Button from "../Components/Button/Button.vue";
+import Input from "../Components/Input/Input.vue";
+import Tag from "../Components/Tag/Tag.vue";
 
 import scheme2Default from "../utils/scheme2Default.js";
+import scheme2Input from "../SettingBoard/scheme2Input.js";
 
 Vue.use(Vuex)
 
@@ -23,7 +34,19 @@ const getName = (() => {
 const allComsConfig = {
     Table: TableConfig,
     Dialog: DialogConfig,
-    Form: FormConfig
+    Form: FormConfig,
+    Button: ButtonConfig,
+    Input: InputConfig,
+    Tag: TagConfig
+};
+
+const allComs = {
+    Table,
+    Dialog,
+    Form,
+    Button,
+    Input,
+    Tag
 };
 
 let uuid = 1;
@@ -41,11 +64,17 @@ const store = new Vuex.Store({
         dialogs(state) {
             return state.dialogs;
         },
-        data(state){
+        data(state) {
             return {
-                components:state.components,
-                dialogs:state.dialogs
+                components: state.components,
+                dialogs: state.dialogs
             }
+        },
+        activeComponentSetting(state) {
+            return state.activeComponent && scheme2Input(allComsConfig[state.activeComponent.type].props)
+        },
+        allComs() {
+            return allComs;
         }
     },
     mutations: {
@@ -100,6 +129,15 @@ const store = new Vuex.Store({
             const type = comVm.name; //vm.options.name
             const config = allComsConfig[type];
             const name = getName(type);
+
+            let slotsKey = [];
+            JSON.parse(JSON.stringify(config.props), function (k, v) {
+                if (k === 'value' && v === 'new-component') {
+                    slotsKey.push(this.name);
+                }
+                return v;
+            })
+
             let comObj = {
                 pg: uuid++,
                 name,
@@ -110,8 +148,11 @@ const store = new Vuex.Store({
                     name
                 },
                 com: comVm,
-                subCom: []
+                subCom: [],
+                slotsKey,
+                __pg_slot__:false
             }
+
             node.subCom.push(comObj);
 
             this.commit('activateComponent', {
@@ -141,6 +182,42 @@ const store = new Vuex.Store({
             if (name === 'name') {
                 state.activeComponent.name = value;
             }
+
+            /**
+             * @return [
+             *  0:['form1','form2'],
+             *  1:['table1']
+             * ]
+             */
+            function getSlots() {
+                let slot = [];
+                let slotsKey = state.activeComponent.slotsKey;
+                if (slotsKey.includes(name)) {
+                    slot.push(value.split(','));
+                } else {
+                    JSON.parse(JSON.stringify(value), function (k, v) {
+                        if (slotsKey.includes(k)) {
+                            slot.push(v.split(','));
+                        }
+                        return v;
+                    })
+                }
+                return slot;
+            }
+
+            let slots = getSlots()
+            state.activeComponent.subCom.forEach((com)=>{
+                com.__pg_slot__ = false;
+            })
+            slots.forEach((slotsName, slotIdx) => {
+                state.activeComponent.subCom.forEach(subCom=>{
+                    if (slotsName.includes(subCom.name)) {
+                        subCom.__pg_slot__ = slotIdx + 1;
+                        subCom.props.__pg_slot__ = slotIdx + 1;
+                    }
+                })
+            })
+
             Vue.set(state.activeComponent.props, name, value);
         }
     }

@@ -1,0 +1,32 @@
+<template>
+  <el-input v-model="@@value"
+  {{{if size}}} size="{{{size}}}" {{{/if}}}  
+  {{{if type}}} type="{{{type}}}" {{{/if}}}  
+  {{{if placeholder}}} placeholder="{{{placeholder}}}" {{{/if}}}  
+  {{{if prefixIcon}}} prefix-icon="{{{prefixIcon}}}" {{{/if}}}  
+  {{{if suffixIcon}}} suffix-icon="{{{suffixIcon}}}" {{{/if}}}  
+  {{{if rows}}} rows="{{{rows}}}" {{{/if}}}  
+  {{{if autosize}}} autosize="{{{autosize}}}" {{{/if}}}  
+  {{{if clearable}}} clearable {{{/if}}}  
+  {{{if disabled}}} disabled {{{/if}}}  
+  {{{if autofocus}}} autofocus {{{/if}}}  
+  {{{if readonly}}} readonly {{{/if}}}  
+  {{{if autofocus}}} autofocus {{{/if}}}  
+  {{{if autoComplete}}} auto-complete="on" {{{/if}}}  
+  {{{if name}}} name="{{{name}}}" {{{/if}}}  
+  ></el-input>
+</template>
+<script>
+export default {
+  data() {
+    return {
+      value:''
+    };
+  },
+  methods:{
+  }
+};
+</script>
+<style scoped>
+</style>
+

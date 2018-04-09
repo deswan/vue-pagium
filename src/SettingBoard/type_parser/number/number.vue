@@ -1,9 +1,9 @@
 <template>
-    <el-input 
+    <el-input-number 
     v-model="input" 
     :size="size" 
-    @change="valChange"></el-input>
-    
+    @change="valChange">
+    </el-input-number>
 </template>
 <script>
 export default {
@@ -11,8 +11,7 @@ export default {
     value: String,
     size: {
       default: "small"
-    },
-    name: String
+    }
   },
   data() {
     return {

@@ -1,20 +1,29 @@
 import input from './array.vue';
-import scheme2Input from '../../scheme2Input.js';
+import scheme2Input from '../../scheme2Input';
 const pass = [];
-const configStrategy = {
-}
+const configStrategy = {}
 export default function (conf) {
     const props = {};
-    pass.forEach((name)=>{
+    pass.forEach((name) => {
         let v;
-        if((v = conf[name]) !== undefined){
+        if ((v = conf[name]) !== undefined) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
-    props._itemCOM = scheme2Input([{...conf,value:conf.value[0],label:null}])[0]
+    let _itemCOM = scheme2Input([{ ...conf,
+        value: conf.value[0],
+        label: null
+    }])[0]
+    if (conf.value[0] === 'object' && _itemCOM.props.format) {
+        props._itemCOM = _itemCOM.props.format.map((e) => {
+            return e
+        })
+    } else {
+        props._itemCOM = [_itemCOM]
+    }
     return {
-        name:conf.name,
-        label:conf.label,
+        name: conf.name,
+        label: conf.label,
         input,
         props,
         conf

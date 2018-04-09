@@ -13,7 +13,10 @@
     <div class="tree-node-name" :style="{'padding-left': level * 16 + 10 + 'px'}" :class="[{'has-name': node.name}, 'idx_' + idx ]">
       <div @click="emitEvent('nodeRow')">
         <span>
-          <span class="el-tree-node__label">{{ node.name }}</span>
+          <span class="el-tree-node__label">
+            <span v-if="!!node.__pg_slot__" style="font-size:10px;">slot</span>
+            {{ node.name }}
+          </span>
           <i @click="emitEvent('nodeName')" v-if="node.name && node.subCom && node.subCom.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
         </span>
         <span class="tree-node-action" v-if="node.name">

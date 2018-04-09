@@ -1,0 +1,28 @@
+<template>
+  <el-button @click="@@onClick"
+  {{{if size}}} size="{{{size}}}" {{{/if}}}  
+  {{{if type}}} type="{{{type}}}" {{{/if}}}  
+  {{{if plain}}} plain {{{/if}}}  
+  {{{if round}}} round {{{/if}}}  
+  {{{if disabled}}} disabled {{{/if}}}  
+  {{{if icon}}} icon="{{{icon}}}" {{{/if}}}  
+  >{{{if title}}} {{{title}}} {{{/if}}}
+  </el-button>
+</template>
+<script>
+export default {
+  name: 'Button',
+  data() {
+    return {
+    };
+  },
+  methods:{
+    onClick(e){
+
+    } 
+  },
+};
+</script>
+<style scoped>
+</style>
+

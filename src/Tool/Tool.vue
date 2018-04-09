@@ -4,7 +4,7 @@
       @on-node-row-click="nodeClick" 
       v-model="draggingNode" 
       :node="data_com" 
-      :all-coms="allComs" 
+      :all-coms="$store.getters.allComs" 
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"
@@ -17,7 +17,7 @@
       @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
-      :all-coms="allComs" 
+      :all-coms="$store.getters.allComs" 
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"
@@ -29,23 +29,15 @@
 </template>
 
 <script>
-import Table from "../Components/Table/Table.vue";
-import Dialog from "../Components/Dialog/Dialog.vue";
-import Form from "../Components/Form/Form.vue";
+
 import Hierarchy from "./Hierarchy";
 
-const allComs = {
-  Table,
-  Dialog,
-  Form
-};
 export default {
   components: {
     HierarchyTree: Hierarchy
   },
   data() {
     return {
-      allComs,
       data_com: {},
       data_dialog: {},
       draggingNode: null

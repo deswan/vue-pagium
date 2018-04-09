@@ -1,15 +1,23 @@
 <template>
-    <div class="row">
-        <div class="col" v-for="(item,idx) in input" :key="idx">
-            <component 
-            :is="_itemCOM.input" 
-            v-bind="_itemCOM.props" 
-            pg-child 
-            v-model="input[idx]" 
-            @input="handleChange"></component>
-        </div>
-        <div class="col add" @click="add"><i class="el-icon-plus"></i></div>
-    </div>
+  <div>
+    <el-table :data="input" size="mini" cell-class-name="pg-table-cell" row-key="__id__">
+      <el-table-column width="60">
+        <el-button slot-scope="scope" size="mini" type="danger" @click="delRow(scope.$index)"> - </el-button>
+      </el-table-column>
+      <el-table-column v-for="col in _itemCOM" :label="col.label" :key="col.name">
+        <component 
+            slot-scope="scope"
+            :is="col.input" 
+            v-bind="col.props" 
+            :conf="col.conf" 
+            size="mini"
+            v-model="scope.row[col.name]"
+            @input="handleChange">
+        </component>
+      </el-table-column>
+    </el-table>
+    <div class="col add" @click="add"><i class="el-icon-plus"></i></div>
+  </div>
 </template>
 
 <script>
@@ -18,34 +26,66 @@ export default {
   name: "Array",
   props: {
     value: Array,
-    _itemCOM: Object,
-    name: String
+    _itemCOM: Array,
+    arrItem:{}
   },
   data() {
     return {
+      cols:[],
       input: this.value,
-      defaultValue: ""
+      uuid:0
     };
   },
   created() {
-    defaultValue = JSON.stringify(this.value[0]);
+    this.input = this.input2Obj(this.value);
   },
   methods: {
+    input2Obj(value){
+      if(typeof this.value[0] == 'object'){
+        return value.map((e)=>{
+          return {
+            ...e,
+            __id__:this.uuid++
+          }
+        })
+      }else{
+        return value.map((e)=>{
+          return {
+            [_itemCOM.name]:e,
+            __id__:this.uuid++
+          }
+        })
+      }
+    },
+    objTOInput(input){
+      if(typeof this.value[0] == 'object'){
+        return input.map((e)=>{
+          e  = JSON.parse(JSON.stringify(e));
+          delete e.__id__;
+          return e
+        })
+      }else{
+        return input.map((e)=>{
+          return e[_itemCOM.name]
+        })
+      }
+    },
     add() {
-      this.input.push(JSON.parse(defaultValue));
-      handleChange()
+      this.input.push(this.input2Obj([JSON.parse(JSON.stringify(this.arrItem))])[0]);
+      this.handleChange();
     },
     handleChange() {
-      this.$store.commit("input", {
-        name: this.name,
-        value: this.input
-      });
-    }
+      this.$emit('input',this.objTOInput(this.input));
+    },
+    delRow(index) {
+      this.input.splice(index, 1);
+      this.handleChange();
+    },
   }
 };
 </script>
 
-<style scoped>
+<style>
 .row {
   display: flex;
   flex-flow: row wrap;
@@ -76,6 +116,10 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.pg-table-cell .cell {
+  padding: 0 3px;
 }
 </style>
 

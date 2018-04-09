@@ -1,8 +1,7 @@
-import input from './boolean.vue';
-import scheme2Input from '../../scheme2Input';
-const pass = [];
+import input from './number.vue';
 const configStrategy = {
 }
+const pass = []
 export default function (conf) {
     const props = {};
     pass.forEach((name)=>{
@@ -11,13 +10,10 @@ export default function (conf) {
             props[name] = configStrategy[name] ? configStrategy[name](v) : v;
         }
     })
-    let com = {
-        name:conf.name,
-        label:conf.label,
+    return {
+        name:conf.name,   //变量名
+        label:conf.label, //中文label
         input,
-        props,
-        conf
+        props
     }
-    conf.on && (com.subInput = scheme2Input(conf.on))
-    return com;
 }

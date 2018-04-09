@@ -6,7 +6,7 @@
           <span slot-scope="scope">{{scope.row.label}}</span>
         </el-table-column>
         <el-table-column label="value" min-width="40">
-          <component size="mini" slot-scope="scope" @input="handleChange" v-model="scope.row.value" pg-child :is="scope.row.com.input" v-bind="scope.row.com.props"></component>
+          <component size="mini" slot-scope="scope" :conf="scope.row.com.conf" @input="handleChange" v-model="scope.row.value" pg-child :is="scope.row.com.input" v-bind="scope.row.com.props"></component>
         </el-table-column>
       </el-table>
     </div>
@@ -44,7 +44,9 @@ export default {
     };
   },
   created() {
-    this.input = this.obj2Array(this.value);
+    if(this.format){
+      this.input = this.obj2Array(this.value);
+    }
   },
   methods: {
     obj2Array(obj) {

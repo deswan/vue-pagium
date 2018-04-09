@@ -1,0 +1,24 @@
+<template>
+    <el-tag
+    {{{if type}}} type="{{{type}}}" {{{/if}}}  
+    {{{if color}}} color="{{{color}}}" {{{/if}}}  
+    {{{if hit}}} hit {{{/if}}}  
+    {{{if size}}} size="{{{size}}}" {{{/if}}}  
+    >
+    {{{if title}}} {{{title}}} {{{/if}}}  
+    </el-tag>
+</template>
+<script>
+export default {
+  data() {
+    return {
+    };
+  },
+  created() {},
+  methods: {},
+};
+</script>
+<style scoped>
+
+</style>
+

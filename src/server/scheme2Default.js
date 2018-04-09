@@ -1,18 +1,22 @@
-module.exports =  function (config) {
+module.exports = function (config) {
     let def = {}
     Object.assign(def, conf2Default(config, true))
     return def;
 
     function getDefault(conf, isRoot) {
         let type = conf.value
-        if (type === String) {
+        if (type === 'string') {
             return ''
-        } else if (type === Boolean) {
+        } else if (type === 'select') {
+            return ''
+        } else if (type === 'new-component') {
+            return ''
+        } else if (type === 'boolean') {
             if (conf.on && isRoot) { //仅限Root
                 Object.assign(def, conf2Default(conf.on)) //!!!有副作用
             }
             return false;
-        } else if (type === Object) {
+        } else if (type === 'object') {
             if (conf.format) {
                 return conf2Default(conf.format);
             } else {
@@ -25,8 +29,11 @@ module.exports =  function (config) {
             let item = getDefault({ ...conf,
                 value: type[0]
             })
+            Object.assign(def, {
+                [`_${conf.name}`]: JSON.parse(JSON.stringify(item))
+            }) //!!!有副作用
             return new Array(2).fill('').map(() => {
-                return JSON.parse(JSON.stringify(item));    //防止引用同一个实例
+                return JSON.parse(JSON.stringify(item)); //防止引用同一个实例
             })
         }
     }

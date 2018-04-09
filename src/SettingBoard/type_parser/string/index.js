@@ -1,7 +1,7 @@
 import input from './string.vue';
 const configStrategy = {
 }
-const pass = ['options']
+const pass = []
 export default function (conf) {
     const props = {};
     pass.forEach((name)=>{

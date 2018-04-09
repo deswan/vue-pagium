@@ -17,26 +17,10 @@ const template = require('./art');
 const babylon = require('babylon');
 const babel_generator = require('babel-generator').default;
 
-const log4js = require('log4js');
-
 const CHILDREN_PLACEHOLDER = '_____pg_chilren_____';
+const SLOT_PLACEHOLDER = '_____pg_slot______';
 
-log4js.configure({
-    appenders: {
-        my: {
-            type: 'file',
-            filename: 'my.log'
-        }
-    },
-    categories: {
-        default: {
-            appenders: ['my'],
-            level: 'debug'
-        }
-    }
-});
-let logger = log4js.getLogger('my');
-
+let logger = require('./logger')
 
 let pg_map = {
     components: [],
@@ -46,24 +30,26 @@ let pg_map = {
 //全局替换标识符 @@varName -> varName
 function replaceIdentifier() {
     let regExp = /@@(\D[$\w]*)/g;
-    function doReplace(list,wrapper = ''){
-        if(!list || !list.length) return;
-        list.forEach((pg_com)=>{
+
+    function doReplace(list, wrapper = '') {
+        if (!list || !list.length) return;
+        list.forEach((pg_com) => {
             let comWrapper = pg_com.setDataWrapper ? pg_com.comObj.name : '';
-            if(comWrapper){
-                wrapper = wrapper+comWrapper + '.';
+            let curWrapper = wrapper;
+            if (comWrapper) {
+                curWrapper = curWrapper + comWrapper + '.';
             }
             let replaced = pg_com.compiled.replace(regExp, (match, word) => {
                 if (!pg_com.dataKeys.includes(word) && !pg_com.methodsKeys.includes(word)) {
                     throw new Error('data 或 methods 标识符不存在：' + match)
                 } else if (pg_com.dataKeys.includes(word)) { //data
-                    return wrapper + word;
+                    return curWrapper + word;
                 } else { //methods
                     return word;
                 }
             })
             pg_com.replaced = replaced;
-            doReplace(pg_com.children,wrapper)
+            doReplace(pg_com.children, curWrapper)
         })
     }
     doReplace(pg_map.components);
@@ -103,44 +89,79 @@ function merge() {
 
     replaceIdentifier();
 
-    function doMerge(list){
+    /**
+     * 合并组件
+     * @param {} list 
+     */
+    function doMerge(list) {
         let html = '';
         let data = '';
         let methods = '';
         let hooks = {};
-        list.forEach(pg_com=>{
+        list.forEach(pg_com => {
             let parsed = parse(pg_com);
-            if(pg_com.children && pg_com.children.length){
-                let childParsed = doMerge(pg_com.children);
-                parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER,childParsed.html);
-                parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
-                parsed.data += childParsed.data               
-                parsed.methods += childParsed.methods   
-                Object.keys(childParsed.hooks).forEach(hook=>{
+            let children = pg_com.children.filter(e => {
+                return !e.comObj.__pg_slot__;
+            })
+            let slots = pg_com.children.reduce((target, child) => {
+                let slotId = child.comObj.__pg_slot__;
+                if (slotId) {
+                    target[slotId] || (target[slotId] = []);
+                    target[slotId].push(child)
+                }
+                return target;
+            }, {})
+
+            if (children && children.length) {
+                let childParsed = doMerge(children);
+                parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER, childParsed.html);
+                if (childParsed.data.trim() && parsed.data.trim()) {
+                    parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
+                }
+                parsed.data += childParsed.data
+                parsed.methods += childParsed.methods
+                Object.keys(childParsed.hooks).forEach(hook => {
                     parsed.hooks[hook] += childParsed.hooks[hook];
                 })
             }
+
+            Object.keys(slots).forEach(slotId => {
+                let slotList = slots[slotId];
+                let childParsed = doMerge(slotList);
+                parsed.html = parsed.html.replace(SLOT_PLACEHOLDER + slotId, childParsed.html);
+                if (childParsed.data.trim() && parsed.data.trim()) {
+                    parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
+                }
+                parsed.data += childParsed.data
+                parsed.methods += childParsed.methods
+                Object.keys(childParsed.hooks).forEach(hook => {
+                    parsed.hooks[hook] += childParsed.hooks[hook];
+                })
+            })
+
             html += parsed.html;
             if (pg_com.setDataWrapper) {
                 parsed.data.trimRight().slice(-1) == ',' && (parsed.data = parsed.data.trimRight().slice(0, -1))
                 data += `${pg_com.comObj.name}:{${parsed.data}},`
-            } else {    //单属性data
-                parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
+            } else { //单属性data 或 无属性data
+                if (data.trim() && parsed.data.trim()) {
+                    data.trimRight().slice(-1) != ',' && (data = data.trimRight() + ',')
+                }
                 data += parsed.data
             }
             methods += parsed.methods;
-            Object.keys(parsed.hooks).forEach(hook=>{
+            Object.keys(parsed.hooks).forEach(hook => {
                 hooks[hook] += parsed.hooks[hook];
             })
         })
-        
+
         return {
             html,
             data,
             methods,
             hooks
         }
-    }    
+    }
 
     function parse(pg_com) {
         let {
@@ -164,16 +185,6 @@ function merge() {
         //data
         let scriptData = getScriptData(replaced);
         data += scriptData.data.body
-        
-        // if (dataKeys.length) {
-        //     if (pg_com.setDataWrapper) {
-        //         scriptData.data.body.trimRight().slice(-1) == ',' && (scriptData.data.body = scriptData.data.body.trimRight().slice(0, -1))
-        //         data += `${comObj.name}:{${scriptData.data.body}},`
-        //     } else {    //单属性data
-        //         scriptData.data.body.trimRight().slice(-1) != ',' && (scriptData.data.body = scriptData.data.body.trimRight() + ',')
-        //         data += scriptData.data.body
-        //     }
-        // }
 
         //methods
         if (scriptData.methods.body.trim()) {
@@ -198,29 +209,17 @@ function merge() {
     }
     let comp = doMerge(pg_map.components)
     let dialog = doMerge(pg_map.dialogs)
-    // let dialog = {
-    //         html:'',
-    //         data:'',
-    //         methods:'',
-    //         hooks:{}
-    //     }
     let hooks = {};
-    Object.keys(dialog.hooks).forEach(hook=>{
+    Object.keys(dialog.hooks).forEach(hook => {
         comp.hooks[hook] += dialog.hooks[hook];
     })
 
     return {
-        html:comp.html + dialog.html,
-        data:comp.data + dialog.data,
-        methods:comp.methods + dialog.methods,
+        html: comp.html + dialog.html,
+        data: comp.data + dialog.data,
+        methods: comp.methods + dialog.methods,
         hooks
     }
-    // return {
-    //     html:'',
-    //     data:'',
-    //     methods:'',
-    //     hooks
-    // }
 
 }
 
@@ -238,10 +237,11 @@ function render(data) {
  * 编译模板
  * @param {comObj} comObj 
  */
-function compile(comObj) {
+function compile(comObj, options = {}) {
     var comType = comObj.type;
     let config = require(path.join(componentDir, comType, 'config.js'));
-    let vueText = template(path.join(componentDir, comType, comType + '.vue.art'), Object.assign(scheme2Default(config.props), comObj.props))
+    let art = fs.readFileSync(path.join(componentDir, comType, comType + '.vue.art'), 'utf-8');
+    let vueText = template.render(art, Object.assign(scheme2Default(config.props), comObj.props), options)
     return vueText;
 }
 
@@ -302,8 +302,8 @@ function renameMethods() {
     }
     traverse(pg_map.components);
     traverse(pg_map.dialogs);
-    logger.debug('renameMethods: AllMethodsKey' + JSON.stringify(AllMethodsKey, null, 2))
-    logger.debug('renameMethods: toRename' + JSON.stringify(toRename, null, 2))
+    logger('renameMethods: AllMethodsKey', AllMethodsKey)
+    logger('renameMethods: toRename', toRename)
 
     if (!toRename.length) return;
 
@@ -446,8 +446,8 @@ function renameData() {
     }
     traverse(pg_map.components);
     traverse(pg_map.dialogs);
-    logger.debug('renameData: pg_map' + JSON.stringify(pg_map, null, 2))
-    logger.debug('renameData: toRename' + JSON.stringify(toRename, null, 2))
+    logger('renameData: pg_map', pg_map)
+    logger('renameData: toRename', toRename)
 
     if (!toRename.length) return;
 
@@ -507,7 +507,7 @@ function renameData() {
 
         //替换@@data
         node.compiled = newVue.replace(new RegExp('@@(' + raw + ')', 'g'), '@@' + value)
-        logger.debug('after renameData: compiled' + node.compiled)
+        logger('after renameData: compiled', node.compiled)
     })
 }
 
@@ -635,15 +635,36 @@ function initMap(states) {
 
     function doCompile(comObj, list) {
         let children = [];
-        template.defaults.imports.insertChildren = () => {
-            let subCom = comObj.subCom;
-            if (!subCom || !subCom.length) return;
-            subCom.forEach(comObj => {
-                doCompile(comObj, children)
-            })
-            return CHILDREN_PLACEHOLDER;
-        }
-        let compiled = compile(comObj);
+
+        let compiled = compile(comObj, {
+            imports: {
+                insertChildren() {
+                    let subCom = comObj.subCom.filter((e) => {
+                        return !e.__pg_slot__;
+                    });
+                    if (!subCom || !subCom.length) return '';
+                    subCom.forEach(comObj => {
+                        doCompile(comObj, children)
+                    })
+                    return CHILDREN_PLACEHOLDER;
+                },
+                insertSlot(names) {
+                    let nameArr = names.split(',');
+                    let slotId = '';
+                    let subCom = comObj.subCom.filter((e) => {
+                        if (e.__pg_slot__ && nameArr.includes(e.name)) {
+                            slotId = e.__pg_slot__;
+                            return true;
+                        }
+                    });
+                    if (!subCom || !subCom.length) return '';
+                    subCom.forEach(comObj => {
+                        doCompile(comObj, children)
+                    })
+                    return SLOT_PLACEHOLDER + slotId;
+                }
+            }
+        });
         let scriptData = getScriptData(compiled);
         list.push({
             comObj: comObj,
@@ -659,7 +680,7 @@ function initMap(states) {
     states.dialogs.forEach((comObj) => {
         doCompile(comObj, pg_map.dialogs)
     })
-    logger.info(JSON.stringify(pg_map, null, 2))
+    logger('init', pg_map)
 }
 
 module.exports = (states) => {

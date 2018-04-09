@@ -1,13 +1,19 @@
 <template>
-    <el-form label-width="80px">{{@@show}}
+    <el-form
+    {{{if labelPosition}}} label-position="{{{labelPosition}}}" {{{/if}}}  
+    {{{if labelWidth}}} label-width="{{{labelWidth}}}" {{{/if}}}  
+    {{{if labelSuffix}}} label-suffix="{{{labelSuffix}}}" {{{/if}}}  
+    {{{if inline}}} inline {{{/if}}}  
+    {{{if statusIcon}}} status-icon {{{/if}}}  
+    {{{if size}}} size="{{{size}}}" {{{/if}}}  
+    >
+    {{{$imports.insertChildren()}}}
     </el-form>
 </template>
 <script>
 export default {
-  name: "form",
   data() {
     return {
-        show:true
     };
   },
   created() {},

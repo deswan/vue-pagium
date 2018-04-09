@@ -11,14 +11,16 @@
     custom-class="pg-dialog"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
-    :show-close="false">
+    :show-close="false"
+    :center="center"
+    >
     <slot></slot>
     </el-dialog>
 </template>
 <script>
 export default {
   name: 'Dialog',
-  props:['title','active','subActive'],
+  props:['title','center','active','subActive'],
   data() {
     return {
       show:true
