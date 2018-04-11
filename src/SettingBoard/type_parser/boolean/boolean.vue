@@ -8,9 +8,9 @@
   export default {
     name: "Boolean",
     props: {
+      conf:{},
       value:Boolean,
-      name: String,
-      pgChild: Boolean
+      name: String
     },
     data() {
       return {

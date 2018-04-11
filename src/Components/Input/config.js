@@ -1,5 +1,5 @@
 module.exports = {
-    "nestable": false,
+    "name":'input',
     "props": [{
         "name": "label",
         "label": "label",

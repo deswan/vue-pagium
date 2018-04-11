@@ -35,8 +35,7 @@ export default {
   props: {
     value: Object,
     format: Array,
-    name: String,
-    pgChild: Boolean
+    conf:{}
   },
   data() {
     return {

@@ -8,13 +8,29 @@
           <el-form-item 
           :label="item.label" 
           :key="idx">
-              <!-- 输入组件 -->
-              <component :is="item.input" @input="handleInput(item.name,$event)" :arrItem="$store.state.activeComponent.props['_'+item.name]" :value="$store.state.activeComponent.props[item.name]" v-bind="item.props" :name="item.name" :conf="item.conf"></component>
+              <!-- 输入组件
+                arrItem: 数组默认值            
+               -->
+              <component 
+              :is="item.input" 
+              @input="handleInput(item.name,$event)" 
+              :arrItem="$store.state.activeComponent.props['_'+item.name]"
+              :value="$store.state.activeComponent.props[item.name]" 
+              v-bind="item.props" 
+              :conf="item.conf">
+              </component>
           </el-form-item>
           <!-- Boolean.on -->
           <div class="expand" :key="idx + 'expand'" v-if="item.subInput && item.subInput.length && $store.state.activeComponent.props[item.name]">
               <el-form-item v-for="(subInput,idx) in item.subInput" :label="subInput.label" :key="idx">
-                <component :is="subInput.input" @input="handleInput(subInput.name,$event)" :arrItem="$store.state.activeComponent.props['_'+subInput.name]" :value="$store.state.activeComponent.props[subInput.name]" v-bind="subInput.props" :name="subInput.name" :conf="subInput.conf"></component>
+                <component 
+                :is="subInput.input" 
+                @input="handleInput(subInput.name,$event)" 
+                :arrItem="$store.state.activeComponent.props['_'+subInput.name]" 
+                :value="$store.state.activeComponent.props[subInput.name]" 
+                v-bind="subInput.props" 
+                :conf="subInput.conf">
+                </component>
               </el-form-item>            
           </div>
         </template>
@@ -27,16 +43,14 @@ import StringInput from "./type_parser/string/string.vue";
 export default {
   data() {
     return {
-      StringInput,
-      form: {}
+      StringInput
     };
   },
   methods: {
     handleInput(name, value) {
       this.$store.commit("input", { name, value });
     }
-  },
-  
+  }
 };
 </script>
 

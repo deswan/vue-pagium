@@ -20,9 +20,9 @@
           <i @click="emitEvent('nodeName')" v-if="node.name && node.subCom && node.subCom.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
         </span>
         <span class="tree-node-action" v-if="node.name">
-          <el-popover placement="right-end" trigger="click" v-if="idx === undefined || node.nestable" v-model="showComlib">  
+          <el-popover placement="right-end" trigger="click" v-model="showComlib">  
             <div class="com-lib">
-              <div @click="emitEvent('addCom',{comVm,node})" class="com-lib-item" v-for="(comVm,key) in allComs" :key="key">{{comVm.name}}</div>
+              <div @click="emitEvent('addCom',{comType,node})" class="com-lib-item" v-for="comType in allComs" :key="comType">{{comType}}</div>
             </div>      
             <i class="el-icon-fa-plus" slot="reference" @click.stop="emitEvent('add')"></i>
           </el-popover>
@@ -54,7 +54,7 @@ export default {
       type: Number,
       default: 0
     }, // 层级
-    allComs: Object,
+    allComs: {},
     type:String
   },
   data: function() {
@@ -115,14 +115,10 @@ export default {
         this.isParent ||
         this.isNextToMe ||
         this.isMeOrMyAncestor ||
-        this.notNestable || 
         this.isDialogToComponents || 
         this.isComponentsToDialogsRoot ||
         this.isDialogNest
       );
-    },
-    notNestable() { //非nestable元素不可含有子组件
-      return this.node.name && !this.node.nestable;
     },
     isDialogNest(){ //dialog不可作为其他组件的子组件
       return this.value.node.isDialog && !this.$parent.node.isRoot ||  this.value.node.isDialog && this.node.name;

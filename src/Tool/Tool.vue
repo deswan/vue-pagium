@@ -4,7 +4,7 @@
       @on-node-row-click="nodeClick" 
       v-model="draggingNode" 
       :node="data_com" 
-      :all-coms="$store.getters.allComs" 
+      :all-coms="$store.getters.allComsType" 
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"
@@ -17,7 +17,7 @@
       @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
-      :all-coms="$store.getters.allComs" 
+      :all-coms="$store.getters.allDialogsType" 
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"
@@ -65,8 +65,8 @@ export default {
     delCom(root, node) {
       this.$store.commit("delComponent", { list: root, node });
     },
-    addCom({ comVm, node }) {
-      this.$store.commit("addComponent", { node, comVm });
+    addCom({ comType, node }) {
+      this.$store.commit("addComponent", { node, comType });
     }
   }
 };

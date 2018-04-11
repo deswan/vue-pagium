@@ -1,5 +1,5 @@
 module.exports = {
-    "nestable": true,
+    "name":'table',
     "props": [{
         "name": "cols",
         "label": "设置列",

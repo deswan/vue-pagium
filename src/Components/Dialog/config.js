@@ -1,5 +1,5 @@
 module.exports = {
-    "nestable": true,
+    "name": 'dialog',
     "isDialog": true,
     "props": [{
         "name": "title",

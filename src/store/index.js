@@ -73,8 +73,26 @@ const store = new Vuex.Store({
         activeComponentSetting(state) {
             return state.activeComponent && scheme2Input(allComsConfig[state.activeComponent.type].props)
         },
-        allComs() {
-            return allComs;
+        /**
+         * 获取所有component（非对话框）的
+         */
+        allComsType() {
+            let target = [];
+            for (let key in allComsConfig) {
+                if (!allComsConfig[key].isDialog) {
+                    target.push(key);
+                }
+            }
+            return target;
+        },
+        allDialogsType() {
+            let target = [];
+            for (let key in allComsConfig) {
+                if (allComsConfig[key].isDialog) {
+                    target.push(key);
+                }
+            }
+            return target;
         }
     },
     mutations: {
@@ -124,12 +142,13 @@ const store = new Vuex.Store({
          */
         addComponent(state, {
             node,
-            comVm
+            comType:type
         }) {
-            const type = comVm.name; //vm.options.name
             const config = allComsConfig[type];
-            const name = getName(type);
+            const comVm = allComs[type];
+            let name = getName(config.name);
 
+            //init slot属性
             let slotsKey = [];
             JSON.parse(JSON.stringify(config.props), function (k, v) {
                 if (k === 'value' && v === 'new-component') {
@@ -142,7 +161,6 @@ const store = new Vuex.Store({
                 pg: uuid++,
                 name,
                 type,
-                nestable: config.nestable,
                 isDialog: config.isDialog,
                 props: { ...scheme2Default(config.props),
                     name
@@ -150,7 +168,7 @@ const store = new Vuex.Store({
                 com: comVm,
                 subCom: [],
                 slotsKey,
-                __pg_slot__:false
+                __pg_slot__: false
             }
 
             node.subCom.push(comObj);
@@ -206,14 +224,16 @@ const store = new Vuex.Store({
             }
 
             let slots = getSlots()
-            state.activeComponent.subCom.forEach((com)=>{
-                com.__pg_slot__ = false;
+            state.activeComponent.subCom.forEach((com) => {
+                if (com.__pg_slot__ && com.__pg_slot__.startsWith(name)) {
+                    com.__pg_slot__ = false;
+                }
             })
             slots.forEach((slotsName, slotIdx) => {
-                state.activeComponent.subCom.forEach(subCom=>{
+                state.activeComponent.subCom.forEach(subCom => {
                     if (slotsName.includes(subCom.name)) {
-                        subCom.__pg_slot__ = slotIdx + 1;
-                        subCom.props.__pg_slot__ = slotIdx + 1;
+                        subCom.__pg_slot__ = name + (slotIdx + 1);
+                        subCom.props.__pg_slot__ = name + (slotIdx + 1);
                     }
                 })
             })

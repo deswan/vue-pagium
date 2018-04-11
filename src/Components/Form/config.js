@@ -1,5 +1,5 @@
 module.exports = {
-    "nestable": true,
+    "name":'form',
     "props": [{
         "name": "inline",
         "label": "是否行内表单",

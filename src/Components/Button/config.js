@@ -1,5 +1,5 @@
 module.exports = {
-    "nestable": false,
+    "name":'button',
     "props": [{
         "name": "title",
         "label": "文本",

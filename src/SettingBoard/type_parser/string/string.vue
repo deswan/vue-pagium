@@ -8,6 +8,7 @@
 <script>
 export default {
   props: {
+    conf:{},
     value: String,
     size: {
       default: "small"

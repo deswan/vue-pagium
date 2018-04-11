@@ -25,6 +25,7 @@ let defaultValue;
 export default {
   name: "Array",
   props: {
+    conf:{},
     value: Array,
     _itemCOM: Array,
     arrItem:{}
