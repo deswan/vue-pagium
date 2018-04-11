@@ -54,7 +54,7 @@ export default {
     {{{if load}}}
      loadList(){
         this.@@loading = true;
-        <% include('../http.art',{
+        <% include('http.art',{
           method:$imports.valuelize(method),
           url:$imports.valuelize(url),
           params:pagination ? {

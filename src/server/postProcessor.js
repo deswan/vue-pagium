@@ -54,6 +54,7 @@ function replaceIdentifier() {
     }
     doReplace(pg_map.components);
     doReplace(pg_map.dialogs);
+    logger('after replaceIdentifier',pg_map)
 }
 
 /**
@@ -237,11 +238,12 @@ function render(data) {
  * 编译模板
  * @param {comObj} comObj 
  */
-function compile(comObj, options = {}) {
+function compile(comObj, imports = {}) {
+    Object.assign(template.defaults.imports, imports)
     var comType = comObj.type;
     let config = require(path.join(componentDir, comType, 'config.js'));
     let art = fs.readFileSync(path.join(componentDir, comType, comType + '.vue.art'), 'utf-8');
-    let vueText = template.render(art, Object.assign(scheme2Default(config.props), comObj.props), options)
+    let vueText = template.render(art, Object.assign(scheme2Default(config.props), comObj.props), {...template.defaults,root:path.resolve(__dirname,'..','Components')})
     return vueText;
 }
 
@@ -637,32 +639,30 @@ function initMap(states) {
         let children = [];
 
         let compiled = compile(comObj, {
-            imports: {
-                insertChildren() {
-                    let subCom = comObj.subCom.filter((e) => {
-                        return !e.__pg_slot__;
-                    });
-                    if (!subCom || !subCom.length) return '';
-                    subCom.forEach(comObj => {
-                        doCompile(comObj, children)
-                    })
-                    return CHILDREN_PLACEHOLDER;
-                },
-                insertSlot(names) {
-                    let nameArr = names.split(',');
-                    let slotId = '';
-                    let subCom = comObj.subCom.filter((e) => {
-                        if (e.__pg_slot__ && nameArr.includes(e.name)) {
-                            slotId = e.__pg_slot__;
-                            return true;
-                        }
-                    });
-                    if (!subCom || !subCom.length) return '';
-                    subCom.forEach(comObj => {
-                        doCompile(comObj, children)
-                    })
-                    return SLOT_PLACEHOLDER + slotId;
-                }
+            insertChildren() {
+                let subCom = comObj.subCom.filter((e) => {
+                    return !e.__pg_slot__;
+                });
+                if (!subCom || !subCom.length) return '';
+                subCom.forEach(comObj => {
+                    doCompile(comObj, children)
+                })
+                return CHILDREN_PLACEHOLDER;
+            },
+            insertSlot(names) {
+                let nameArr = names.split(',');
+                let slotId = '';
+                let subCom = comObj.subCom.filter((e) => {
+                    if (e.__pg_slot__ && nameArr.includes(e.name)) {
+                        slotId = e.__pg_slot__;
+                        return true;
+                    }
+                });
+                if (!subCom || !subCom.length) return '';
+                subCom.forEach(comObj => {
+                    doCompile(comObj, children)
+                })
+                return SLOT_PLACEHOLDER + slotId;
             }
         });
         let scriptData = getScriptData(compiled);

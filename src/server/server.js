@@ -7,14 +7,17 @@ const fs = require('fs');
 const template = require('./art');
 const Mock = require('mockjs');
 const Log = require('log');
-const log = new Log('debug',fs.createWriteStream('./my.log'))
+const log = new Log('debug', fs.createWriteStream('./my.log'))
 
-const componentDir = path.resolve(__dirname, './');
 const scheme2Default = require('./scheme2Default');
 const postProcessor = require('./postProcessor');
 
+const componentDir = '../Components'
+
 app.use(bodyParser.json()); // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({
+    extended: true
+})); // for parsing application/x-www-form-urlencoded
 
 const outputDir = path.join(__dirname, 'dist');
 
@@ -41,10 +44,17 @@ let props = {
     },
 }
 
+/**
+ * 获取组件文件夹绝对路径
+ * 输入结果Vue组件
+ * @return {code:0} 
+ */
 app.post('/save', function (req, res) {
     let output = postProcessor(req.body);
     fs.writeFileSync(path.join(outputDir, 'App.vue'), output);
-    res.json({code:0})
+    res.json({
+        code: 0
+    })
 });
 
 app.get('/api/table-data', function (req, res) {
@@ -55,6 +65,39 @@ app.get('/api/table-data', function (req, res) {
             age: '@integer(20,60)'
         }]
     }))
+});
+
+/**
+ * 获取组件文件夹绝对路径
+ * @return [string]
+ */
+app.get('/getAllComponents', function (req, res) {
+    let componentPaths = []
+    let dirs = fs.readdirSync(componentDir, 'utf-8');
+    dirs.forEach(dir => {
+        let dirPath = path.resolve(componentDir, dir);
+        if (fs.statSync(dirPath).isDirectory()) {
+            let files = fs.readdirSync(dirPath, 'utf-8');
+            let hasConfig, hasVue, hasArt;
+            files.forEach(file => {
+                let filePath = path.join(componentDir, dir, file);
+                if (!fs.statSync(filePath).isFile()) return;
+                if (file === dir + '.vue') {
+                    hasVue = true;
+                } else if (file === dir + '.vue.art') {
+                    hasArt = true;
+                } else if (file === 'config.js') {
+                    hasConfig = true;
+                }
+            })
+            if (hasConfig && hasArt && hasVue) {
+                componentPaths.push(dirPath);
+            } else {
+                throw new Error(`组件文件夹${dir}缺少config.js/Vue组件/模板文件`)
+            }
+        }
+    })
+    return res.json(componentPaths)
 });
 
 var server = app.listen(3000, function () {
