@@ -25,63 +25,70 @@ let defaultValue;
 export default {
   name: "Array",
   props: {
-    conf:{},
+    conf: {},
     value: Array,
     _itemCOM: Array,
-    arrItem:{}
+    arrItem: {}
   },
   data() {
     return {
-      cols:[],
+      cols: [],
       input: this.value,
-      uuid:0
+      uuid: 0
     };
   },
   created() {
     this.input = this.input2Obj(this.value);
   },
   methods: {
-    input2Obj(value){
-      if(typeof this.value[0] == 'object'){
-        return value.map((e)=>{
+    input2Obj(value) {
+      if (this.conf.value[0] === "object") {
+        return value.map(e => {
           return {
             ...e,
-            __id__:this.uuid++
-          }
-        })
-      }else{
-        return value.map((e)=>{
+            __id__: this.uuid++
+          };
+        });
+      } else {
+        return value.map(e => {
           return {
-            [_itemCOM.name]:e,
-            __id__:this.uuid++
-          }
-        })
+            [_itemCOM.name]: e,
+            __id__: this.uuid++
+          };
+        });
       }
     },
-    objTOInput(input){
-      if(typeof this.value[0] == 'object'){
-        return input.map((e)=>{
-          e  = JSON.parse(JSON.stringify(e));
+    objTOInput(input) {
+      if (this.conf.value[0] === "object") {
+        return input.map(e => {
+          e = JSON.parse(JSON.stringify(e));
           delete e.__id__;
-          return e
-        })
-      }else{
-        return input.map((e)=>{
-          return e[_itemCOM.name]
-        })
+          return e;
+        });
+      } else {
+        return input.map(e => {
+          return e[_itemCOM.name];
+        });
       }
     },
     add() {
-      this.input.push(this.input2Obj([JSON.parse(JSON.stringify(this.arrItem))])[0]);
+      this.input.push(
+        this.input2Obj([JSON.parse(JSON.stringify(this.arrItem))])[0]
+      );
       this.handleChange();
     },
     handleChange() {
-      this.$emit('input',this.objTOInput(this.input));
+      this.$emit("input", this.objTOInput(this.input));
     },
     delRow(index) {
       this.input.splice(index, 1);
       this.handleChange();
-    },
+    }
+  },
+  watch: {
+    value() {
+      this.input = this.input2Obj(this.value);
+    }
   }
 };
 </script>

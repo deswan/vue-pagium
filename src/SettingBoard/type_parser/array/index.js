@@ -15,9 +15,7 @@ export default function (conf) {
         label: null
     }])[0]
     if (conf.value[0] === 'object' && _itemCOM.props.format) {
-        props._itemCOM = _itemCOM.props.format.map((e) => {
-            return e
-        })
+        props._itemCOM = _itemCOM.props.format
     } else {
         props._itemCOM = [_itemCOM]
     }

@@ -4,7 +4,8 @@ import object from './type_parser/object'
 import array from './type_parser/array'
 import select from './type_parser/select'
 import number from './type_parser/number'
-import new_component from './type_parser/new-component'
+import slot_component from './type_parser/slot-component'
+import refer_component from './type_parser/refer-component'
 const TYPES = {
     string,
     boolean,
@@ -12,7 +13,8 @@ const TYPES = {
     array,
     select,
     number,
-    new_component
+    slot_component,
+    refer_component
 }
 export default function (config) {
     let inputs = [];
@@ -29,8 +31,10 @@ export default function (config) {
 function getLoader(type) {
     if (typeof type == 'string' && TYPES[type]) {
         return TYPES[type];
-    } else if(type == 'new-component'){
-        return TYPES.new_component;
+    } else if (type == 'slot-component') {
+        return TYPES.slot_component;
+    } else if (type == 'refer-component') {
+        return TYPES.refer_component;
     } else if (Array.isArray(type) && type.length == 1) {
         return TYPES.array;
     }

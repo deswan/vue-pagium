@@ -24,7 +24,7 @@ module.exports = {
         }, {
             "name": "scope",
             "label": "scope",
-            "value": "new-component"
+            "value": "slot-component"
         }]
     }, {
         "name": "pagination",

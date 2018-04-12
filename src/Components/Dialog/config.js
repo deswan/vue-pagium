@@ -1,6 +1,7 @@
 module.exports = {
     "name": 'dialog',
     "isDialog": true,
+    "expose":["open"],
     "props": [{
         "name": "title",
         "value": "string",

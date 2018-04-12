@@ -1,4 +1,4 @@
-import input from './new-component.vue';
+import input from './slot-component.vue';
 const configStrategy = {
    
 }

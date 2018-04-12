@@ -21,7 +21,6 @@ export default {
   },
   watch:{
     cols(){
-      console.log(this.cols)
     }
   }
 };

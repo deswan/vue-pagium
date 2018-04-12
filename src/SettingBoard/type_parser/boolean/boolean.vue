@@ -5,27 +5,32 @@
 </template>
 
 <script>
-  export default {
-    name: "Boolean",
-    props: {
-      conf:{},
-      value:Boolean,
-      name: String
-    },
-    data() {
-      return {
-        input: this.value
-      };
-    },
-    created() {
-    },
-    methods: {
-      valChange(input) {
-          this.$emit('input',input);
-      }
+export default {
+  name: "Boolean",
+  props: {
+    conf: {},
+    value: Boolean,
+    name: String
+  },
+  data() {
+    return {
+      input: this.value
+    };
+  },
+  created() {},
+  methods: {
+    valChange(input) {
+      this.$emit("input", input);
     }
-  };
+  },
+  watch: {
+    value() {
+      this.input = this.value;
+    }
+  }
+};
 </script>
 
 <style scoped>
+
 </style>

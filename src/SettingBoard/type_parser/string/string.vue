@@ -26,6 +26,11 @@ export default {
     valChange(input) {
       this.$emit('input',input);
     }
+  },
+  watch:{
+    value(){
+      this.input = this.value;
+    }
   }
 };
 </script>

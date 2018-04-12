@@ -9,8 +9,16 @@ module.exports = function (config) {
             return ''
         } else if (type === 'select') {
             return ''
-        } else if (type === 'new-component') {
-            return ''
+        } else if (type === 'slot-component') {
+            return {
+                type: '__pg_type_slot_component__',
+                value: []
+            }
+        } else if (type === 'refer-component') {
+            return {
+                type: '__pg_type_refer_component__',
+                value: ''
+            }
         } else if (type === 'boolean') {
             if (conf.on && isRoot) { //仅限Root
                 Object.assign(def, conf2Default(conf.on)) //!!!有副作用

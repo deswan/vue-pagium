@@ -17,6 +17,9 @@ import Tag from "../Components/Tag/Tag.vue";
 import scheme2Default from "../utils/scheme2Default.js";
 import scheme2Input from "../SettingBoard/scheme2Input.js";
 
+const SLOT_TYPE = '__pg_type_slot_component__'
+const REFER_TYPE = '__pg_type_refer_component__'
+
 Vue.use(Vuex)
 
 const getName = (() => {
@@ -93,6 +96,46 @@ const store = new Vuex.Store({
                 }
             }
             return target;
+        },
+        /**
+         * 获取所有组件可引用属性的map
+         * @return {
+         *     comName1:['varName1','varName2'],
+         *      .
+         *      .
+         *      .
+         * }
+         */
+        allExposeMap(state) {
+            let list = state.components.concat(state.dialogs);
+            let map = {}
+
+            function traverse(list) {
+                list.forEach(item => {
+                    let config = allComsConfig[item.type];
+                    if (config.expose && config.expose.length) {
+                        map[item.name] = config.expose;
+                    }
+                    traverse(item.children)
+                })
+            }
+            return map;
+        },
+        /**
+         * @return {Array}  所有已创建组件（包括子组件）
+         */
+        componentNameList(state) {
+            let names = [];
+            (function traverse(list) {
+                if(!list) return;
+                list.forEach(item => {
+                    if(item !== state.activeComponent){
+                        names.push(item.name)
+                    }
+                    traverse(item.children)
+                })
+            })(state.components.concat(state.dialogs))
+            return names;
         }
     },
     mutations: {
@@ -133,6 +176,29 @@ const store = new Vuex.Store({
                 }
             }
             del(list.subCom, node)
+
+            //删除组件名引用
+            (function traverse(list) {
+                if (!list) return;
+                for (let i = 0, len = list.length; i < len; i++) {
+                    let props = list[i].props;
+                    list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
+                        if (this.type === SLOT_TYPE) {
+                            this.value = this.value.map(e => {
+                                return e !== node.name
+                            })
+                        }else if(this.type === REFER_TYPE){
+                            if(this.value === node.name){
+                                this.value = ''
+                            }
+                        }
+                        return v;
+                    })
+                    traverse(list[i].subCom)
+                }
+            })(state.components.concat(state.dialogs))
+
+            
         },
 
         /**
@@ -142,20 +208,11 @@ const store = new Vuex.Store({
          */
         addComponent(state, {
             node,
-            comType:type
+            comType: type
         }) {
             const config = allComsConfig[type];
             const comVm = allComs[type];
             let name = getName(config.name);
-
-            //init slot属性
-            let slotsKey = [];
-            JSON.parse(JSON.stringify(config.props), function (k, v) {
-                if (k === 'value' && v === 'new-component') {
-                    slotsKey.push(this.name);
-                }
-                return v;
-            })
 
             let comObj = {
                 pg: uuid++,
@@ -167,8 +224,7 @@ const store = new Vuex.Store({
                 },
                 com: comVm,
                 subCom: [],
-                slotsKey,
-                __pg_slot__: false
+                __pg_slot__: false //是否成为slot
             }
 
             node.subCom.push(comObj);
@@ -197,38 +253,69 @@ const store = new Vuex.Store({
             name,
             value
         }) {
-            if (name === 'name') {
-                state.activeComponent.name = value;
-            }
 
+            function getComponent(comName, list = state.components.concat(state.dialogs)) {
+                let ret = null;
+
+                function find(list) {
+                    if (!list) return;
+                    for (let i = 0, len = list.length; i < len; i++) {
+                        if (list[i].name === comName) {
+                            return ret = list[i];
+                        } else {
+                            find(list[i].subCom)
+                        }
+                    }
+                }
+                find(list)
+                return ret;
+            }
             /**
              * @return [
              *  0:['form1','form2'],
              *  1:['table1']
              * ]
              */
-            function getSlots() {
-                let slot = [];
-                let slotsKey = state.activeComponent.slotsKey;
-                if (slotsKey.includes(name)) {
-                    slot.push(value.split(','));
-                } else {
-                    JSON.parse(JSON.stringify(value), function (k, v) {
-                        if (slotsKey.includes(k)) {
-                            slot.push(v.split(','));
-                        }
-                        return v;
-                    })
-                }
-                return slot;
-            }
+            let slots = [];     //TODO:JSON.parse遍历参数循环两次的问题
 
-            let slots = getSlots()
+            value = JSON.parse(JSON.stringify(value), function (k, v) {
+                if (this.type === SLOT_TYPE) {
+                    //去重
+                    this.value = this.value.filter((e, idx) => {
+                        return this.value.indexOf(e) == idx;
+                    })
+                    //过滤非直接子组件以及已经成为slot的子组件
+                    this.value = this.value.filter(e => {
+                        return state.activeComponent.subCom.some(subCom => {
+                            return e === subCom.name
+                        }) && slots.every(slot => {
+                            return slot.every(slot => {
+                                return e !== slot;
+                            })
+                        })
+                    })
+
+                    slots.push(this.value);
+                } else if (this.type === REFER_TYPE) {
+                    //过滤不存在的组件以及自身组件
+                    if(!getComponent(this.value) || this.value === state.activeComponent.name){
+                        this.value = '';
+                    }
+                }
+                return v;
+            })
+
+            console.log(slots)
+
+            //清除该变量名下子组件的所有slot标识
             state.activeComponent.subCom.forEach((com) => {
                 if (com.__pg_slot__ && com.__pg_slot__.startsWith(name)) {
                     com.__pg_slot__ = false;
                 }
             })
+
+
+            //为子组件添加slot标识
             slots.forEach((slotsName, slotIdx) => {
                 state.activeComponent.subCom.forEach(subCom => {
                     if (slotsName.includes(subCom.name)) {
@@ -237,6 +324,38 @@ const store = new Vuex.Store({
                     }
                 })
             })
+
+            if (name === 'name') {
+
+                //组件名称引用联动
+                let oldName = state.activeComponent.name;
+                (function traverse(list) {
+                    if (!list) return;
+                    for (let i = 0, len = list.length; i < len; i++) {
+                        let props = list[i].props;
+                        list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
+                            if (this.type === SLOT_TYPE) {
+                                this.value = this.value.map(e => {
+                                    if (e === oldName) {
+                                        return value
+                                    } else {
+                                        return e;
+                                    }
+                                })
+                            }else if(this.type === REFER_TYPE){
+                                if(this.value === oldName){
+                                    this.value  = value
+                                }
+                            }
+                            return v;
+                        })
+                        traverse(list[i].subCom)
+                    }
+                })(state.components.concat(state.dialogs))
+
+                state.activeComponent.name = value;
+
+            }
 
             Vue.set(state.activeComponent.props, name, value);
         }
