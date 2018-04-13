@@ -5,7 +5,7 @@
 </template>
 <script>
 export default {
-    name: 'PG Page',
+    name: 'PG-Page',
     data() {
         return {
             {{{data}}}

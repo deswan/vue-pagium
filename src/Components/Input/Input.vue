@@ -17,7 +17,6 @@ export default {
     "suffixIcon",
     "rows",
     "autosize",
-    "autoComplete",
     "name",
     "readonly",
     "autofocus"

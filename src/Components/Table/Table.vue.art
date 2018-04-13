@@ -47,7 +47,7 @@ export default {
   },
   created(){
     {{{if load}}}
-    this.@@loadList();
+    this.@@loadList(); 
     {{{/if}}}
   },
   methods:{

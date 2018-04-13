@@ -1,4 +1,4 @@
-export default function (config) {
+module.exports = function (config) {
     let def = {}
     Object.assign(def, conf2Default(config, true))
     return def;
@@ -11,7 +11,7 @@ export default function (config) {
             return ''
         } else if (type === 'slot-component') {
             return {
-                type: '__pg_type_new_component__',
+                type: '__pg_type_slot_component__',
                 value: []
             }
         } else if (type === 'refer-component') {

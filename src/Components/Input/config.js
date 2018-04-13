@@ -5,6 +5,14 @@ module.exports = {
         "label": "label",
         "value": "string"
     }, {
+        "name": "required",
+        "label": "required",
+        "value": "boolean"
+    },{
+        "name": "width",
+        "label": "宽度",
+        "value": "string"
+    },{
         "name": "size",
         "label": "尺寸",
         "value": "select",

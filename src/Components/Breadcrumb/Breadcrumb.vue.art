@@ -1,0 +1,26 @@
+<template>
+  <el-breadcrumb
+  {{{if separator}}} separator="{{{separator}}}" {{{/if}}}  
+  {{{if separatorClass}}} separator-class="{{{separatorClass}}}" {{{/if}}}  
+  >
+  {{{each items}}}
+    <el-breadcrumb-item 
+  {{{if $value.to}}} to="{{{$value.to}}}" {{{/if}}}  >
+      {{{$value.title}}}
+    </el-breadcrumb-item>
+  {{{/each}}}
+  </el-breadcrumb>
+</template>
+<script>
+export default {
+  data() {
+    return {
+    };
+  },
+  methods:{
+  },
+};
+</script>
+<style scoped>
+</style>
+
