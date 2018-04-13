@@ -20,7 +20,7 @@ prog
             }else if(!fs.statSync(output).isDirectory()){
                 return console.log(`${chalk.red(output)} 不是文件夹`)
             }
-            require('../server/server')(dir)
+            require('../server/server')(output)
         }catch(err){
             throw err;
         }

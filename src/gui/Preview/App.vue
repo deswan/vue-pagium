@@ -1,15 +1,6 @@
 <template>
     <div>
-        <div>
-            <el-table :data="table.items" border v-loading="table.loading">
-                <el-table-column>
-                    <template slot-scope="scope"> </template>
-                </el-table-column>
-                <el-table-column>
-                    <template slot-scope="scope"> </template>
-                </el-table-column>
-            </el-table>
-        </div>
+        <el-form label-width="80px" label-suffix=":"> </el-form>
     </div>
 </template>
 <script>
@@ -17,13 +8,8 @@ export default {
     name: 'PG-Page',
     data() {
         return {
-            table: {
-                loading: false,
-                items: [{},
-                    {},
-                    {}],
-                total: 0
-            },
+
+
         };
     },
     methods: {

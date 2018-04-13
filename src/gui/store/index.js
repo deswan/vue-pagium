@@ -1,20 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import TableConfig from "../../Components/Table/config";
-import DialogConfig from "../../Components/Dialog/config";
-import FormConfig from "../../Components/Form/config";
-import ButtonConfig from "../../Components/Button/config";
-import InputConfig from "../../Components/Input/config";
-import TagConfig from "../../Components/Tag/config";
-import BreadcrumbConfig from "../../Components/Breadcrumb/config";
 
-import Table from "../../Components/Table/Table.vue";
-import Dialog from "../../Components/Dialog/Dialog.vue";
-import Form from "../../Components/Form/Form.vue";
-import Button from "../../Components/Button/Button.vue";
-import Input from "../../Components/Input/Input.vue";
-import Tag from "../../Components/Tag/Tag.vue";
-import Breadcrumb from "../../Components/Breadcrumb/Breadcrumb.vue";
+const COMPONENTS = process.Components;
 
 import scheme2Default from "../../utils/scheme2Default.js";
 import scheme2Input from "../Create/SettingBoard/scheme2Input.js";
@@ -36,25 +23,16 @@ const getName = (() => {
     }
 })()
 
-const allComsConfig = {
-    Table: TableConfig,
-    Dialog: DialogConfig,
-    Form: FormConfig,
-    Button: ButtonConfig,
-    Input: InputConfig,
-    Tag: TagConfig,
-    Breadcrumb: BreadcrumbConfig,
-};
+const allComsConfig = Object.keys(COMPONENTS).reduce((target,name)=>{
+     target[name] = require(`../../Components/${name}/config.js`);
+     return target;
+},{});
 
-const allComs = {
-    Table,
-    Dialog,
-    Form,
-    Button,
-    Input,
-    Tag,
-    Breadcrumb
-};
+const allComs = Object.keys(COMPONENTS).reduce((target,name)=>{
+    target[name] = require(`../../Components/${name}/${name}.vue`).default;
+    return target;
+},{});
+
 
 let uuid = 1;
 
@@ -313,11 +291,6 @@ const store = new Vuex.Store({
                 }
                 return v;
             })
-
-            console.log(slots)
-
-            
-
 
             //为子组件添加slot标识
             slots.forEach((slotsName, slotIdx) => {

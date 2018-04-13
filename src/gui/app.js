@@ -5,7 +5,6 @@ import App from './App.vue'
 import store from './store'
 import VueDragTree from 'vue-drag-tree'
 import axios from "axios";
-import './assets/el-font-awesome.css'
 import router from "./router";
 
 Vue.component('vue-drag-tree', VueDragTree)

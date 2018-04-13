@@ -2,16 +2,16 @@ const fs = require('fs')
 const path = require('path')
 const {componentDir} = require('../config');
 
-function getAllComponent(){
+function getAllComponent($dir = componentDir){
     let componentPaths = {}
-    let dirs = fs.readdirSync(componentDir, 'utf-8');
+    let dirs = fs.readdirSync($dir, 'utf-8');
     dirs.forEach(dir => {
-        let dirPath = path.resolve(componentDir, dir);
+        let dirPath = path.resolve($dir, dir);
         if (fs.statSync(dirPath).isDirectory()) {
             let files = fs.readdirSync(dirPath, 'utf-8');
             let hasConfig, hasVue, hasArt;
             files.forEach(file => {
-                let filePath = path.join(componentDir, dir, file);
+                let filePath = path.join($dir, dir, file);
                 if (!fs.statSync(filePath).isFile()) return;
                 if (file === dir + '.vue') {
                     hasVue = true;

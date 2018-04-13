@@ -7,7 +7,6 @@ const vueLoaderConfig = require('./vue-loader.conf')
 function resolve(dir) {
   return path.join(__dirname, '../../../', dir)
 }
-console.log(resolve('src'))
 
 module.exports = {
   context: path.resolve(__dirname, '../'),

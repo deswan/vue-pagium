@@ -24,7 +24,7 @@
             <div class="com-lib">
               <div @click="emitEvent('addCom',{comType,node})" class="com-lib-item" v-for="comType in allComs" :key="comType">{{comType}}</div>
             </div>      
-            <i class="el-icon-fa-plus" slot="reference" @click.stop="emitEvent('add')"></i>
+            <i class="el-icon-plus" slot="reference" @click.stop="emitEvent('add')"></i>
           </el-popover>
           <i class="el-icon-delete" @click="emitEvent('delete')" v-if="idx !== undefined"></i>
         </span>
