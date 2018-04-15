@@ -5,6 +5,7 @@ const COMPONENTS = process.Components;
 
 import scheme2Default from "../../utils/scheme2Default.js";
 import scheme2Input from "../Create/SettingBoard/scheme2Input.js";
+const parser = require('../../server/parser');
 
 const SLOT_TYPE = '__pg_type_slot_component__'
 const REFER_TYPE = '__pg_type_refer_component__'
@@ -23,15 +24,15 @@ const getName = (() => {
     }
 })()
 
-const allComsConfig = Object.keys(COMPONENTS).reduce((target,name)=>{
-     target[name] = require(`../../Components/${name}/config.js`);
-     return target;
-},{});
+const allComsConfig = Object.keys(COMPONENTS).reduce((target, name) => {
+    target[name] = require(`../../Components/${name}/config.js`);
+    return target;
+}, {});
 
-const allComs = Object.keys(COMPONENTS).reduce((target,name)=>{
+const allComs = Object.keys(COMPONENTS).reduce((target, name) => {
     target[name] = require(`../../Components/${name}/${name}.vue`).default;
     return target;
-},{});
+}, {});
 
 
 let uuid = 1;
@@ -54,6 +55,9 @@ const store = new Vuex.Store({
         },
         activeComponentSetting(state) {
             return state.activeComponent && scheme2Input(allComsConfig[state.activeComponent.type].props)
+        },
+        type2Com(type){
+            return allComs
         },
         /**
          * 获取所有component（非对话框）的
@@ -106,9 +110,9 @@ const store = new Vuex.Store({
         componentNameList(state) {
             let names = [];
             (function traverse(list) {
-                if(!list) return;
+                if (!list) return;
                 list.forEach(item => {
-                    if(item !== state.activeComponent){
+                    if (item !== state.activeComponent) {
                         names.push(item.name)
                     }
                     traverse(item.children)
@@ -166,8 +170,8 @@ const store = new Vuex.Store({
                             this.value = this.value.map(e => {
                                 return e !== node.name
                             })
-                        }else if(this.type === REFER_TYPE){
-                            if(this.value === node.name){
+                        } else if (this.type === REFER_TYPE) {
+                            if (this.value === node.name) {
                                 this.value = ''
                             }
                         }
@@ -177,7 +181,7 @@ const store = new Vuex.Store({
                 }
             })(state.components.concat(state.dialogs))
 
-            
+
         },
 
         /**
@@ -190,7 +194,6 @@ const store = new Vuex.Store({
             comType: type
         }) {
             const config = allComsConfig[type];
-            const comVm = allComs[type];
             let name = getName(config.name);
 
             let comObj = {
@@ -201,7 +204,6 @@ const store = new Vuex.Store({
                 props: { ...scheme2Default(config.props),
                     name
                 },
-                com: comVm,
                 subCom: [],
                 __pg_slot__: false //是否成为slot
             }
@@ -263,7 +265,7 @@ const store = new Vuex.Store({
              *  1:['table1']
              * ]
              */
-            let slots = [];     //TODO:JSON.parse遍历参数循环两次的问题
+            let slots = []; //TODO:JSON.parse遍历参数循环两次的问题
 
             value = JSON.parse(JSON.stringify(value), function (k, v) {
                 if (this.type === SLOT_TYPE) {
@@ -285,7 +287,7 @@ const store = new Vuex.Store({
                     slots.push(this.value);
                 } else if (this.type === REFER_TYPE) {
                     //过滤不存在的组件以及自身组件
-                    if(!getComponent(this.value) || this.value === state.activeComponent.name){
+                    if (!getComponent(this.value) || this.value === state.activeComponent.name) {
                         this.value = '';
                     }
                 }
@@ -319,9 +321,9 @@ const store = new Vuex.Store({
                                         return e;
                                     }
                                 })
-                            }else if(this.type === REFER_TYPE){
-                                if(this.value === oldName){
-                                    this.value  = value
+                            } else if (this.type === REFER_TYPE) {
+                                if (this.value === oldName) {
+                                    this.value = value
                                 }
                             }
                             return v;
@@ -335,11 +337,42 @@ const store = new Vuex.Store({
             }
 
             Vue.set(state.activeComponent.props, name, value);
+        },
+        employTemplate(state,{data}){
+            let comList = parser(data,allComsConfig);
+            state.activeComponent = null;
+            state.components = comList.filter(e=>{
+                return !e.isDialog
+            })
+            state.dialogs = comList.filter(e=>{
+                return e.isDialog
+            })
+        },
+        clearData(state){
+            state.activeComponent = null;
+            state.components.splice(0)
+            state.dialogs.splice(0)
         }
     },
-    actions:{
-        save(state,{vm}){
-            vm.$http.post("/save", state.getters.data);
+    actions: {
+        save(state, {
+            vm
+        }) {
+            return vm.$http.post("/save", state.getters.data);
+        },
+        preview(state, {
+            vm
+        }) {
+            return vm.$http.post("/preview", state.getters.data);
+        },
+        saveAsTemplate(state, {
+            vm,
+            ...props
+        }) {
+            return vm.$http.post("/saveAsTemplate", {
+                data: state.getters.data,
+                ...props
+            });
         }
     }
 })

@@ -21,9 +21,12 @@
         </span>
         <span class="tree-node-action" v-if="node.name">
           <el-popover placement="right-end" trigger="click" v-model="showComlib">  
-            <div class="com-lib">
+            <div class="com-lib" v-if="isDialog && idx === undefined">
+              <div @click="emitEvent('addCom',{comType,node})" class="com-lib-item" v-for="comType in $store.getters.allComsDialog" :key="comType">{{comType}}</div>
+            </div>
+            <div class="com-lib" v-else>
               <div @click="emitEvent('addCom',{comType,node})" class="com-lib-item" v-for="comType in allComs" :key="comType">{{comType}}</div>
-            </div>      
+            </div>        
             <i class="el-icon-plus" slot="reference" @click.stop="emitEvent('add')"></i>
           </el-popover>
           <i class="el-icon-delete" @click="emitEvent('delete')" v-if="idx !== undefined"></i>
@@ -55,7 +58,8 @@ export default {
       default: 0
     }, // 层级
     allComs: {},
-    type:String
+    type:String,
+    isDialog:Boolean
   },
   data: function() {
     return {

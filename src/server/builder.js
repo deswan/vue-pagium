@@ -1,24 +1,19 @@
-const {getAllComponent} = require('../server/util');
-
-let allComponents = getAllComponent();
 const chalk = require('chalk');
-const path = require('path');
 const scheme2Default = require('../utils/scheme2Default');
 const constant = require('../const');
 
 let uuid = 1;
+
+function getComponent(comName) {
+    return true;
+}
+
 function traverse(list) {
     let result = []
     list.forEach(item => {
-        let children = item.children ? traverse(item.children) : [];
-        if (!allComponents[item.type]) {
-            console.log(`Component ${chalk.red(item.type)} do not exist`);
-            process.exit(1)
-        }
+        let children = item.subCom ? traverse(item.subCom) : [];
 
-        let config = require(path.resolve(allComponents[item.type], 'config.js'))
-
-        for(let key in item.props){
+        for (let key in item.props) {
 
             let slots = [];
 
@@ -39,11 +34,11 @@ function traverse(list) {
                             })
                         })
                     })
-    
+
                     slots.push(this.value);
                 } else if (this.type === constant.REFER_TYPE) {
                     //过滤不存在的组件以及自身组件
-                    if(!getComponent(this.value) || this.value === item.name){
+                    if (!getComponent(this.value) || this.value === item.name) {
                         this.value = '';
                     }
                 }
@@ -61,20 +56,36 @@ function traverse(list) {
             })
         }
 
+        let propBlacklist = ['name', '__pg_slot__']
+        let props = Object.keys(item.props).reduce((target, name) => {
+            if (!~propBlacklist.indexOf(name)) {
+                target[name] = item.props[name]
+            }
+            return target;
+        }, {})
+
         result.push({
-            pg: uuid++,
-            name: item.name,
             type: item.type,
-            isDialog: config.isDialog,
-            props: { ...scheme2Default(config.props),
-                ...item.props,
-                name:item.name
-            },
-            subCom: children,
-            __pg_slot__: false //是否成为slot
+            name: item.name,
+            props: props,
+            chilren: children,
         })
     })
     return result;
 }
 
-module.exports = traverse
+module.exports = ({
+    data,
+    name,
+    remark
+}) => {
+    let d = new Date();
+    let date = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " +
+        d.getHours() + ":" + d.getMinutes() + ':' + d.getSeconds();
+    return {
+        name,
+        date,
+        remark,
+        data:traverse(data),
+    }
+}

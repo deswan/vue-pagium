@@ -1,6 +1,6 @@
 <template>
-      <components :is="comObj.com" v-bind="comObj.props" class="pg-com" 
-      :active="$store.state.activeComponent.pg === comObj.pg" 
+      <components :is="$store.getters.type2Com[comObj.type]" v-bind="comObj.props" class="pg-com" 
+      :active="$store.state.activeComponent && $store.state.activeComponent.pg === comObj.pg" 
       :subActive="subActive"
       :pg="comObj.pg">
           <template v-if="comObj.subCom && comObj.subCom.length">
@@ -19,6 +19,7 @@ export default {
   },
   computed: {
     subActive() {
+      if(!this.$store.state.activeComponent) return false;
       return find(this.comObj.subCom, this.$store.state.activeComponent);
       function find(list, node) {
         if (!list) return false;

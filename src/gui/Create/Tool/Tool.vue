@@ -17,7 +17,8 @@
       @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
-      :all-coms="$store.getters.allDialogsType" 
+      :all-coms="$store.getters.allComsType" 
+      isDialog
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"

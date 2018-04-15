@@ -4,24 +4,27 @@ const prog = require('caporal');
 const path = require('path');
 const fs = require('fs');
 const chalk = require('chalk');
-const parser = require('./parser');
+const parser = require('../server/parser');
 const postProcessor = require('../server/postProcessor');
 const ora = require('ora');
+const {
+    getAllComponent
+} = require('../server/util');
 prog
     .version('1.0.0')
     .command('start', 'launch GUI')
     .option('-p, --output <dir1>', 'output dir')
     .action(function (args, options, logger) {
         let output = options.output || path.resolve('./.pager');
-        
-        try{
-            if(!fs.existsSync(output)){
+
+        try {
+            if (!fs.existsSync(output)) {
                 fs.mkdirSync(output)
-            }else if(!fs.statSync(output).isDirectory()){
+            } else if (!fs.statSync(output).isDirectory()) {
                 return console.log(`${chalk.red(output)} 不是文件夹`)
             }
             require('../server/server')(output)
-        }catch(err){
+        } catch (err) {
             throw err;
         }
     })
@@ -60,7 +63,11 @@ prog
         }
         check.succeed('valid format')
 
-        let components = parser(json)
+        let componentPaths = getAllComponent()
+
+        let components = parser(json, Object.keys(componentPaths).reduce((target, name) => {
+            target[name] = require(path.join(componentPaths[name], 'config.js'))
+        }, {}))
 
         const spinner = ora({
             text: 'generating page'

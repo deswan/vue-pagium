@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div class="header">
-      <el-menu default-active="1" mode="horizontal" background-color="#545c64"
+      <el-menu :default-active="$route.path" mode="horizontal" background-color="#545c64"
   text-color="#fff" active-text-color="#ffd04b" router>
         <el-menu-item index="/">模板</el-menu-item>
         <el-menu-item index="/create" >编辑页面</el-menu-item>
@@ -13,6 +13,11 @@
 
 <script>
 export default {
+  data(){
+    return {
+      defaultActive:'/'
+    }
+  },
   methods: {
     
   }
