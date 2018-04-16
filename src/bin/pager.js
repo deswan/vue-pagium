@@ -15,7 +15,7 @@ prog
     .command('start', 'launch GUI')
     .option('-p, --output <dir1>', 'output dir')
     .action(function (args, options, logger) {
-        let output = output ? path.resolve(options.output) : path.resolve('./.pager');
+        let output = options.output ? path.resolve(options.output) : path.resolve('./.pager');
 
         try {
             if (!fs.existsSync(output)) {
