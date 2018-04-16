@@ -38,8 +38,13 @@ let template_uuid = 1;
 let template = []
 
 function copyComponent(dir, cb) {
-    let paths = getAllComponent(path.join(dir, config.target.comDir));
+    let comPath = path.join(dir, config.target.comDir);
+    if(!fs.existsSync(comPath) || !fs.statSync(comPath).isDirectory()){
+        return cb();
+    }
+    let paths = getAllComponent(comPath);
     let counter = Object.keys(paths).length;
+    end();
     Object.keys(paths).forEach(name => {
         let p = paths[name]
         ncp(p, path.join(config.componentDir, name), (err) => {
@@ -48,7 +53,6 @@ function copyComponent(dir, cb) {
             end()
         })
     })
-
     function end() {
         if (!counter) {
             cb()
@@ -83,14 +87,14 @@ function writeTemplatesFile(dir) {
 
 function startServer(targetDir) {
 
-    app.use(express.static(path.resolve(__dirname, './index')));
+    app.use(express.static(path.resolve(__dirname, './dist')));
 
     app.get('/', (req, res) => {
-        return res.sendFile(path.resolve(__dirname, './index', 'index.html'))
+        return res.sendFile(path.resolve(__dirname, './dist', 'index.html'))
     })
 
     app.get('/preview', (req, res) => {
-        return res.sendFile(path.resolve(__dirname, './index', 'preview.html'))
+        return res.sendFile(path.resolve(__dirname, './dist', 'preview.html'))
     })
 
     app.post('/preview', function (req, res) {
