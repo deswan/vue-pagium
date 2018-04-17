@@ -79,6 +79,7 @@ export default {
     },
     handleChange() {
       this.$emit("input", this.objTOInput(this.input));
+      this.input = this.input2Obj(this.value);
     },
     delRow(index) {
       this.input.splice(index, 1);

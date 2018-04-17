@@ -14,5 +14,13 @@ module.exports = {
         "name": "center",
         "label": "对头部和底部采用居中布局",
         "value": "boolean"
+    }, {
+        "name": "loadComponent",
+        "label": "加载组件",
+        "value": "refer-component"
+    }, {
+        "name": "clearComponent",
+        "label": "清空组件",
+        "value": "refer-component"
     }]
 }

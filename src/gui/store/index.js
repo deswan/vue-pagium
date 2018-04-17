@@ -6,23 +6,23 @@ const COMPONENTS = process.Components;
 import scheme2Default from "../../utils/scheme2Default.js";
 import scheme2Input from "../Create/SettingBoard/scheme2Input.js";
 const parser = require('../../server/parser');
+const utils = require('../../utils/utils');
 
 const SLOT_TYPE = '__pg_type_slot_component__'
 const REFER_TYPE = '__pg_type_refer_component__'
 
 Vue.use(Vuex)
 
-const getName = (() => {
-    const counter = {}
-    return (name) => {
-        if (counter[name]) {
-            return name + counter[name]++
-        } else {
-            counter[name] = 1
-            return name
-        }
+let nameRecorder = {}
+
+const getName = (name) => {
+    if (nameRecorder[name]) {
+        return name + nameRecorder[name]++
+    } else {
+        nameRecorder[name] = 1
+        return name
     }
-})()
+}
 
 const allComsConfig = Object.keys(COMPONENTS).reduce((target, name) => {
     target[name] = require(`../../Components/${name}/config.js`);
@@ -56,7 +56,7 @@ const store = new Vuex.Store({
         activeComponentSetting(state) {
             return state.activeComponent && scheme2Input(allComsConfig[state.activeComponent.type].props)
         },
-        type2Com(type){
+        type2Com(type) {
             return allComs
         },
         /**
@@ -132,10 +132,10 @@ const store = new Vuex.Store({
             drop
         }) {
             let holder = {}
-            let [comObj] = drag.p.subCom.splice(drag.i, 1, holder);
+            let [comObj] = drag.p.children.splice(drag.i, 1, holder);
 
-            drop.p.subCom.splice(drop.i, 0, comObj)
-            drag.p.subCom.splice(drag.p.subCom.indexOf(holder), 1);
+            drop.p.children.splice(drop.i, 0, comObj)
+            drag.p.children.splice(drag.p.children.indexOf(holder), 1);
         },
 
         /**
@@ -144,7 +144,7 @@ const store = new Vuex.Store({
          * @param { comObj } node 要删除的子对象
          */
         delComponent(state, {
-            list,
+            parent,
             node
         }) {
             function del(list, node) {
@@ -154,11 +154,11 @@ const store = new Vuex.Store({
                     return true;
                 } else {
                     list.some(e => {
-                        return del(e.subCom, node)
+                        return del(e.children, node)
                     })
                 }
             }
-            del(list.subCom, node);
+            del(parent.children, node);
 
             //删除组件名引用
             (function traverse(list) {
@@ -177,7 +177,7 @@ const store = new Vuex.Store({
                         }
                         return v;
                     })
-                    traverse(list[i].subCom)
+                    traverse(list[i].children)
                 }
             })(state.components.concat(state.dialogs))
 
@@ -186,11 +186,11 @@ const store = new Vuex.Store({
 
         /**
          * 添加组件
-         * @param { comObj } node 父对象
+         * @param { comObj } parent 父对象
          * @param { vm } comVm 要添加的组件实例
          */
         addComponent(state, {
-            node,
+            parent,
             comType: type
         }) {
             const config = allComsConfig[type];
@@ -204,11 +204,11 @@ const store = new Vuex.Store({
                 props: { ...scheme2Default(config.props),
                     name
                 },
-                subCom: [],
+                children: [],
                 __pg_slot__: false //是否成为slot
             }
 
-            node.subCom.push(comObj);
+            parent.children.push(comObj);
 
             this.commit('activateComponent', {
                 comObj
@@ -231,8 +231,10 @@ const store = new Vuex.Store({
          * @param { Any } value 字段值
          */
         input(state, {
+            me,
             name,
-            value
+            value,
+            cb
         }) {
 
             function getComponent(comName, list = state.components.concat(state.dialogs)) {
@@ -244,7 +246,7 @@ const store = new Vuex.Store({
                         if (list[i].name === comName) {
                             return ret = list[i];
                         } else {
-                            find(list[i].subCom)
+                            find(list[i].children)
                         }
                     }
                 }
@@ -253,7 +255,7 @@ const store = new Vuex.Store({
             }
 
             //清除该变量名下子组件的所有slot标识
-            state.activeComponent.subCom.forEach((com) => {
+            state.activeComponent.children.forEach((com) => {
                 if (com.__pg_slot__ && com.__pg_slot__.startsWith(name)) {
                     com.__pg_slot__ = false;
                 }
@@ -275,7 +277,7 @@ const store = new Vuex.Store({
                     })
                     //过滤非直接子组件以及已经成为slot的子组件
                     this.value = this.value.filter(e => {
-                        return state.activeComponent.subCom.some(subCom => {
+                        return state.activeComponent.children.some(subCom => {
                             return e === subCom.name && !subCom.__pg_slot__
                         }) && slots.every(slot => {
                             return slot.every(slot => {
@@ -296,7 +298,7 @@ const store = new Vuex.Store({
 
             //为子组件添加slot标识
             slots.forEach((slotsName, slotIdx) => {
-                state.activeComponent.subCom.forEach(subCom => {
+                state.activeComponent.children.forEach(subCom => {
                     if (slotsName.includes(subCom.name)) {
                         subCom.__pg_slot__ = name + (slotIdx + 1);
                         subCom.props.__pg_slot__ = name + (slotIdx + 1);
@@ -306,49 +308,69 @@ const store = new Vuex.Store({
 
             if (name === 'name') {
 
-                //组件名称引用联动
                 let oldName = state.activeComponent.name;
-                (function traverse(list) {
-                    if (!list) return;
-                    for (let i = 0, len = list.length; i < len; i++) {
-                        let props = list[i].props;
-                        list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
-                            if (this.type === SLOT_TYPE) {
-                                this.value = this.value.map(e => {
-                                    if (e === oldName) {
-                                        return value
-                                    } else {
-                                        return e;
+
+                if (utils.isNameExist(this.getters.data, value)) {
+                    me.$message.warning('该组件名已存在');
+                    value = oldName;
+                } else {
+                    if (!nameRecorder[value]) nameRecorder[value] = 1;
+
+                    //组件名称引用联动
+                    (function traverse(list) {
+                        if (!list) return;
+                        for (let i = 0, len = list.length; i < len; i++) {
+                            let props = list[i].props;
+                            list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
+                                if (this.type === SLOT_TYPE) {
+                                    this.value = this.value.map(e => {
+                                        if (e === oldName) {
+                                            return value
+                                        } else {
+                                            return e;
+                                        }
+                                    })
+                                } else if (this.type === REFER_TYPE) {
+                                    if (this.value === oldName) {
+                                        this.value = value
                                     }
-                                })
-                            } else if (this.type === REFER_TYPE) {
-                                if (this.value === oldName) {
-                                    this.value = value
                                 }
-                            }
-                            return v;
-                        })
-                        traverse(list[i].subCom)
-                    }
-                })(state.components.concat(state.dialogs))
+                                return v;
+                            })
+                            traverse(list[i].children)
+                        }
+                    })(this.getters.data)
 
-                state.activeComponent.name = value;
-
+                    state.activeComponent.name = value;
+                }
             }
-
             Vue.set(state.activeComponent.props, name, value);
         },
-        employTemplate(state,{data}){
-            let comList = parser(data,allComsConfig);
+        employTemplate(state, {
+            data
+        }) {
+            let comList = parser(data, allComsConfig);
             state.activeComponent = null;
-            state.components = comList.filter(e=>{
+            nameRecorder = {};
+            state.components = comList.filter(e => {
                 return !e.isDialog
             })
-            state.dialogs = comList.filter(e=>{
+            state.dialogs = comList.filter(e => {
                 return e.isDialog
-            })
+            });
+
+            function collectName(list) {
+                list.forEach(e => {
+                    getName(e.name)
+                    collectName(e.children)
+                })
+            }
+            collectName(comList);
+
+            console.log(data)
         },
-        clearData(state){
+        clearData(state) {
+            nameRecorder = {};
             state.activeComponent = null;
             state.components.splice(0)
             state.dialogs.splice(0)

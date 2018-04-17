@@ -93,6 +93,7 @@ export default {
     },
     inputArg() {
       this.$emit("input", this.arr2Obj(this.input));
+      this.input = this.arr2Obj(this.value);
     }
   },
   watch:{

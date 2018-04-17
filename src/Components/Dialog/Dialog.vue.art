@@ -5,6 +5,7 @@
     {{{if center}}} center {{{/if}}}  
     :visible.sync="@@show">
     {{{$imports.insertChildren()}}}
+    @close="@@close"
     </el-dialog>
 </template>
 <script>
@@ -18,7 +19,15 @@ export default {
   },
   methods:{
       open(){
-          this.@@show = true;
+        this.@@show = true;
+        {{{if loadComponent}}}
+          {{{$imports.external(loadComponent.value,'load')}}}
+        {{{/if}}}
+      },
+      close(){
+        {{{if clearComponent}}}
+          {{{$imports.external(clearComponent.value,'clear')}}}
+        {{{/if}}}
       }
   },
 };

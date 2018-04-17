@@ -20,6 +20,8 @@ const babel_generator = require('babel-generator').default;
 const CHILDREN_PLACEHOLDER = '_____pg_chilren_____';
 const SLOT_PLACEHOLDER = '_____pg_slot______';
 
+const HOOKS_NAME = ['created', 'mounted'];
+
 let logger = require('./logger')
 
 let pg_map = {
@@ -55,8 +57,8 @@ function replaceIdentifier() {
         if (!list || !list.length) return;
         list.forEach((pg_com) => {
             let externalReplaced = pg_com.compiled.replace(externalRegExp, (match, comName, varName) => {
-                let com = getComponent(comName)
-                if (!com) {
+                let externalCom = getComponent(comName)
+                if (!externalCom) {
                     throw new Error(`${comName} 组件不存在`)
                 }
 
@@ -65,7 +67,7 @@ function replaceIdentifier() {
                 //修改为rename后的值
                 if (pg_map.renameMap.data) {
                     idx = pg_map.renameMap.data.findIndex(toRename => {
-                        return toRename.node === com && toRename.raw === varName
+                        return toRename.node === externalCom && toRename.raw === varName
                     })
                     if (~idx) {
                         renamedVarName = pg_map.renameMap.data[idx].value
@@ -74,22 +76,22 @@ function replaceIdentifier() {
 
                 if (pg_map.renameMap.methods) {
                     idx = pg_map.renameMap.methods.findIndex(toRename => {
-                        return toRename.node === com && toRename.keys[varName]
+                        return toRename.node === externalCom && toRename.raw === varName
                     })
                     if (~idx) {
-                        renamedVarName = pg_map.renameMap.methods[idx].keys[varName]
+                        renamedVarName = pg_map.renameMap.data[idx].value
                     }
                 }
 
                 //匹配
-                let isData = com.dataKeys.includes(renamedVarName)
-                let isMethod = com.methodsKeys.includes(renamedVarName);
+                let isData = externalCom.dataKeys.includes(renamedVarName)
+                let isMethod = externalCom.methodsKeys.includes(renamedVarName);
 
                 if (!isData && !isMethod) { //编译后组件的某些属性很有可能不存在，因此不必报错
                     warn(`${comName} 组件的属性（data/method） ${renamedVarName} 不存在`)
-                }else if(isData){
-                    return com.wrapper + renamedVarName;
-                }else{
+                } else if (isData) {
+                    return externalCom.wrapper + renamedVarName;
+                } else {
                     return renamedVarName;
                 }
 
@@ -289,7 +291,7 @@ function merge() {
  * @param {html,data,methods,hooks} data 输出信息
  */
 function render(data) {
-    logger('render',data)
+    logger('render', data)
     let output = template(path.join(outTemplDir, 'App.vue.art'), data)
     return beautify(output);
 }
@@ -336,12 +338,10 @@ function getScript(vue) {
 
 function renameMethods() {
     let AllMethodsKey = [];
-    let toRename = []
+    let renameList = []
 
     function traverse(list) {
-        if (!list || !list.length) return;
         list.forEach(e => {
-            let t = {};
             let newMethodsKey = [] //该组件的methosKey集合
             e.methodsKeys.forEach(key => {
                 let newKey = key;
@@ -350,28 +350,43 @@ function renameMethods() {
                     while (AllMethodsKey.includes(newKey)) {
                         newKey = newKey + '$'
                     }
-                    t[key] = newKey;
+                    renameList.push({
+                        node: e,
+                        value: newKey,
+                        raw: key
+                    });
                 }
                 newMethodsKey.push(newKey)
             })
             e.methodsKeys = newMethodsKey; //修改pg_map中的methodsKey
             AllMethodsKey = AllMethodsKey.concat(newMethodsKey);
-            if (Object.keys(t).length) {
-                toRename.push({
-                    node: e,
-                    keys: t
-                });
-            }
             traverse(e.children);
         })
     }
     traverse(pg_map.components);
     logger('renameMethods: AllMethodsKey', AllMethodsKey)
-    logger('renameMethods: toRename', toRename)
+    logger('renameMethods: renameList', renameList)
 
-    if (!toRename.length) return;
+    if (!renameList.length) return;
 
-    pg_map.renameMap.methods = toRename
+    pg_map.renameMap.methods = renameList
+
+    let toRename = renameList.reduce((target, item) => {
+        let idx = target.findIndex(e => {
+            return e.node === item.node
+        })
+        if (~idx) {
+            target[idx].keys[item.raw] = item.value;
+        } else {
+            target.push({
+                node: item.node,
+                keys: {
+                    [item.raw]: item.value
+                }
+            })
+        }
+        return target;
+    }, [])
 
     //compiled -> methodRenamed
     toRename.forEach(({
@@ -626,7 +641,6 @@ function renameData() {
  */
 function getScriptData(vue) {
     let script = getScript(vue);
-    const hooksName = ['created', 'mounted'];
 
     //替换掉@@为合法标识符
     const pgHash = 'pg______' + Date.now();
@@ -645,7 +659,7 @@ function getScriptData(vue) {
 
     let ret = {
         data: getData(ast, script),
-        hooks: getHook(ast, script, hooksName),
+        hooks: getHook(ast, script, HOOKS_NAME),
         methods: getMethods(ast, script)
     }
 
@@ -731,9 +745,7 @@ function getScriptData(vue) {
 }
 
 function getComponent(comName) {
-    let list = pg_map.components;
     let ret = null;
-
     function find(list) {
         if (!list) return;
         for (let i = 0, len = list.length; i < len; i++) {
@@ -744,7 +756,7 @@ function getComponent(comName) {
             }
         }
     }
-    find(list)
+    find(pg_map.components)
     return ret;
 }
 
@@ -756,26 +768,36 @@ function initMap(components) {
         let children = [];
 
         let compiled = compile(comObj, {
+            /**
+             * 插入子组件
+             */
             insertChildren() {
-                let subCom = comObj.subCom.filter((e) => {
+                //过滤slot children
+                let children = comObj.children.filter((e) => {
                     return !e.__pg_slot__;
                 });
-                if (!subCom || !subCom.length) return '';
+                if (!children.length) return '';
                 return CHILDREN_PLACEHOLDER;
             },
+            /**
+             * 插入slot
+             */
             insertSlot({
                 value: nameArr
             }) {
                 let slotId = '';
-                let subCom = comObj.subCom.filter((e) => {
+                let children = comObj.children.filter((e) => {
                     if (e.__pg_slot__ && nameArr.includes(e.name)) {
                         slotId = e.__pg_slot__;
                         return true;
                     }
                 });
-                if (!subCom || !subCom.length) return '';
+                if (!children.length) return '';
                 return SLOT_PLACEHOLDER + slotId;
             },
+            /**
+             * 引用其它组件的data/method
+             */
             external({
                 value: comName
             }, varName) {
@@ -792,7 +814,7 @@ function initMap(components) {
             compiled,
             children
         });
-        comObj.subCom && comObj.subCom.forEach(comObj => {
+        comObj.children && comObj.children.forEach(comObj => {
             doCompile(comObj, children)
         })
     }

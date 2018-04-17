@@ -1,4 +1,9 @@
 
+/**
+ * browser/node 共用模块
+ * template.data/data.json -> $store.state.components/$store.state.dialogs
+ * TODO:检查合法性
+ */
 const chalk = require('chalk');
 const scheme2Default = require('../utils/scheme2Default');
 const constant = require('../const');
@@ -30,17 +35,12 @@ function traverse(list, allComsConfig) {
                     this.value = this.value.filter((e, idx) => {
                         return this.value.indexOf(e) == idx;
                     })
-                    //过滤非直接子组件以及已经成为slot的子组件
-                    this.value = this.value.filter(e => {
+                    //过滤非直接子组件、已经成为slot的子组件
+                    this.value = this.value.filter(name => {
                         return children.some(subCom => {
-                            return e === subCom.name && !subCom.__pg_slot__
-                        }) && slots.every(slot => {
-                            return slot.every(slot => {
-                                return e !== slot;
-                            })
-                        })
+                            return name === subCom.name && !subCom.__pg_slot__
+                        }) && !~[].concat(...slots).indexOf(name)
                     })
-
                     slots.push(this.value);
                 } else if (this.type === constant.REFER_TYPE) {
                     //过滤不存在的组件以及自身组件
@@ -67,12 +67,13 @@ function traverse(list, allComsConfig) {
             name: item.name,
             type: item.type,
             isDialog: config.isDialog,
-            props: { ...scheme2Default(config.props),
+            props: { 
+                ...scheme2Default(config.props),
                 ...item.props,
                 name: item.name
             },
-            subCom: children,
-            __pg_slot__: false //是否成为slot
+            children,
+            __pg_slot__: false
         })
     })
     return result;

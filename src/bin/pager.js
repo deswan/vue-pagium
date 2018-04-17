@@ -7,6 +7,7 @@ const chalk = require('chalk');
 const parser = require('../server/parser');
 const postProcessor = require('../server/postProcessor');
 const ora = require('ora');
+const config = require('../config');
 const {
     getAllComponent
 } = require('../server/util');
@@ -15,18 +16,15 @@ prog
     .command('start', 'launch GUI')
     .option('-p, --output <dir1>', 'output dir')
     .action(function (args, options, logger) {
-        let output = options.output ? path.resolve(options.output) : path.resolve('./.pager');
+        let output = options.output ? path.resolve(options.output) : path.resolve(config.target.dir);
 
-        try {
-            if (!fs.existsSync(output)) {
-                fs.mkdirSync(output)
-            } else if (!fs.statSync(output).isDirectory()) {
-                return console.log(`${chalk.red(output)} 不是文件夹`)
-            }
-            require('../server/server')(output)
-        } catch (err) {
-            throw err;
+        if (!fs.existsSync(output)) {
+            fs.mkdirSync(output)
+        } else if (!fs.statSync(output).isDirectory()) {
+            return console.log(`${chalk.red(output)} 不是文件夹`)
         }
+        
+        require('../server/server')(output)
     })
 
 
@@ -63,6 +61,7 @@ prog
         }
         check.succeed('valid format')
 
+        //直接使用本地Components?
         let componentPaths = getAllComponent()
 
         let components = parser(json, Object.keys(componentPaths).reduce((target, name) => {
@@ -73,9 +72,9 @@ prog
             text: 'generating page'
         }).start();
         let ret = postProcessor(components)
-        fs.writeFile(path.join(targetDir, 'Page.vue'), ret, (err) => {
+        fs.writeFile(path.join(targetDir, config.target.pageName), ret, (err) => {
             if (err) throw err;
-            spinner.succeed(`${chalk.green('Page.vue')} is created in ${chalk.green(targetDir)}`)
+            spinner.succeed(`${chalk.green(config.target.pageName)} is created in ${chalk.green(targetDir)}`)
         })
     });
 

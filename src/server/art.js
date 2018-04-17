@@ -8,10 +8,7 @@ Object.assign(template.defaults, {
     escape: false,
 })
 Object.assign(template.defaults.imports, {
-    Object,Array,String,
-    valuelize(e) {
-        return JSON.stringify(e)
-    },
+    Object,Array,String,JSON
 })
 
 module.exports = template;

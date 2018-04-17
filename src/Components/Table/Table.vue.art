@@ -33,11 +33,10 @@
 </template>
 <script>
 export default {
-  name: 'Table',
   data() {
     return {
       loading:false,
-      items:[{},{},{}],
+      items:[],
       total: 0,
       {{{if pagination}}}
         page: 1,
@@ -47,16 +46,16 @@ export default {
   },
   created(){
     {{{if load}}}
-    this.@@loadList(); 
+    this.@@load(); 
     {{{/if}}}
   },
   methods:{
     {{{if load}}}
-     loadList(){
+     load(){
         this.@@loading = true;
         <% include('http.art',{
-          method:$imports.valuelize(method),
-          url:$imports.valuelize(url),
+          method:JSON.stringify(method),
+          url:JSON.stringify(url),
           params:pagination ? {
             [pageName]:'this.@@page',
             [pageSizeName]:'this.@@pageSize'
@@ -79,7 +78,7 @@ export default {
       handleCurrentChange(page) {
         this.@@page = page;
         {{{if load}}}
-          this.@@loadList();
+          this.@@load();
         {{{/if}}}
       },
 
@@ -87,7 +86,7 @@ export default {
         this.table.pageSize = size;
         if (this.table.page == 1) {
           {{{if load}}}
-            this.@@loadList();
+            this.@@load();
           {{{/if}}}
         } else {
           this.table.page = 1;

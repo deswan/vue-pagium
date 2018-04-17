@@ -3,8 +3,8 @@
       :active="$store.state.activeComponent && $store.state.activeComponent.pg === comObj.pg" 
       :subActive="subActive"
       :pg="comObj.pg">
-          <template v-if="comObj.subCom && comObj.subCom.length">
-            <pg-com :com-obj="subCom" v-for="subCom in comObj.subCom" :key="subCom.pg"></pg-com>
+          <template v-if="comObj.children && comObj.children.length">
+            <pg-com :com-obj="subCom" v-for="subCom in comObj.children" :key="subCom.pg"></pg-com>
           </template>
       </components>
 </template>
@@ -20,14 +20,14 @@ export default {
   computed: {
     subActive() {
       if(!this.$store.state.activeComponent) return false;
-      return find(this.comObj.subCom, this.$store.state.activeComponent);
+      return find(this.comObj.children, this.$store.state.activeComponent);
       function find(list, node) {
         if (!list) return false;
         return list.some(e => {
           if ((e.pg === node.pg)) {
             return true;
           } else {
-            return find(e.subCom, node);
+            return find(e.children, node);
           }
         });
       }

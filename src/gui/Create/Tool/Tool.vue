@@ -8,7 +8,7 @@
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"
-      @on-del-btn-click="delCom(data_com,$event)"
+      @on-del-btn-click="delCom"
       type="components"
       >
       </hierarchy-tree>      
@@ -22,7 +22,7 @@
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"
-      @on-del-btn-click="delCom(data_dialog,$event)"
+      @on-del-btn-click="delCom"
       type="dialogs"
       >
       </hierarchy-tree> 
@@ -47,12 +47,12 @@ export default {
   created() {
     this.data_com = {
       name: "组件",
-      subCom: this.$store.getters.components,
+      children: this.$store.getters.components,
       isRoot: true
     };
     this.data_dialog = {
       name: "对话框",
-      subCom: this.$store.getters.dialogs,
+      children: this.$store.getters.dialogs,
       isRoot: true
     };
   },
@@ -63,11 +63,11 @@ export default {
     nodeClick(comObj) {
       this.$store.commit("activateComponent", { comObj });
     },
-    delCom(root, node) {
-      this.$store.commit("delComponent", { list: root, node });
+    delCom(data) {
+      this.$store.commit("delComponent", data);
     },
-    addCom({ comType, node }) {
-      this.$store.commit("addComponent", { node, comType });
+    addCom(data) {
+      this.$store.commit("addComponent", data);
     }
   }
 };

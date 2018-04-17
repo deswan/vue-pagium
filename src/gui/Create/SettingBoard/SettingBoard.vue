@@ -48,7 +48,7 @@ export default {
   },
   methods: {
     handleInput(name, value) {
-      this.$store.commit("input", { name, value });
+      this.$store.commit("input", { me:this,name, value });
     }
   }
 };

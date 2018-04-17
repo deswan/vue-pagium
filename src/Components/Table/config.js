@@ -1,5 +1,5 @@
 module.exports = {
-    "name":'table',
+    "name": 'table',
     "props": [{
         "name": "cols",
         "label": "设置列",
@@ -25,7 +25,39 @@ module.exports = {
             "name": "scope",
             "label": "scope",
             "value": "slot-component"
+        }, {
+            "name": "align",
+            "label": "align",
+            "value": "select",
+            "options": ['left', 'center', 'right']
+        }, {
+            "name": "type",
+            "label": "type",
+            "value": "select",
+            "options": ['selection', 'index', 'expand']
         }]
+    }, {
+        "name": "height",
+        "label": "height",
+        "value": "string"
+    }, {
+        "name": "max-height",
+        "label": "maxHeight",
+        "value": "string"
+    }, {
+        "name": "stripe",
+        "label": "stripe",
+        "value": "boolean"
+    }, {
+        "name": "size",
+        "label": "size",
+        "value": "select",
+        "options": ['medium', 'small', 'mini']
+    }, {
+        "name": "fit",
+        "label": "宽度是否自撑开",
+        "value": "boolean",
+        "default": true
     }, {
         "name": "pagination",
         "label": "分页器",

@@ -37,8 +37,13 @@ let template_uuid = 1;
 
 let template = []
 
-function copyComponent(dir, cb) {
-    let comPath = path.join(dir, config.target.comDir);
+/**
+ * 拷贝用户自定义组件到src/Components中
+ * @param {String} targetDir 
+ * @param {Function} cb 
+ */
+function copyComponent(targetDir, cb) {
+    let comPath = path.join(targetDir, config.target.comDir);
     if(!fs.existsSync(comPath) || !fs.statSync(comPath).isDirectory()){
         return cb();
     }
@@ -60,10 +65,14 @@ function copyComponent(dir, cb) {
     }
 }
 
-function readTemplatesFile(dir) {
-    let tempPath = path.join(dir, config.target.tempName)
+/**
+ * 读取用户目录下的模板数据到template变量中
+ * @param {*} targetDir 
+ */
+function readTemplatesFile(targetDir) {
+    let tempPath = path.join(targetDir, config.target.tempName)
     if (fs.existsSync(tempPath) && fs.statSync(tempPath).isFile()) {
-        template = require(path.join(dir, config.target.tempName)).map(e => {
+        template = require(path.join(targetDir, config.target.tempName)).map(e => {
             e.id = template_uuid++;
             return e;
         });
@@ -72,8 +81,12 @@ function readTemplatesFile(dir) {
     }
 }
 
-function writeTemplatesFile(dir) {
-    let tempPath = path.join(dir, config.target.tempName)
+/**
+ * 将当前template数据写入用户目录
+ * @param {*} targetDir 
+ */
+function writeTemplatesFile(targetDir) {
+    let tempPath = path.join(targetDir, config.target.tempName)
     let templateWithoutId = template.map(e => {
         return {
             name: e.name,
@@ -100,7 +113,9 @@ function startServer(targetDir) {
     app.post('/preview', function (req, res) {
         let output = postProcessor(req.body);
         let finish = 0;
-        fs.writeFile(config.outputPath, output, (err) => {
+
+        //将结果写入preview目录下后打包
+        fs.writeFile(config.previewOutputPath, output, (err) => {
             if (err) throw err;
             webpack(webpackPreviewConfig, (err, stats) => {
                 if (err) throw err;
@@ -108,7 +123,7 @@ function startServer(targetDir) {
                 process.stdout.write(stats.toString({
                     colors: true,
                     modules: false,
-                    children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
+                    children: false,
                     chunks: false,
                     chunkModules: false
                   }) + '\n\n')
@@ -117,6 +132,8 @@ function startServer(targetDir) {
                 end();
             })
         });
+
+        //将结果写入用户目录
         fs.writeFile(path.join(targetDir, config.target.pageName), output, (err) => {
             if (err) throw err;
             finish++;
@@ -132,6 +149,7 @@ function startServer(targetDir) {
         }
     });
 
+    //将结果写入用户目录
     app.post('/save', function (req, res) {
         let output = postProcessor(req.body);
         fs.writeFile(path.join(targetDir, config.target.pageName), output, (err) => {
@@ -143,7 +161,7 @@ function startServer(targetDir) {
     });
 
     /**
-     * 保存模板
+     * 保存为模板
      * @data {data,name,date,remark}
      */
     app.post('/saveAsTemplate', function (req, res) {
@@ -185,10 +203,7 @@ function startServer(targetDir) {
     app.post('/delTemplate', function (req, res) {
         let id = req.body.id;
         template = template.filter((e, idx) => {
-            if (e.id === id) {
-                return false;
-            }
-            return true
+            return e.id !== id
         })
         writeTemplatesFile(targetDir)
         res.json({

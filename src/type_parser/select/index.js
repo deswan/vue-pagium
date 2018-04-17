@@ -1,7 +1,5 @@
 import component from './select.vue';
-import {
-    isPlainObject
-} from '../../utils/utils';
+const isPlainObject = require('../../utils/utils')
 let options = {
     loader(options) {
         /**

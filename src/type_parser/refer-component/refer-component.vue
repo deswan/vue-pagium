@@ -45,6 +45,7 @@ export default {
     },
     valChange(input) {
       this.$emit("input", this.inp2val(this.input));
+      this.input = this.val2inp(this.value);
     }
   },
   watch:{

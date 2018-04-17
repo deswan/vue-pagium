@@ -27,7 +27,8 @@ export default {
   },
   methods: {
     valChange(input) {
-      this.$emit('input',this.input);
+      this.$emit('input',this.input)
+      this.input = this.value;
     }
   },
   watch: {

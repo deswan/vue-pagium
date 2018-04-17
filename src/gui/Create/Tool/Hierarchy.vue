@@ -17,19 +17,19 @@
             <span v-if="!!node.__pg_slot__" style="font-size:10px;">slot</span>
             {{ node.name }}
           </span>
-          <i @click="emitEvent('nodeName')" v-if="node.name && node.subCom && node.subCom.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
+          <i @click="emitEvent('nodeName')" v-if="node.name && node.children && node.children.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
         </span>
         <span class="tree-node-action" v-if="node.name">
           <el-popover placement="right-end" trigger="click" v-model="showComlib">  
             <div class="com-lib" v-if="isDialog && idx === undefined">
-              <div @click="emitEvent('addCom',{comType,node})" class="com-lib-item" v-for="comType in $store.getters.allComsDialog" :key="comType">{{comType}}</div>
+              <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in $store.getters.allDialogsType" :key="comType">{{comType}}</div>
             </div>
             <div class="com-lib" v-else>
-              <div @click="emitEvent('addCom',{comType,node})" class="com-lib-item" v-for="comType in allComs" :key="comType">{{comType}}</div>
+              <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in allComs" :key="comType">{{comType}}</div>
             </div>        
             <i class="el-icon-plus" slot="reference" @click.stop="emitEvent('add')"></i>
           </el-popover>
-          <i class="el-icon-delete" @click="emitEvent('delete')" v-if="idx !== undefined"></i>
+          <i class="el-icon-delete" @click="emitEvent('delete',{parent:$parent.node,node})" v-if="idx !== undefined"></i>
         </span>
       </div>
     </div>
@@ -85,7 +85,7 @@ export default {
     children() {
       // 为每个子节点前后都生成空节点，便于实现兄弟节点间的“插入排序”
       // 举例：原本是 [N1, N2, N3]
-      let { subCom: children } = this.node;
+      let { children } = this.node;
       if (!children || !children.length) return [];
       let _children = [];
       children.forEach(child => _children.push({}, child));
@@ -149,7 +149,7 @@ export default {
       if (!this.isAllowToDrop) return;
 
       var dragParentNode = this.value.$parent.node;
-      let dragIndex = dragParentNode.subCom.indexOf(this.value.node);
+      let dragIndex = dragParentNode.children.indexOf(this.value.node);
 
       // 情况 1：拖入空节点，成其兄弟（使用 splice 插入节点）
       if (!this.node.name) {
@@ -242,18 +242,18 @@ export default {
         this.$parent && this.$parent.onNodeRowClick(data);
       }
     },
-    onAddCom(com) {
+    onAddCom(data) {
       if (typeof this.idx === "undefined") {
-        this.$emit("addCom", com);
+        this.$emit("addCom", data);
       } else {
-        this.$parent && this.$parent.onAddCom(com);
+        this.$parent && this.$parent.onAddCom(data);
       }
     },
-    emitEvent(type, node) {
+    emitEvent(type, data) {
       switch (type) {
         case "addCom":
           this.showComlib = false;
-          this.onAddCom(node);
+          this.onAddCom(data);
           break; //{com,node}
         case "add":
           this.onAddBtnClick(this.node);
@@ -265,7 +265,7 @@ export default {
           this.onCopyBtnClick(this.node);
           break;
         case "delete":
-          this.onDelBtnClick(this.node);
+          this.onDelBtnClick(data);
           break;
         case "nodeRow":
           if(this.idx === undefined) return;
