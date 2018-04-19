@@ -12,7 +12,7 @@ export default new Router({
       name: 'templates',
       component: Template
     },{
-      path: '/create/:template?',
+      path: '/create/:templateId?',
       name: 'create',
       component: Create
     }

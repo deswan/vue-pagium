@@ -1,16 +1,20 @@
-import component from './string.vue';
-var hasError = (conf) => {
+var hasError = (conf) => {}
 
+function isValid(value) {
+    return typeof value == 'string'
 }
 
-var input = {
-    component,
-    propsLoader(conf){
-        return {}
-    }
+function patchDefault(value) {
+    return value;
 }
 
-export {
-    input,
-    hasError
+function defaultValue() {
+    return '';
+}
+
+module.exports = {
+    hasError,
+    isValid,
+    patchDefault,
+    defaultValue
 }

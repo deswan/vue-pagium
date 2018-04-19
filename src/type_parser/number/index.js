@@ -1,16 +1,22 @@
-import component from './number.vue';
 let hasError = (conf) => {
 
 }
 
-let input = {
-    component,
-    propsLoader(conf){
-        return {}
-    }
+function isValid(value){
+    return typeof value == 'number'
 }
 
-export {
-    input,
-    hasError
+function patchDefault(value) {
+    return value;
+}
+
+function defaultValue(){
+    return 1;
+}
+
+module.exports = {
+    hasError,
+    isValid,
+    patchDefault,
+    defaultValue
 }

@@ -1,24 +1,5 @@
-import component from './select.vue';
-const isPlainObject = require('../../utils/utils')
+const {isPlainObject} = require('../../utils/utils')
 let options = {
-    loader(options) {
-        /**
-         * options有两种写法，[Object<key,value>]为标准写法，[String]为简写法
-         * 实现简写->标准写法的转换
-         * etc.['name1','name2'] => [{key,value}]
-         */
-        return options.reduce((arr, item) => {
-            if (typeof item != 'object') {
-                arr.push({
-                    key: item,
-                    value: item
-                })
-            } else {
-                arr.push(item)
-            }
-            return arr;
-        }, [])
-    },
     hasError(options) {
         if (!Array.isArray(options)) {
             return "options 必须是数组"
@@ -49,16 +30,27 @@ let hasError = (conf) => {
     return false;
 }
 
-let input = {
-    component,
-    propsLoader(conf) {
-        return {
-            options: options.loader(conf.options)
+function isValid(value){
+    return this.options.some(e=>{
+        if(e.key && e.value){
+            return value === e.key
+        }else{
+            return value === e
         }
-    }
+    })
 }
 
-export {
-    input,
-    hasError
+function patchDefault(value){
+    return value;
+}
+
+function defaultValue(){
+    return ''
+}
+
+module.exports = {
+    hasError,
+    isValid,
+    patchDefault,
+    defaultValue
 }

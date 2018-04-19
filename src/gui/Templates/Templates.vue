@@ -51,9 +51,9 @@ export default {
         this.table.loading = false;
       });
     },
-    employ({ data }) {
-      this.$store.commit("employTemplate", { data });
-      this.$router.push({name:'create'})
+    employ(row) {
+      this.$store.commit("employTemplate", row);
+      this.$router.push({name:'create',params:{templateId:row.id}})
     },
     del({ id,name }) {
       this.$confirm(`确认删除模板 ${name} ？`)

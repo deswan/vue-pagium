@@ -4,8 +4,8 @@
     
     <div class="main">
       <el-button class="save-btn" @click="save" type="primary" :loading="saving">保存</el-button>
-      <el-button class="save-btn" @click="preview" :loading="previewing">保存并预览</el-button>
-      <el-button class="save-btn" @click="saveAsTemplateDialog.show = true">生成模板</el-button>
+      <el-button class="save-btn" @click="preview" :loading="previewing">预览</el-button>
+      <el-button class="save-btn" @click="openSaveAsTemplate">生成模板</el-button>
       <el-button class="save-btn" @click="clear">清空</el-button>
       
       <draw-board></draw-board>
@@ -59,7 +59,7 @@ export default {
         .dispatch("save", { vm: this })
         .then(({ data }) => {
           this.saving = false;
-          this.$message.success("保存成功");
+          this.$message.success("保存成功 "+data.data);
         })
         .catch(err => {
           this.saving = false;
@@ -72,33 +72,64 @@ export default {
         .dispatch("preview", { vm: this })
         .then(({ data }) => {
           this.previewing = false;
-          window.open('/preview','_blank')
+          window.open("/preview", "_blank");
         })
         .catch(err => {
           this.previewing = false;
           this.$message.error("预览失败：" + err.message);
         });
     },
+    openSaveAsTemplate() {
+      if (this.$route.params.templateId) {
+        this.$http
+          .get("/template", {
+            params: {
+              id: this.$route.params.templateId
+            }
+          })
+          .then(({ data }) => {
+            this.saveAsTemplateDialog.form.name = data.data.name;
+          })
+          .catch(err => {});
+      }
+      this.saveAsTemplateDialog.show = true;
+    },
     saveAsTemplate() {
+      const request = isCover => {
+        this.$http
+          .post("/saveAsTemplate", {
+            name: this.saveAsTemplateDialog.form.name,
+            remark: this.saveAsTemplateDialog.form.remark,
+            data: this.$store.getters.data,
+            isCover: !!isCover
+          })
+          .then(({ data }) => {
+            if (data.code === 0) {
+              this.saveAsTemplateDialog.commiting = false;
+              this.saveAsTemplateDialog.show = false;
+              this.$message.success("保存模板成功");
+            } else if (data.code === 1) {
+              this.$confirm("将覆盖原有模板，是否允许？")
+                .then(_ => {
+                  this.saveAsTemplateDialog.commiting = false;
+                  request(true);
+                })
+                .catch(_ => {
+                  this.saveAsTemplateDialog.commiting = false;
+                });
+            }
+          })
+          .catch(err => {
+            this.saveAsTemplateDialog.commiting = false;
+            this.$message.error("保存模板失败：" + err.message);
+          });
+      };
+
       this.$refs.saveAsTemplate
         .validate()
         .then(() => {
           this.saveAsTemplateDialog.commiting = true;
-          this.$store
-            .dispatch("saveAsTemplate", {
-              vm: this,
-              name: this.saveAsTemplateDialog.form.name,
-              remark: this.saveAsTemplateDialog.form.remark
-            })
-            .then(({ data }) => {
-              this.saveAsTemplateDialog.commiting = false;
-              this.saveAsTemplateDialog.show = false;
-              this.$message.success("保存模板成功");
-            })
-            .catch(err => {
-              this.saveAsTemplateDialog.commiting = false;
-              this.$message.error("保存模板失败：" + err.message);
-            });
+          request();
         })
         .catch(() => {});
     },

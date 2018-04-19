@@ -1,20 +1,22 @@
-import component from './boolean.vue';
-import scheme2Input from '../../gui/Create/SettingBoard/scheme2Input';
-
 let hasError = (conf) => {
 
 }
 
-let input = {
-    component,
-    propsLoader(conf) {
-        return {
-            subInput: conf.on && scheme2Input(conf.on)
-        }
-    }
+function isValid(value){
+    return typeof value == 'boolean'
 }
 
-export {
-    input,
-    hasError
+function patchDefault(value) {
+    return value;
+}
+
+function defaultValue(){
+    return false;
+}
+
+module.exports = {
+    hasError,
+    isValid,
+    patchDefault,
+    defaultValue
 }

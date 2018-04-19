@@ -25,14 +25,7 @@ module.exports = function (config) {
             }
             return false;
         } else if (type === 'object') {
-            if (conf.format) {
-                return conf2Default(conf.format);
-            } else {
-                return {
-                    name: '',
-                    value: ''
-                }
-            }
+            return conf2Default(conf.format);
         } else if (Array.isArray(type) && type.length == 1) {
             let item = getDefault({ ...conf,
                 value: type[0]

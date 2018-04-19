@@ -7,7 +7,7 @@
     {{{if statusIcon}}} status-icon {{{/if}}}  
     {{{if size}}} size="{{{size}}}" {{{/if}}}  
     >
-    {{{$imports.insertChildren()}}}
+    {{{insertChildren()}}}
     </el-form>
 </template>
 <script>

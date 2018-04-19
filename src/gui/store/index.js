@@ -13,27 +13,31 @@ const REFER_TYPE = '__pg_type_refer_component__'
 
 Vue.use(Vuex)
 
-let nameRecorder = {}
+const allComsConfig = {}
 
-const getName = (name) => {
-    if (nameRecorder[name]) {
-        return name + nameRecorder[name]++
-    } else {
-        nameRecorder[name] = 1
-        return name
-    }
-}
+const allComs = {}
 
-const allComsConfig = Object.keys(COMPONENTS).reduce((target, name) => {
+console.log(COMPONENTS)
+
+Object.keys(COMPONENTS.origin).reduce((target, name) => {
     target[name] = require(`../../Components/${name}/config.js`);
     return target;
-}, {});
+}, allComsConfig);
 
-const allComs = Object.keys(COMPONENTS).reduce((target, name) => {
+Object.keys(COMPONENTS.custom).reduce((target, name) => {
+    target[name] = require(`../../Components/.custom/${name}/config.js`);
+    return target;
+}, allComsConfig);
+
+Object.keys(COMPONENTS.origin).reduce((target, name) => {
     target[name] = require(`../../Components/${name}/${name}.vue`).default;
     return target;
-}, {});
+}, allComs);
 
+Object.keys(COMPONENTS.custom).reduce((target, name) => {
+    target[name] = require(`../../Components/.custom/${name}/${name}.vue`).default;
+    return target;
+}, allComs);
 
 let uuid = 1;
 
@@ -194,7 +198,14 @@ const store = new Vuex.Store({
             comType: type
         }) {
             const config = allComsConfig[type];
-            let name = getName(config.name);
+
+            let name = config.name;
+            if(utils.isNameExist(this.getters.data,name)){
+                let nameCounter = 1;
+                while(utils.isNameExist(this.getters.data,name)){
+                    name = config.name + nameCounter++
+                }
+            }
 
             let comObj = {
                 pg: uuid++,
@@ -313,9 +324,10 @@ const store = new Vuex.Store({
                 if (utils.isNameExist(this.getters.data, value)) {
                     me.$message.warning('该组件名已存在');
                     value = oldName;
+                }else if(!utils.isValidIdentifier(value)){
+                    me.$message.warning('该组件名不是合法js标识符');
+                    value = oldName;
                 } else {
-                    if (!nameRecorder[value]) nameRecorder[value] = 1;
-
                     //组件名称引用联动
                     (function traverse(list) {
                         if (!list) return;
@@ -346,31 +358,17 @@ const store = new Vuex.Store({
             }
             Vue.set(state.activeComponent.props, name, value);
         },
-        employTemplate(state, {
-            data
-        }) {
+        employTemplate(state, {id,data}) {
             let comList = parser(data, allComsConfig);
             state.activeComponent = null;
-            nameRecorder = {};
             state.components = comList.filter(e => {
                 return !e.isDialog
             })
             state.dialogs = comList.filter(e => {
                 return e.isDialog
             });
-
-            function collectName(list) {
-                list.forEach(e => {
-                    getName(e.name)
-                    collectName(e.children)
-                })
-            }
-            collectName(comList);
-
-            console.log(data)
         },
         clearData(state) {
-            nameRecorder = {};
             state.activeComponent = null;
             state.components.splice(0)
             state.dialogs.splice(0)
@@ -386,15 +384,6 @@ const store = new Vuex.Store({
             vm
         }) {
             return vm.$http.post("/preview", state.getters.data);
-        },
-        saveAsTemplate(state, {
-            vm,
-            ...props
-        }) {
-            return vm.$http.post("/saveAsTemplate", {
-                data: state.getters.data,
-                ...props
-            });
         }
     }
 })

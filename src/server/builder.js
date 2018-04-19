@@ -26,18 +26,20 @@ function traverse(list) {
     return result;
 }
 
-module.exports = ({
-    data,
-    name,
-    remark
-}) => {
-    let d = new Date();
-    let date = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " +
-        d.getHours() + ":" + d.getMinutes() + ':' + d.getSeconds();
-    return {
-        name,
-        date,
-        remark,
-        data:traverse(data),
-    }
-}
+// module.exports = ({
+//     data,
+//     name,
+//     remark
+// }) => {
+//     let d = new Date();
+//     let date = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " +
+//         d.getHours() + ":" + d.getMinutes() + ':' + d.getSeconds();
+//     return {
+//         name,
+//         date,
+//         remark,
+//         data:traverse(data),
+//     }
+// }
+
+module.exports = traverse;

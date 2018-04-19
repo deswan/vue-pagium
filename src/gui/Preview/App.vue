@@ -1,59 +1,27 @@
 <template>
     <div>
-        <el-breadcrumb>
-            <el-breadcrumb-item> 广告管理 </el-breadcrumb-item>
-            <el-breadcrumb-item> WAP首页国家馆管理 </el-breadcrumb-item>
-        </el-breadcrumb>
-        <el-button @click="onClick" type="primary" icon="el-icon-plus"> 新增版面 </el-button>
         <div>
-            <el-table :data="table.items" border v-loading="table.loading">
-                <el-table-column prop="taskId" label="版面ID">
+            <el-table :data="tablet556.items" v-loading="tablet556.loading" border>
+                <el-table-column>
                     <template slot-scope="scope"> </template>
                 </el-table-column>
-                <el-table-column prop="taskName" label="版面名称">
+                <el-table-column>
                     <template slot-scope="scope"> </template>
-                </el-table-column>
-                <el-table-column prop="siteType" label="站点">
-                    <template slot-scope="scope"> </template>
-                </el-table-column>
-                <el-table-column prop="taskFromTime" label="开始时间">
-                    <template slot-scope="scope"> </template>
-                </el-table-column>
-                <el-table-column prop="taskStatus" label="状态">
-                    <template slot-scope="scope"> </template>
-                </el-table-column>
-                <el-table-column label="操作">
-                    <template slot-scope="scope">
-                        <el-button @click="editOnClick" size="small"> 编辑 </el-button>
-                        <el-button @click="delOnClick" size="small" type="warning"> 删除 </el-button>
-                    </template>
-                </el-table-column>
-                <el-table-column label="多语言">
-                    <template slot-scope="scope">
-                        <el-button @click="multiOnClick" size="small" type="text"> 图片 </el-button>
-                    </template>
                 </el-table-column>
             </el-table>
-            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="table.page" :page-size="table.pageSize" :total="table.total"> </el-pagination>
         </div>
-        <el-dialog title="多语言-图片" :visible.sync="dialog.show">
-            <div>
-                <el-table :data="dialog.table.items" border v-loading="dialog.table.loading">
-                    <el-table-column min-width="120" label="语种">
-                        <template slot-scope="scope"> </template>
-                    </el-table-column>
-                    <el-table-column label="图片">
-                        <template slot-scope="scope"> </template>
-                    </el-table-column>
-                    <el-table-column label="尺寸">
-                        <template slot-scope="scope"> </template>
-                    </el-table-column>
-                    <el-table-column label="操作">
-                        <template slot-scope="scope"> </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-        </el-dialog>
+        <div>
+            <el-table :data="table1.items" v-loading="table1.loading" border>
+                <el-table-column>
+                    <template slot-scope="scope"> </template>
+                </el-table-column>
+                <el-table-column>
+                    <template slot-scope="scope"> </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        <el-button @click="onClick"> </el-button>
+        <el-dialog @close="close" :visible.sync="dialog54754Show"> </el-dialog>
     </div>
 </template>
 <script>
@@ -61,74 +29,69 @@ export default {
     name: 'PG-Page',
     data() {
         return {
-            table: {
+            tablet556: {
                 loading: false,
-                items: [{},
-                    {},
-                    {}],
-                total: 0,
-                page: 1,
-                pageSize: 50
+                items: [],
+                total: 0
             },
-            dialog: {
-                show: false,
-                table: {
-                    loading: false,
-                    items: [{},
-                        {},
-                        {}],
-                    total: 0
-                }
+            table1: {
+                loading: false,
+                items: [],
+                total: 0
             },
+            dialog54754Show: false
         };
     },
     created() {
-        this.loadList();
+        this.load();
+        this.table1Load();
     },
     methods: {
-        onClick(e) {},
-        loadList() {
-            this.table.loading = true;
+        load() {
+            this.tablet556.loading = true;
             this.$http({
                 method: "get",
-                url: "/api/table-data",
-                params: {
-                    page: this.table.page,
-                    pageSize: this.table.pageSize,
-                }
-            }).then((response) => {
-                this.$message.success(response.msg || 'success')
-                return response;
-            }).catch((err) => {
-                this.$message.error(response.msg || 'error')
-                return err;
+                url: "",
             }).then((response) => {
                 let data = response.data;
-                this.table.total = data.total;
-                this.table.items = data.items;
-                this.table.loading = false;
+                this.tablet556.total = data.total;
+                this.tablet556.items = data.items;
+                this.tablet556.loading = false;
             }).catch((err) => {
-                this.table.loading = false;
+                this.tablet556.loading = false;
             })
         },
-        handleCurrentChange(page) {
-            this.table.page = page;
-            this.loadList();
+        clear() {
+            this.tablet556.loading = false;
+            this.tablet556.items = []
+            this.tablet556.total = []
         },
-        handleSizeChange(size) {
-            this.table.pageSize = size;
-            if (this.table.page == 1) {
-                this.loadList();
-            } else {
-                this.table.page = 1;
-            }
+        table1Load() {
+            this.table1.loading = true;
+            this.$http({
+                method: "get",
+                url: ""
+            }).then(response => {
+                let data = response.data;
+                this.table1.total = data.total;
+                this.table1.items = data.items;
+                this.table1.loading = false;
+            }).catch(err => {
+                this.table1.loading = false;
+            });
         },
-        editOnClick(e) {},
-        delOnClick(e) {},
-        multiOnClick(e) {},
+        table1Clear() {
+            this.table1.loading = false;
+            this.table1.items = [];
+            this.table1.total = [];
+        },
+        onClick(e) {
+            this.open()
+        },
         open() {
-            this.dialog.show = true;
+            this.dialog54754Show = true;
         },
+        close() {},
     }
 };
 

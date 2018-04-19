@@ -1,27 +1,45 @@
-import component from './array.vue';
-import scheme2Input from '../../gui/Create/SettingBoard/scheme2Input';
+//config是否填写正确
 let hasError = (conf) => {
 
 }
 
-let input = {
-    component,
-    propsLoader(conf) {
-        let props = {}
-        let _itemCOM = scheme2Input([{ ...conf,
-            value: conf.value[0],
-            label: null
-        }])[0]
-        if (conf.value[0] === 'object' && _itemCOM.props.format) {
-            props._itemCOM = _itemCOM.props.format
-        } else {
-            props._itemCOM = [_itemCOM]
-        }
-        return props;
-    }
+//值是否合法
+function isValid(value) {
+    const {
+        getIsValid
+    } = require('../index');
+    return Array.isArray(value) && value.every(item => {
+        return getIsValid(this.value[0]).call({
+            ...this,
+            value: this.value[0]
+        }, item)
+    })
 }
 
-export {
-    input,
-    hasError
+
+//前提：isValid
+//值补完
+function patchDefault(value) {
+    const {
+        getPatchDefault
+    } = require('../index');
+    let innerConf = {
+        ...this,
+        value: this.value[0]
+    }
+    return value.map(e => {
+        return getPatchDefault(innerConf.value).call(innerConf, e)
+    })
+}
+
+//默认值
+function defaultValue() {
+    return [];
+}
+
+module.exports = {
+    hasError,
+    isValid,
+    defaultValue,
+    patchDefault
 }

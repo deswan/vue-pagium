@@ -10,9 +10,11 @@ const constant = require('../const');
 
 let uuid = 1;
 
-function getComponent(comName) {
+function getComponentByName(comName) {
     return true;
 }
+
+//TODO:collectAllNAme
 
 function traverse(list, allComsConfig) {
     let result = []
@@ -44,7 +46,7 @@ function traverse(list, allComsConfig) {
                     slots.push(this.value);
                 } else if (this.type === constant.REFER_TYPE) {
                     //过滤不存在的组件以及自身组件
-                    if (!getComponent(this.value) || this.value === item.name) {
+                    if (!getComponentByName(this.value) || this.value === item.name) {
                         this.value = '';
                     }
                 }

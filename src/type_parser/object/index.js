@@ -1,19 +1,75 @@
-import component from './object.vue';
-import scheme2Input from '../../gui/Create/SettingBoard/scheme2Input';
+const utils = require('../../utils/utils');
+
 let hasError = (conf) => {
+    const {
+        checkProps
+    } = require('../../utils/checkConfigValid');
 
-}
-
-let input = {
-    component,
-    propsLoader(conf){
-        return {
-            format: conf.format && scheme2Input(conf.format)
-        }
+    let format = conf.format;
+    if (!format) {
+        return '必须填写 format 属性'
     }
+
+    try {
+        checkProps(format)
+    } catch (err) {
+        return err.message;
+    }
+
 }
 
-export {
-    input,
-    hasError
+
+function isValid(defaultValue) {
+    const {
+        getIsValid,
+    } = require('../index');
+
+    let format = this.format;
+
+    if (!utils.isPlainObject(defaultValue)) {
+        return false
+    }
+
+    let keys = Object.keys(defaultValue)
+    let valid = keys.every(key => {
+        let conf = format.find(formatConf=>{
+            return formatConf.name === key
+        });
+        return conf && getIsValid(conf.value).call(conf, defaultValue[conf.name])
+    })
+
+    if (!valid) {
+        return false;
+    }
+    return true;
+}
+
+function patchDefault(value) {
+    const {
+        getDefaultValue,
+        getPatchDefault
+    } = require('../index');
+
+    return this.format.reduce((target, conf) => {
+        target[conf.name] = value[conf.name] === undefined ? getDefaultValue(conf.value).call(conf) : getPatchDefault(conf.value).call(conf, value[conf.name])
+        return target;
+    }, {})
+}
+
+function defaultValue(){
+    const {
+        getDefaultValue,
+    } = require('../index');
+
+    return this.format.reduce((target, conf) => {
+        target[conf.name] = getDefaultValue(conf.value).call(conf) 
+        return target;
+    }, {})
+}
+
+module.exports = {
+    hasError,
+    isValid,
+    patchDefault,
+    defaultValue
 }

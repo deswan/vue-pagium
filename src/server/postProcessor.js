@@ -9,7 +9,6 @@ const hash = crypto.createHash('sha256');
 
 const output = './dist';
 
-const componentDir = path.join(__dirname, '../Components');
 const outTemplDir = path.join(__dirname, './');
 
 const scheme2Default = require('../utils/scheme2Default');
@@ -22,7 +21,7 @@ const SLOT_PLACEHOLDER = '_____pg_slot______';
 
 const HOOKS_NAME = ['created', 'mounted'];
 
-let logger = require('./logger')
+let logger = require('../logger')('postProcessor')
 
 let pg_map = {
     components: [],
@@ -301,15 +300,16 @@ function render(data) {
  * 编译模板
  * @param {comObj} comObj 
  */
-function compile(comObj, imports = {}) {
+function compile(comObj, imports = {}, comPaths, root = path.resolve(__dirname, '..', 'Components')) {
     Object.assign(template.defaults.imports, imports)
     var comType = comObj.type;
-    let config = require(path.join(componentDir, comType, 'config.js'));
-    let art = fs.readFileSync(path.join(componentDir, comType, comType + '.vue.art'), 'utf-8');
-    let vueText = template.render(art, Object.assign(scheme2Default(config.props), comObj.props), { ...template.defaults,
-        root: path.resolve(__dirname, '..', 'Components')
+    let output;
+    let config = require(path.join(comPaths.origin[comType] || comPaths.custom[comType], 'config.js'));
+    let art = fs.readFileSync(path.join(comPaths.origin[comType] || comPaths.custom[comType], comType + '.vue.art'), 'utf-8');
+    output = template.render(art, Object.assign(scheme2Default(config.props), comObj.props), { ...template.defaults,
+        root: comPaths.origin[comType] ? root : path.join(root, '.custom')
     })
-    return vueText;
+    return output;
 }
 
 /**
@@ -439,8 +439,8 @@ function renameMethods() {
         newVue = node.compiled.replace(script, newScript);
 
         //替换compiled
-        node.compiled = newVue.replace(new RegExp('@@(' + Object.keys(keys).join('|') + ')', 'g'), (val, word) => {
-            return '@@' + keys[word];
+        node.compiled = newVue.replace(new RegExp('@@(' + Object.keys(keys).join('|') + ')([^$\\w])', 'g'), (val, word,suffix) => {
+            return '@@' + keys[word] + suffix;
         })
     })
 }
@@ -746,6 +746,7 @@ function getScriptData(vue) {
 
 function getComponent(comName) {
     let ret = null;
+
     function find(list) {
         if (!list) return;
         for (let i = 0, len = list.length; i < len; i++) {
@@ -760,7 +761,7 @@ function getComponent(comName) {
     return ret;
 }
 
-function initMap(components) {
+function initMap(components, comPaths) {
     pg_map.components = [];
     pg_map.renameMap = {};
 
@@ -804,7 +805,7 @@ function initMap(components) {
                 if (!comName || !varName) throw new Error('external参数不合法');
                 return '@@' + comName + '__pg_external__' + varName;
             }
-        });
+        }, comPaths);
         let scriptData = getScriptData(compiled);
         list.push({
             name: comObj.name,
@@ -824,7 +825,7 @@ function initMap(components) {
     logger('init', pg_map)
 }
 
-module.exports = (components) => {
-    initMap(components);
+module.exports = (components, comPaths) => {
+    initMap(components, comPaths);
     return render(merge())
 }

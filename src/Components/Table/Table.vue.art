@@ -1,6 +1,12 @@
 <template>
     <div>
-        <el-table :data="@@items" border v-loading="@@loading"
+        <el-table :data="@@items" v-loading="@@loading"
+            {{{if !fit}}}
+             :fit="false" 
+             {{{else}}}
+             border
+            {{{/if}}}  
+
         >
             {{{each cols}}}
             <el-table-column 
@@ -8,10 +14,12 @@
             {{{if $value.prop}}} prop="{{{$value.prop}}}" {{{/if}}}  
             {{{if $value['min-width']}}} min-width="{{{$value['min-width']}}}" {{{/if}}}  
             {{{if $value.label}}} label="{{{$value.label}}}" {{{/if}}}  
+            {{{if $value.type}}} type="{{{$value.type}}}" {{{/if}}}  
+            {{{if $value.align}}} align="{{{$value.align}}}" {{{/if}}}  
             >
-            {{{if $value.scope}}}
+            {{{if $value.scope.value}}}
               <template slot-scope="scope">
-                {{{$imports.insertSlot($value.scope)}}}
+                {{{insertSlot($value.scope)}}}
               </template> 
             {{{/if}}}  
             </el-table-column>
@@ -45,12 +53,9 @@ export default {
     };
   },
   created(){
-    {{{if load}}}
     this.@@load(); 
-    {{{/if}}}
   },
   methods:{
-    {{{if load}}}
      load(){
         this.@@loading = true;
         <% include('http.art',{
@@ -72,22 +77,27 @@ export default {
           this.@@loading = false;
         })
      },
-    {{{/if}}}
+     clear(){
+       this.@@loading = false;
+       this.@@items = []
+       this.@@total = []
+
+       {{{if pagination}}}
+          this.@@page = 1
+          this.@@pageSize = 50
+        {{{/if}}}
+     },
 
     {{{if pagination}}}
       handleCurrentChange(page) {
         this.@@page = page;
-        {{{if load}}}
-          this.@@load();
-        {{{/if}}}
+        this.@@load();
       },
 
       handleSizeChange(size) {
         this.table.pageSize = size;
         if (this.table.page == 1) {
-          {{{if load}}}
-            this.@@load();
-          {{{/if}}}
+          this.@@load();
         } else {
           this.table.page = 1;
         }
