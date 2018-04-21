@@ -1,5 +1,6 @@
 const utils = require('./utils')
 const type_parser = require('../type_parser')
+
 function checkConfig(config) {
     if (!config.name) {
         throw new Error('请填写name属性')
@@ -32,6 +33,13 @@ function checkProps(props) {
             throw new Error(JSON.stringify(conf, null, 2) + "\n" + err.message)
         }
     })
+    let allName = utils.getAllPropNameInConfig(props);
+    let duplName = allName.find((name, idx) => {
+        return allName.indexOf(name) !== idx;
+    })
+    if (duplName) {
+        throw new Error(`name 不得重复：` + duplName)
+    }
 
     function checkConf(conf) {
         if (!conf.name) {
@@ -40,7 +48,7 @@ function checkProps(props) {
         if (typeof conf.name != 'string') {
             throw new Error('name属性需是字符串')
         }
-        if(conf.name == 'name'){
+        if (conf.name == 'name') {
             throw new Error('name属性值不能为"name"')
         }
         if (!utils.isValidIdentifier(conf.name)) {
@@ -61,6 +69,9 @@ function checkProps(props) {
         if (conf.default && !type_parser.getIsValid(conf.value).call(conf, conf.default)) {
             throw new Error('default值不合法')
         }
+
+        conf.default !== undefined && (conf.default = type_parser.getPatchDefault(conf.value).call(conf, conf.default))
+
     }
 }
 

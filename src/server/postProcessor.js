@@ -12,12 +12,16 @@ const output = './dist';
 const outTemplDir = path.join(__dirname, './');
 
 const scheme2Default = require('../utils/scheme2Default');
+const utils = require('../utils/utils')
 const template = require('./art');
 const babylon = require('babylon');
 const babel_generator = require('babel-generator').default;
 
 const CHILDREN_PLACEHOLDER = '_____pg_chilren_____';
 const SLOT_PLACEHOLDER = '_____pg_slot______';
+
+const pgHashPrefix = 'pg______';
+const pgColonHashPrefix = '__pg_colon__';
 
 const HOOKS_NAME = ['created', 'mounted'];
 
@@ -34,8 +38,8 @@ function warn(info) {
 
 //全局替换标识符 @@varName -> varName
 function replaceIdentifier() {
-    let regExp = /@@(\D[$\w]*)(:pg_last)?/g;
-    let externalRegExp = /@@(\D[$\w]*)__pg_external__(\D[$\w]*)/g;
+    let regExp = /@@([$a-zA-Z][$\w]*)?(:[$a-zA-Z][$\w]*)?/g;
+    let externalRegExp = /@@([$a-zA-Z][$\w]*)__pg_external__([$a-zA-Z][$\w]*)/g;
 
     //init pg_com.wrapper for each one
     function calcWrapper(list, wrapper = '') {
@@ -56,30 +60,27 @@ function replaceIdentifier() {
         if (!list || !list.length) return;
         list.forEach((pg_com) => {
             let externalReplaced = pg_com.compiled.replace(externalRegExp, (match, comName, varName) => {
-                let externalCom = getComponent(comName)
+                let externalCom = utils.getComponentByName(pg_map.components, comName)
                 if (!externalCom) {
                     throw new Error(`${comName} 组件不存在`)
                 }
 
                 let idx, renamedVarName = varName;
 
-                //修改为rename后的值
-                if (pg_map.renameMap.data) {
-                    idx = pg_map.renameMap.data.findIndex(toRename => {
-                        return toRename.node === externalCom && toRename.raw === varName
-                    })
-                    if (~idx) {
-                        renamedVarName = pg_map.renameMap.data[idx].value
-                    }
-                }
+                //修改为rename后的值（data优先级较高）
+                pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, externalCom))
+                pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, externalCom))
 
-                if (pg_map.renameMap.methods) {
-                    idx = pg_map.renameMap.methods.findIndex(toRename => {
-                        return toRename.node === externalCom && toRename.raw === varName
+                function getRenamed(renameMap, varName, comObj) {
+                    let idx = renameMap.findIndex(toRename => {
+                        return toRename.node === comObj && toRename.raw === varName
                     })
                     if (~idx) {
-                        renamedVarName = pg_map.renameMap.data[idx].value
+                        return renameMap[idx].value
+                    } else {
+                        return varName;
                     }
+
                 }
 
                 //匹配
@@ -97,16 +98,37 @@ function replaceIdentifier() {
             })
 
             let replaced = externalReplaced.replace(regExp, (match, word, modifier) => {
+
                 modifier && (modifier = modifier.slice(1))
-                if (!pg_com.dataKeys.includes(word) && !pg_com.methodsKeys.includes(word)) {
-                    throw new Error('data 或 methods 标识符不存在：' + match)
-                } else if (pg_com.dataKeys.includes(word) && modifier === 'pg_last') {
-                    return word;
-                } else if (pg_com.dataKeys.includes(word)) { //data
-                    return pg_com.wrapper + word;
-                } else { //methods
-                    return word;
+
+                //匹配
+                let isData = pg_com.dataKeys.includes(word)
+                let isMethod = pg_com.methodsKeys.includes(word);
+
+                if (modifier) {
+                    if (!word && modifier === 'wrapper') {
+                        let match = pg_com.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
+                        if (match) {
+                            return match[1];
+                        } else {
+                            return '';
+                        }
+                    } else if (isData && modifier === 'last') {
+                        return word;
+                    } else {
+                        throw new Error(match + ' 不匹配任何模式')
+                    }
+                } else {
+                    if (!isData && !isMethod) {
+                        throw new Error('data 或 methods 标识符不存在：' + match)
+                    } else if (isData) { //data
+                        return pg_com.wrapper + word;
+                    } else { //methods
+                        return word;
+                    }
                 }
+
+
             })
             pg_com.replaced = replaced;
             doReplace(pg_com.children)
@@ -121,6 +143,9 @@ function replaceIdentifier() {
  * @param {String} vue .vue组件文本
  */
 function beautify(vue) {
+
+    logger('before beautify',vue)
+
     let idxStart = vue.indexOf('<template>');
     let idxEnd = vue.lastIndexOf('</template>');
     let html = vue.slice(idxStart, idxEnd + '</template>'.length);
@@ -160,9 +185,14 @@ function merge() {
         let hooks = {};
         list.forEach(pg_com => {
             let parsed = parse(pg_com);
+
+            //子组件
             let children = pg_com.children.filter(e => {
                 return !e.comObj.__pg_slot__;
             })
+
+            //slot组件
+            //  { [slotId]:[pg_com1,pg_com2,...] }
             let slots = pg_com.children.reduce((target, child) => {
                 let slotId = child.comObj.__pg_slot__;
                 if (slotId) {
@@ -175,47 +205,29 @@ function merge() {
             if (children && children.length) {
                 let childParsed = doMerge(children);
                 parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER, childParsed.html);
-                if (childParsed.data.trim() && parsed.data.trim()) {
-                    parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
-                }
-                parsed.data += childParsed.data
-                parsed.methods += childParsed.methods
-                Object.keys(childParsed.hooks).forEach(hook => {
-                    hooks[hook] || (hooks[hook] = '')
-                    parsed.hooks[hook] += childParsed.hooks[hook];
-                })
+                parsed.data = mergeData(parsed.data, childParsed.data)
+                parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
+                parsed.hooks = mergeHook(parsed.hooks, childParsed.hooks)
             }
 
             Object.keys(slots).forEach(slotId => {
                 let slotList = slots[slotId];
                 let childParsed = doMerge(slotList);
                 parsed.html = parsed.html.replace(SLOT_PLACEHOLDER + slotId, childParsed.html);
-                if (childParsed.data.trim() && parsed.data.trim()) {
-                    parsed.data.trimRight().slice(-1) != ',' && (parsed.data = parsed.data.trimRight() + ',')
-                }
-                parsed.data += childParsed.data
-                parsed.methods += childParsed.methods
-                Object.keys(childParsed.hooks).forEach(hook => {
-                    hooks[hook] || (hooks[hook] = '')
-                    parsed.hooks[hook] += childParsed.hooks[hook];
-                })
+                parsed.data = mergeData(parsed.data, childParsed.data)
+                parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
+                parsed.hooks = mergeHook(parsed.hooks, childParsed.hooks)
             })
 
-            html += parsed.html;
+            html = mergeHtml(html, parsed.html)
             if (pg_com.setDataWrapper) {
-                parsed.data.trimRight().slice(-1) == ',' && (parsed.data = parsed.data.trimRight().slice(0, -1))
-                data += `${pg_com.comObj.name}:{${parsed.data}},`
+                parsed.data.trimRight().slice(-1) == ',' && (parsed.data = parsed.data.trimRight().slice(0, -1)) //去除内部多余的逗号
+                data = mergeData(data, `${pg_com.comObj.name}:{${parsed.data}}`)
             } else { //单属性data 或 无属性data
-                if (data.trim() && parsed.data.trim()) {
-                    data.trimRight().slice(-1) != ',' && (data = data.trimRight() + ',')
-                }
-                data += parsed.data
+                data = mergeData(data, parsed.data)
             }
-            methods += parsed.methods;
-            Object.keys(parsed.hooks).forEach(hook => {
-                hooks[hook] || (hooks[hook] = '')
-                hooks[hook] += parsed.hooks[hook];
-            })
+            methods = mergeMethod(methods, parsed.methods)
+            hooks = mergeHook(hooks, parsed.hooks)
         })
 
         return {
@@ -226,15 +238,35 @@ function merge() {
         }
     }
 
-    function parse(pg_com) {
-        let {
-            comObj,
-            compiled,
-            dataKeys,
-            methodsKeys,
-            children
-        } = pg_com;
+    function mergeHtml(a, b) {
+        return a.trim() + b.trim();
+    }
 
+    function mergeData(a, b) {
+        if (a.trimRight() && a.trimRight().slice(-1) !== ',') {
+            return a.trim() + ',' + b.trim();
+        } else {
+            return a.trim() + b.trim();
+        }
+    }
+
+    function mergeMethod(a, b) {
+        if (a.trimRight() && a.trimRight().slice(-1) !== ',') {
+            return a.trim() + ',' + b.trim();
+        } else {
+            return a.trim() + b.trim();
+        }
+    }
+
+    function mergeHook(a, b) {
+        return Object.keys(b).reduce((a, hook) => {
+            a[hook] || (a[hook] = '')
+            a[hook] += b[hook];
+            return a;
+        }, a)
+    }
+
+    function parse(pg_com) {
         let html = '';
         let data = '';
         let methods = '';
@@ -243,24 +275,19 @@ function merge() {
         //生成产出的数据结构
         //templace
         let replaced = pg_com.replaced;
-        html += getHtml(replaced);
+        html = getHtml(replaced);
 
         //data
         let scriptData = getScriptData(replaced);
-        data += scriptData.data.body
+        data = scriptData.data.body
 
         //methods
-        if (scriptData.methods.body.trim()) {
-            scriptData.methods.body.trimRight().slice(-1) != ',' && (scriptData.methods.body = scriptData.methods.body.trimRight() + ',')
-            methods += scriptData.methods.body
-        }
+        methods = scriptData.methods.body.trim()
 
         //hooks
         Object.keys(scriptData.hooks).forEach((hook) => {
-            if (scriptData.hooks[hook].body.trim()) {
-                hooks[hook] === undefined && (hooks[hook] = '');
-                hooks[hook] += scriptData.hooks[hook].body
-            }
+            hooks[hook] || (hooks[hook] = '');
+            hooks[hook] += scriptData.hooks[hook].body.trim()
         })
 
         return {
@@ -271,16 +298,17 @@ function merge() {
         }
     }
     let ret = doMerge(pg_map.components)
-    let hooks = {};
-    Object.keys(ret.hooks).forEach(hook => {
-        hooks[hook] = ret.hooks[hook];
-    })
+
+    //删除末尾逗号
+    ret.html.slice(-1) === ',' && (ret.html = ret.html.slice(0, -1))
+    ret.data.slice(-1) === ',' && (ret.data = ret.data.slice(0, -1))
+    ret.methods.slice(-1) === ',' && (ret.methods = ret.methods.slice(0, -1))
 
     return {
         html: ret.html,
         data: ret.data,
         methods: ret.methods,
-        hooks
+        hooks: ret.hooks
     }
 
 }
@@ -299,14 +327,18 @@ function render(data) {
 /**
  * 编译模板
  * @param {comObj} comObj 
+ * @param {custom:{},origin:{}} comPaths 组件路径 
+ * @param {String} root 本地组件文件夹路径
  */
-function compile(comObj, imports = {}, comPaths, root = path.resolve(__dirname, '..', 'Components')) {
+function compile(comObj, imports, comPaths, root = path.resolve(__dirname, '..', 'Components')) {
     Object.assign(template.defaults.imports, imports)
     var comType = comObj.type;
     let output;
-    let config = require(path.join(comPaths.origin[comType] || comPaths.custom[comType], 'config.js'));
-    let art = fs.readFileSync(path.join(comPaths.origin[comType] || comPaths.custom[comType], comType + '.vue.art'), 'utf-8');
-    output = template.render(art, Object.assign(scheme2Default(config.props), comObj.props), { ...template.defaults,
+    let comPath = comPaths.custom[comType] || comPaths.origin[comType]
+    let config = require(path.join(comPath, 'config.js')); //优先引入自定组件
+    let art = fs.readFileSync(path.join(comPath, comType + '.vue.art'), 'utf-8');
+    output = template.render(art, comObj.props, {
+        ...template.defaults,
         root: comPaths.origin[comType] ? root : path.join(root, '.custom')
     })
     return output;
@@ -396,15 +428,8 @@ function renameMethods() {
         let script = getScript(node.compiled);
 
         //替换掉@@为合法标识符
-        const pgHash = 'pg______' + Date.now();
-        const pgColonHash = '__pg_colon__' + Date.now();
-        script = script.replace(/@@(\D[$\w]*)(:?)/g, (_, word, colon) => {
-            if (colon) {
-                return pgHash + word + pgColonHash
-            } else {
-                return pgHash + word
-            }
-        })
+        let cleared = clearControlChar(script);
+        script = cleared.text;
 
         var ast = babylon.parse(script, {
             sourceType: 'module'
@@ -428,18 +453,18 @@ function renameMethods() {
                 break;
             }
         }
-        script = script.replace(new RegExp(pgHash, 'g'), '@@');
-        script = script.replace(new RegExp(pgColonHash, 'g'), ':');
+        script = script.replace(new RegExp(cleared.pgHash, 'g'), '@@');
+        script = script.replace(new RegExp(cleared.pgColonHash, 'g'), ':');
 
         let newScript = babel_generator(ast).code;
-        newScript = newScript.replace(new RegExp(pgHash, 'g'), '@@');
-        newScript = newScript.replace(new RegExp(pgColonHash, 'g'), ':');
+        newScript = newScript.replace(new RegExp(cleared.pgHash, 'g'), '@@');
+        newScript = newScript.replace(new RegExp(cleared.pgColonHash, 'g'), ':');
 
         //替换原script部分
         newVue = node.compiled.replace(script, newScript);
 
         //替换compiled
-        node.compiled = newVue.replace(new RegExp('@@(' + Object.keys(keys).join('|') + ')([^$\\w])', 'g'), (val, word,suffix) => {
+        node.compiled = newVue.replace(new RegExp('@@(' + Object.keys(keys).join('|') + ')([^$\\w])', 'g'), (val, word, suffix) => {
             return '@@' + keys[word] + suffix;
         })
     })
@@ -535,6 +560,9 @@ function renameData() {
         return result;
     }
     traverse(pg_map.components);
+    pg_map.components.forEach(pg_com=>{
+        pg_com.setDataWrapper = true;
+    })
     logger('renameData: pg_map', pg_map)
     logger('renameData: toRename', toRename)
 
@@ -566,15 +594,8 @@ function renameData() {
         let script = getScript(node.compiled);
 
         //替换掉@@为合法标识符
-        const pgHash = 'pg______' + Date.now();
-        const pgColonHash = '__pg_colon__' + Date.now();
-        script = script.replace(/@@(\D[$\w]*)(:?)/g, (_, word, colon) => {
-            if (colon) {
-                return pgHash + word + pgColonHash
-            } else {
-                return pgHash + word
-            }
-        })
+        let cleared = clearControlChar(script)
+        script = cleared.text
 
         var ast = babylon.parse(script, {
             sourceType: 'module'
@@ -603,19 +624,19 @@ function renameData() {
                 break;
             }
         }
-        script = script.replace(new RegExp(pgHash, 'g'), '@@');
-        script = script.replace(new RegExp(pgColonHash, 'g'), ':');
+        script = script.replace(new RegExp(cleared.pgHash, 'g'), '@@');
+        script = script.replace(new RegExp(cleared.pgColonHash, 'g'), ':');
 
         let newScript = babel_generator(ast).code;
-        newScript = newScript.replace(new RegExp(pgHash, 'g'), '@@');
-        newScript = newScript.replace(new RegExp(pgColonHash, 'g'), ':');
+        newScript = newScript.replace(new RegExp(cleared.pgHash, 'g'), '@@');
+        newScript = newScript.replace(new RegExp(cleared.pgColonHash, 'g'), ':');
 
 
         //替换原script部分
         newVue = node.compiled.replace(script, newScript);
 
         //替换@@data
-        node.compiled = newVue.replace(new RegExp('@@(' + raw + ')', 'g'), '@@' + value)
+        node.compiled = newVue.replace(new RegExp('@@(' + raw + ')([^$\\w])', 'g'), '@@' + value + '$2')
         logger('after renameData: compiled', node.compiled)
     })
 }
@@ -642,16 +663,8 @@ function renameData() {
 function getScriptData(vue) {
     let script = getScript(vue);
 
-    //替换掉@@为合法标识符
-    const pgHash = 'pg______' + Date.now();
-    const pgColonHash = '__pg_colon__' + Date.now();
-    script = script.replace(/@@(\D[$\w]*)(:?)/g, (_, word, colon) => {
-        if (colon) {
-            return pgHash + word + pgColonHash
-        } else {
-            return pgHash + word
-        }
-    })
+    let cleared = clearControlChar(script);
+    script = cleared.text
 
     var ast = babylon.parse(script, {
         sourceType: 'module'
@@ -685,7 +698,7 @@ function getScriptData(vue) {
                                             return arr;
                                         }
                                     }, []),
-                                    body: script.slice(p[i].argument.start, p[i].argument.end).match(/^\s*\{([\s\S]*)\}\s*$/)[1].replace(new RegExp(pgHash, 'g'), '@@').replace(new RegExp(pgColonHash, 'g'), ':')
+                                    body: script.slice(p[i].argument.start, p[i].argument.end).match(/^\s*\{([\s\S]*)\}\s*$/)[1].replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
                                 }
                             };
                         }
@@ -708,7 +721,7 @@ function getScriptData(vue) {
                     if (~hooksName.indexOf(keyName)) {
                         p = p[i].body;
                         hooksBody[keyName] = {
-                            body: script.slice(p.start, p.end).match(/^\s*\{([\s\S]*)\}\s*$/)[1].replace(new RegExp(pgHash, 'g'), '@@').replace(new RegExp(pgColonHash, 'g'), ':')
+                            body: script.slice(p.start, p.end).match(/^\s*\{([\s\S]*)\}\s*$/)[1].replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
                         }
                     };
                 }
@@ -734,7 +747,7 @@ function getScriptData(vue) {
                                     return arr;
                                 }
                             }, []),
-                            body: script.slice(methods.start, methods.end).match(/^\s*\{([\s\S]*)\}\s*$/)[1].replace(new RegExp(pgHash, 'g'), '@@').replace(new RegExp(pgColonHash, 'g'), ':')
+                            body: script.slice(methods.start, methods.end).match(/^\s*\{([\s\S]*)\}\s*$/)[1].replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
                         }
                     };
                 }
@@ -744,31 +757,31 @@ function getScriptData(vue) {
     }
 }
 
-function getComponent(comName) {
-    let ret = null;
-
-    function find(list) {
-        if (!list) return;
-        for (let i = 0, len = list.length; i < len; i++) {
-            if (list[i].name === comName) {
-                return ret = list[i];
-            } else {
-                find(list[i].children)
-            }
+function clearControlChar(text) {
+    const pgHash = pgHashPrefix + Date.now();
+    const pgColonHash = pgColonHashPrefix + Date.now();
+    text = text.replace(/@@([$a-zA-Z][$\w]*)?(:)?/g, function(_, word, colon){
+        if (colon) {
+            return pgHash + (word || '') + pgColonHash
+        } else {
+            return pgHash + (word || '')
         }
+    })
+    return {
+        text,
+        pgHash,
+        pgColonHash
     }
-    find(pg_map.components)
-    return ret;
 }
 
-function initMap(components, comPaths) {
+function initMap(components, comPaths, root) {
     pg_map.components = [];
     pg_map.renameMap = {};
 
     function doCompile(comObj, list) {
         let children = [];
 
-        let compiled = compile(comObj, {
+        let imports = {
             /**
              * 插入子组件
              */
@@ -805,7 +818,9 @@ function initMap(components, comPaths) {
                 if (!comName || !varName) throw new Error('external参数不合法');
                 return '@@' + comName + '__pg_external__' + varName;
             }
-        }, comPaths);
+        }
+
+        let compiled = compile(comObj, imports, comPaths, root);
         let scriptData = getScriptData(compiled);
         list.push({
             name: comObj.name,
@@ -822,10 +837,10 @@ function initMap(components, comPaths) {
     components.forEach((comObj) => {
         doCompile(comObj, pg_map.components)
     })
-    logger('init', pg_map)
+    logger('initMap', pg_map)
 }
 
-module.exports = (components, comPaths) => {
-    initMap(components, comPaths);
+module.exports = (components, comPaths, root) => {
+    initMap(components, comPaths, root);
     return render(merge())
 }

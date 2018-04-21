@@ -3,6 +3,7 @@
 const prog = require('caporal');
 const path = require('path');
 const fs = require('fs');
+const fsExtra = require('fs-extra');
 const chalk = require('chalk');
 const parser = require('../server/parser');
 const postProcessor = require('../server/postProcessor');
@@ -111,9 +112,9 @@ prog
         let uniqueTempDir = config.tempComponentDir + '_' + tempDirSuffix;
 
         //将原生组件、自定义组件拷贝至临时目录
-        ncp(config.componentDir, uniqueTempDir, {
+        fsExtra.copy(config.componentDir, uniqueTempDir, {
             filter(filename) {
-                return filename !== '.custom';
+                return path.basename(filename) !== '.custom';
             }
         }, (err) => {
             if (err) throw err;
@@ -129,10 +130,12 @@ prog
             })
 
             if (pagerPath && fs.existsSync(path.join(pagerPath, config.target.comDir)) && fs.statSync(path.join(pagerPath, config.target.comDir)).isDirectory()) {
+                console.log(' pager 路径：'+pagerPath)
                 linkComponent(pagerPath, uniqueTempDir).then(_ => {
                     parse();
                 }).catch(err => {
-                    throw err;
+                    check.fail()
+                    console.log(err.message)
                 })
             } else {
                 parse(); //无自定义组件
@@ -145,6 +148,8 @@ prog
             let json = require(sourcePath);
 
             let comPaths = getOriginComponents(uniqueTempDir)
+
+            logger('comsPath',comPaths)
 
             let customAndOrigin = {
                 ...comPaths.origin,
@@ -160,7 +165,7 @@ prog
             try {
                 checkData(json, allComsConfig)
             } catch (err) {
-                check.fail(path.basename(sourcePath) + '解析错误')
+                check.fail(path.basename(sourcePath) + ' 解析错误')
                 console.log(chalk.red(err.message))
                 process.exit(1);
             }

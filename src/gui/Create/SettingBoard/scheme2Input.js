@@ -10,6 +10,5 @@ export default function (config) {
             conf
         })
     })
-    console.log(inputs)
     return inputs
 }

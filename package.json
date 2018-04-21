@@ -24,6 +24,7 @@
     "element-ui": "^2.3.3",
     "esformatter": "^0.10.0",
     "fecs": "^1.5.5",
+    "fs-extra": "^5.0.0",
     "htmlcs": "^0.4.1",
     "inquirer": "^5.2.0",
     "js-beautify": "^1.7.5",

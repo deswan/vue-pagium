@@ -1,5 +1,6 @@
 <template>
     <el-form
+    :model="@@:wrapper"
     {{{if labelPosition}}} label-position="{{{labelPosition}}}" {{{/if}}}  
     {{{if labelWidth}}} label-width="{{{labelWidth}}}" {{{/if}}}  
     {{{if labelSuffix}}} label-suffix="{{{labelSuffix}}}" {{{/if}}}  

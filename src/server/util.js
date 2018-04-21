@@ -3,6 +3,7 @@ const path = require('path')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const ncp = require('ncp')
+const fsExtra = require('fs-extra')
 const logger = require('../logger')('server/util')
 const constant = require('../const')
 const config = require('../config');
@@ -128,21 +129,19 @@ function linkComponent(targetDir, toDir) {
                 try {
                     checkConfig(require(path.join(p, 'config.js')));
                 } catch (err) {
-                    console.log(chalk.red(`${name} 组件 config.js 格式错误:`));
-                    console.log(chalk.white(err.message));
-                    process.exit(1)
+                    throw new Error(chalk.red(`${name} 组件 config.js 格式错误:`)+'\n'+chalk.white(err.message));
                 }
-                ncp(p, path.join(customPath, name), (err) => {
+                logger('config after check',require(path.join(p, 'config.js')))
+                fsExtra.copy(p, path.join(customPath, name), (err) => {
                     if (err) throw err;
                     logger('已拷贝 ' + p + ' 至' + path.join(customPath, name))
-
                     counter--;
                     end()
                 })
             })
             Object.keys(validPath.art).forEach(name => {
                 let p = validPath.art[name]
-                ncp(p, path.join(customPath, name), (err) => {
+                fsExtra.copy(p, path.join(customPath, name), (err) => {
                     if (err) throw err;
                     logger('已拷贝 ' + p + ' 至' + path.join(customPath, name))
 

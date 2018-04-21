@@ -80,21 +80,21 @@ function checkData(data, allComsConfig) {
             throw new Error('props属性不能为空')
         }
 
-        checkProps(item.props, allComsConfig[item.type])
+        checkProps(item.props, allComsConfig[item.type],item.type)
     }
 
-    function checkProps(props, config) {
+    function checkProps(props, config,comName) {
         Object.keys(props).forEach(propName => {
             let conf = config.props.find(item => {
                 return item.name === propName
             })
             //验证组件是否存在该prop
             if (!conf) {
-                throw new Error(`组件${config.name}不存在prop ${propName}`)
+                throw new Error(`组件 ${comName} 不存在 prop: ${propName}`)
             }
             if (!getIsValid(conf.value).call(conf, props[propName])) {
                 
-                throw new Error(`props ${propName} 不合法`)
+                throw new Error(`prop 不合法: ${propName}`)
             }
         })
     }

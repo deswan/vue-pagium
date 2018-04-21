@@ -262,7 +262,7 @@ function launch(targetDir) {
 
         readTemplatesFile(targetDir);
 
-        // if (process.env.NODE_ENV === 'production') {
+        if (process.env.NODE_ENV === 'production') {
         const spinner = ora('building ...')
         spinner.start()
         rm(path.join('./dist', 'static'), err => {
@@ -288,12 +288,12 @@ function launch(targetDir) {
                 startServer(targetDir);
             })
         })
-        // } else {
-        //     startServer(targetDir);
-        // }
+        } else {
+            startServer(targetDir);
+        }
 
     }).catch(err => {
-        throw err;
+        console.log(err.message)
     })
 
 }

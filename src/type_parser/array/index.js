@@ -1,6 +1,5 @@
 //config是否填写正确
 let hasError = (conf) => {
-
 }
 
 //值是否合法

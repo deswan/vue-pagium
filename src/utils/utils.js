@@ -21,8 +21,37 @@ function isValidIdentifier(value) {
     return /^\D[$\w]*$/.test(value);
 }
 
+/**
+ * 获取config props下的所有name (不包括子对象)
+ * @param {Config.props} props 
+ */
+function getAllPropNameInConfig(props){
+    let arr = [];
+    props.forEach(conf=>{
+        arr.push(conf.name);
+    })
+    return arr;
+}
+
+function getComponentByName(list,comName) {
+    let ret = null;
+    function find(list) {
+        if (!list) return null;
+        for (let i = 0, len = list.length; i < len; i++) {
+            if (list[i].name === comName) {
+                return ret = list[i];
+            } else {
+                return find(list[i].children)
+            }
+        }
+    }
+    find(list)
+    return ret;
+}
+
 module.exports = {
     isPlainObject,
     isNameExist,
-    isValidIdentifier
+    isValidIdentifier,
+    getAllPropNameInConfig
 }
