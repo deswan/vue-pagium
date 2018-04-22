@@ -3,7 +3,8 @@ module.exports = {
     "props": [{
         "name": "dialog",
         "label": "打开对话框-选择组件",
-        "value": "refer-component"
+        "value": "refer-component",
+        property:'open'
     }, {
         "name": "title",
         "label": "文本",

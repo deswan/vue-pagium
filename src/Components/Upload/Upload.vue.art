@@ -1,10 +1,10 @@
 <template>
       <el-upload 
-      :on-success="onSuccess"
-      :on-error="onError"
-      :before-upload="beforeUpload"
+      :on-success="@@onSuccess"
+      :on-error="@@onError"
+      :before-upload="@@beforeUpload"
 
-    {{{if action}}} action="{{{action}}}" {{{/if}}}  
+    :action="@@uploadUrl"
     {{{if multiple}}} multiple {{{/if}}}  
     {{{if withCredentials}}} with-credentials {{{/if}}}  
     {{{if disabled}}} disabled {{{/if}}}  
@@ -18,7 +18,9 @@
 <script>
 export default {
   data() {
-    return {};
+    return {
+      uploadUrl:"{{{action || ''}}}"
+    };
   },
   methods: {
     onSuccess(response, file, fileList) {

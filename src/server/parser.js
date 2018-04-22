@@ -69,6 +69,7 @@ function traverse(list, allComsConfig) {
             name: item.name,
             type: item.type,
             isDialog: config.isDialog,
+            exposeProperty: config.exposeProperty,
             props: { 
                 ...scheme2Default(config.props),
                 ...item.props,

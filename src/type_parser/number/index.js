@@ -11,7 +11,7 @@ function patchDefault(value) {
 }
 
 function defaultValue(){
-    return 1;
+    return 0;
 }
 
 module.exports = {

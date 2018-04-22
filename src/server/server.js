@@ -144,11 +144,20 @@ function startServer(targetDir) {
 
     //将结果写入用户目录
     app.post('/save', function (req, res) {
-        let output = postProcessor(req.body, allComponentPaths);
+        let output;
+        try {
+            output = postProcessor(req.body, allComponentPaths);
+        } catch (err) {
+            throw err;
+            return res.json({
+                data: err.message,
+                code: 1
+            })
+        }
         fs.writeFile(path.join(targetDir, config.target.pageName), output, (err) => {
             if (err) throw err;
             res.json({
-                data:path.join(targetDir, config.target.pageName),
+                data: path.join(targetDir, config.target.pageName),
                 code: 0
             })
         });
@@ -263,31 +272,31 @@ function launch(targetDir) {
         readTemplatesFile(targetDir);
 
         if (process.env.NODE_ENV === 'production') {
-        const spinner = ora('building ...')
-        spinner.start()
-        rm(path.join('./dist', 'static'), err => {
-            if (err) throw err
-            webpack(merge(webpackIndexConfig, {
-                plugins: [
-                    new webpack.DefinePlugin({
-                        'process.Components': JSON.stringify(allComponentPaths)
-                    }),
-                ]
-            }), (err, stats) => {
-                spinner.stop()
-                if (err) throw err;
+            const spinner = ora('building ...')
+            spinner.start()
+            rm(path.join('./dist', 'static'), err => {
+                if (err) throw err
+                webpack(merge(webpackIndexConfig, {
+                    plugins: [
+                        new webpack.DefinePlugin({
+                            'process.Components': JSON.stringify(allComponentPaths)
+                        }),
+                    ]
+                }), (err, stats) => {
+                    spinner.stop()
+                    if (err) throw err;
 
-                process.stdout.write(stats.toString({
-                    colors: true,
-                    modules: false,
-                    children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
-                    chunks: false,
-                    chunkModules: false
-                }) + '\n\n')
+                    process.stdout.write(stats.toString({
+                        colors: true,
+                        modules: false,
+                        children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
+                        chunks: false,
+                        chunkModules: false
+                    }) + '\n\n')
 
-                startServer(targetDir);
+                    startServer(targetDir);
+                })
             })
-        })
         } else {
             startServer(targetDir);
         }

@@ -1,6 +1,9 @@
 <template>
   <div class="setting">
       <el-form label-suffix=":" v-if="$store.state.activeComponent" :key="$store.state.activeComponent.pg" label-position="left"  label-width="80px">
+        <el-form-item label="组件类型">
+          <span class="com-type">{{$store.state.activeComponent.type}}</span>
+        </el-form-item>
         <el-form-item label="组件名称">
             <component :is="StringInput" name="name" @input="handleInput('name',$event)" :value="$store.state.activeComponent.props['name']"></component>
         </el-form-item>
@@ -54,18 +57,26 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .setting {
-  padding: 20px 30px 100px;
-  width: 400px;
+  padding: 20px 30px;
+  width: 450px;
   background: white;
   position: fixed;
   right: 0;
   top: 60px;
-  height: 100%;
+  bottom:0;
   overflow: auto;
+  z-index: 999;
 }
 .setting::-webkit-scrollbar {
   display: none;
+}
+.com-type{
+  font-size: 20px;
+}
+.setting .el-form-item__label{
+  line-height: 1.4;
+  padding-top: 10px;
 }
 </style>

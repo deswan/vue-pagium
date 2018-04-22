@@ -1,5 +1,5 @@
 let hasError = (conf) => {
-
+    
 }
 
 function isValid(value){

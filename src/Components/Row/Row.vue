@@ -1,18 +1,17 @@
 <template>
-      <el-form v-bind="$props">
+      <el-row v-bind="$props">
         <slot></slot>
-      </el-form>
+      </el-row>
 </template>
 <script>
 export default {
-  name: "Form",
+  name: "Row",
   props: [
-    "inline",
-    "labelPosition",
-    "labelWidth",
-    "labelSuffix",
-    "statusIcon",
-    "size"
+    "gutter",
+    "type",
+    "justify",
+    "align",
+    "tag"
   ],
   data() {
     return {

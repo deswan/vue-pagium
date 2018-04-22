@@ -10,26 +10,48 @@
        @dragenter.stop="handleDragEnter"
        @dragleave.stop="handleDragLeave"
        @dragend.prevent="handleDragEnd">
-    <div class="tree-node-name" :style="{'padding-left': level * 16 + 10 + 'px'}" :class="[{'has-name': node.name}, 'idx_' + idx ]">
-      <div @click="emitEvent('nodeRow')">
+    <div 
+    @click="emitEvent('nodeRow')" 
+    @mouseenter="onMouseEnter" 
+    @mouseleave="onMouseLeave" 
+    class="tree-node-name" 
+    :style="{'padding-left': level * 16 +10 + 'px','padding-right':'10px'}" 
+    :class="[{'has-name': node.name,'cur-select':node === $store.state.activeComponent}, 'idx_' + idx ]">
+      <div>
         <span>
           <span class="el-tree-node__label">
-            <span v-if="!!node.__pg_slot__" style="font-size:10px;">slot</span>
+            <span v-if="!!node.__pg_slot__">
+              <el-tag size="mini" type="info" style="font-size:10px;">
+              slot
+              </el-tag>
+              </span>
             {{ node.name }}
           </span>
-          <i @click="emitEvent('nodeName')" v-if="node.name && node.children && node.children.length > 0" :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
+          <i @click="emitEvent('nodeName')" 
+            v-if="node.name && node.children && node.children.length > 0" 
+            :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
         </span>
         <span class="tree-node-action" v-if="node.name">
           <el-popover placement="right-end" trigger="click" v-model="showComlib">  
             <div class="com-lib" v-if="isDialog && idx === undefined">
-              <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in $store.getters.allDialogsType" :key="comType">{{comType}}</div>
+              <div >
+                <!-- <h6 class="com-lib-title">本地组件库</h6> -->
+                <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in $store.getters.allDialogsType" :key="comType">
+                  <span class="com-lib-item-text">{{comType}}</span>
+                </div>
+              </div>
             </div>
             <div class="com-lib" v-else>
-              <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in allComs" :key="comType">{{comType}}</div>
+                <!-- <h6 class="com-lib-title">本地组件库</h6> -->
+                <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in $store.getters.allComsType" :key="comType">
+                  <span class="com-lib-item-text">{{comType}}</span>
+                </div>
             </div>        
-            <i class="el-icon-plus" slot="reference" @click.stop="emitEvent('add')"></i>
+            <el-button icon="el-icon-plus" size="mini" type="text" slot="reference" @click.stop="emitEvent('add')">
+              </el-button>      
           </el-popover>
-          <i class="el-icon-delete" @click="emitEvent('delete',{parent:$parent.node,node})" v-if="idx !== undefined"></i>
+          <el-button icon="el-icon-delete" v-if="idx !== undefined" size="mini" type="text" slot="reference" @click="emitEvent('delete',{parent:$parent.node,node})">
+              </el-button>      
         </span>
       </div>
     </div>
@@ -38,7 +60,6 @@
         v-show="!hideChildren"
         v-for="(child, $index) in children" :key="$index"
         v-model="valueModel" :node="child" :idx="$index" :level="level+1"
-        :all-coms="allComs"
         :type="type"
         >
       </tree-node>
@@ -57,15 +78,14 @@ export default {
       type: Number,
       default: 0
     }, // 层级
-    allComs: {},
-    type:String,
-    isDialog:Boolean
+    type: String,
+    isDialog: Boolean
   },
   data: function() {
     return {
       hideChildren: false,
       unwatchRootNode: () => {},
-      showComlib:false
+      showComlib: false
     };
   },
   beforeDestroy() {
@@ -119,22 +139,41 @@ export default {
         this.isParent ||
         this.isNextToMe ||
         this.isMeOrMyAncestor ||
-        this.isDialogToComponents || 
+        this.isDialogToComponents ||
         this.isComponentsToDialogsRoot ||
         this.isDialogNest
       );
     },
-    isDialogNest(){ //dialog不可作为其他组件的子组件
-      return this.value.node.isDialog && !this.$parent.node.isRoot ||  this.value.node.isDialog && this.node.name;
+    isDialogNest() {
+      //dialog不可作为其他组件的子组件
+      return (
+        (this.value.node.isDialog && !this.$parent.node.isRoot) ||
+        (this.value.node.isDialog && this.node.name)
+      );
     },
-    isDialogToComponents(){ //dialog不可移入“组件”Hierarchy里
-      return this.type == 'components' && this.value.node.isDialog;
+    isDialogToComponents() {
+      //dialog不可移入“组件”Hierarchy里
+      return this.type == "components" && this.value.node.isDialog;
     },
-    isComponentsToDialogsRoot(){  //普通组件不可作为“对话框”Hierarchy的根组件
-      return !this.node.name && this.$parent.node.isRoot && this.type == 'dialogs' && !this.value.node.isDialog;
+    isComponentsToDialogsRoot() {
+      //普通组件不可作为“对话框”Hierarchy的根组件
+      return (
+        !this.node.name &&
+        this.$parent.node.isRoot &&
+        this.type == "dialogs" &&
+        !this.value.node.isDialog
+      );
     }
   },
   methods: {
+    onMouseEnter(e) {
+      if (!this.node.name) return;
+      this.$store.commit("hoverMenuItem", { comObj: this.node });
+    },
+    onMouseLeave(e) {
+      if (!this.node.name) return;
+      this.$store.commit("hoverMenuItem", {});
+    },
     clearBgColor() {
       // 清理样式
       this.$el.style.backgroundColor = "";
@@ -164,7 +203,7 @@ export default {
             i: insertBeforeIndex
           }
         });
-      }else{
+      } else {
         // 情况2：拖入普通节点，成为其子
         this.onDragEnd({
           drag: {
@@ -252,7 +291,6 @@ export default {
     emitEvent(type, data) {
       switch (type) {
         case "addCom":
-          this.showComlib = false;
           this.onAddCom(data);
           break; //{com,node}
         case "add":
@@ -268,7 +306,7 @@ export default {
           this.onDelBtnClick(data);
           break;
         case "nodeRow":
-          if(this.idx === undefined) return;
+          if (this.idx === undefined) return;
           this.onNodeRowClick(this.node);
           break;
         case "nodeName":
@@ -316,13 +354,14 @@ $color-extra-light-black: #999;
     }
   }
   &:hover:not(.idx_undefined) {
-    background: rgba(26, 179, 148, 0.1);
-    // color: $color-primary;
-    box-shadow: 0 2px 10px -2px rgba(26, 179, 148, 0.3);
     .tree-node-action {
       display: inline-block;
       height: 14px;
     }
+  }
+  &:hover:not(.idx_undefined):not(.cur-select){
+     background: rgba(26, 179, 148, 0.1);
+    box-shadow: 0 2px 10px -2px rgba(26, 179, 148, 0.3);
   }
   .el-tree-node__label {
     margin-left: 5px;
@@ -338,17 +377,32 @@ $color-extra-light-black: #999;
   }
 }
 .com-lib {
-  width: 150px;
+  width: 300px;
 }
+.com-lib-title{
+    margin:0 0 10px 0;
+  }
 .com-lib-item {
+  position: relative;
   display: inline-block;
   width: 75px;
   height: 75px;
-  line-height: 75px;
   text-align: center;
   border-radius: 10px;
+  word-wrap: break-word;
+}
+.com-lib-item-text{
+  position: absolute;
+  top:0;
+  left:0;
+  width: 100%;
+  margin-top:50%;
+  transform:translateY(-50%)
 }
 .com-lib-item:hover {
   background-color: whitesmoke;
+}
+.cur-select {
+  background-color: lightgrey;
 }
 </style>

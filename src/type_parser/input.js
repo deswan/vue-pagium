@@ -24,8 +24,10 @@ const propsLoaders = {
     string() {
         return {}
     },
-    boolean() {
-        return {}
+    boolean(conf) {
+        return {
+            subInput:conf.on && scheme2Input(conf.on)
+        }
     },
     object(conf) {
         return {

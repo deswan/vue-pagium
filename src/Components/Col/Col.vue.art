@@ -1,0 +1,28 @@
+<template>
+    <el-col
+    {{{if span}}} span="{{{span}}}" {{{/if}}}  
+    {{{if offset}}} offset="{{{offset}}}" {{{/if}}}  
+    {{{if push}}} push="{{{push}}}" {{{/if}}}  
+    {{{if pull}}} pull="{{{pull}}}" {{{/if}}}  
+    {{{if tag}}} tag="{{{tag}}}" {{{/if}}}  
+    {{{if xs}}} xs="{{{xs}}}" {{{/if}}}  
+    {{{if sm}}} sm="{{{sm}}}" {{{/if}}}  
+    {{{if md}}} md="{{{md}}}" {{{/if}}}  
+    {{{if lg}}} lg="{{{lg}}}" {{{/if}}}  
+    {{{if xl}}} xl="{{{xl}}}" {{{/if}}}  
+    >
+    {{{insertChildren()}}}
+    </el-col>
+</template>
+<script>
+export default {
+  data() {
+    return {
+    };
+  },
+};
+</script>
+<style scoped>
+
+</style>
+

@@ -69,9 +69,6 @@ function checkProps(props) {
         if (conf.default && !type_parser.getIsValid(conf.value).call(conf, conf.default)) {
             throw new Error('default值不合法')
         }
-
-        conf.default !== undefined && (conf.default = type_parser.getPatchDefault(conf.value).call(conf, conf.default))
-
     }
 }
 

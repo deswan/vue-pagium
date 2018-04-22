@@ -15,6 +15,7 @@ const scheme2Default = require('../utils/scheme2Default');
 const utils = require('../utils/utils')
 const template = require('./art');
 const babylon = require('babylon');
+const vueCompiler = require('@vue/component-compiler-utils');
 const babel_generator = require('babel-generator').default;
 
 const CHILDREN_PLACEHOLDER = '_____pg_chilren_____';
@@ -62,14 +63,15 @@ function replaceIdentifier() {
             let externalReplaced = pg_com.compiled.replace(externalRegExp, (match, comName, varName) => {
                 let externalCom = utils.getComponentByName(pg_map.components, comName)
                 if (!externalCom) {
-                    throw new Error(`${comName} 组件不存在`)
+                    throw new Error(`${pg_com.name} 引用的组件 ${comName} 组件不存在`)
                 }
 
                 let idx, renamedVarName = varName;
 
                 //修改为rename后的值（data优先级较高）
-                pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, externalCom))
-                pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, externalCom))
+                pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, externalCom) || renamedVarName)
+                pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, externalCom) || renamedVarName)
+
 
                 function getRenamed(renameMap, varName, comObj) {
                     let idx = renameMap.findIndex(toRename => {
@@ -77,8 +79,6 @@ function replaceIdentifier() {
                     })
                     if (~idx) {
                         return renameMap[idx].value
-                    } else {
-                        return varName;
                     }
 
                 }
@@ -144,7 +144,7 @@ function replaceIdentifier() {
  */
 function beautify(vue) {
 
-    logger('before beautify',vue)
+    logger('before beautify', vue)
 
     let idxStart = vue.indexOf('<template>');
     let idxEnd = vue.lastIndexOf('</template>');
@@ -168,9 +168,9 @@ function beautify(vue) {
 }
 
 function merge() {
+    renameData();
     renameMethods()
 
-    renameData();
 
     replaceIdentifier();
 
@@ -261,7 +261,7 @@ function merge() {
     function mergeHook(a, b) {
         return Object.keys(b).reduce((a, hook) => {
             a[hook] || (a[hook] = '')
-            a[hook] += b[hook];
+            a[hook] += '\n' + b[hook];
             return a;
         }, a)
     }
@@ -344,32 +344,24 @@ function compile(comObj, imports, comPaths, root = path.resolve(__dirname, '..',
     return output;
 }
 
-/**
- * 获取标签内的内容
- * @param {String} vue 组件文本
- * @param {String} name TagName
- */
-function getTag(vue, name) {
-    let idxStart = vue.search(new RegExp('<' + name + '.*>'));
-    let idxEnd = vue.lastIndexOf('</' + name + '>');
-    let content = vue.slice(vue.indexOf('>', idxStart) + 1, idxEnd);
-    return {
-        idxStart,
-        idxEnd,
-        content
-    }
-}
-
 function getHtml(vue) {
-    return getTag(vue, 'template').content
+    let sfc = vueCompiler.parse({
+        source:vue,needMap:false
+    }).template
+    return vue.slice(sfc.start,sfc.end).trim();
 }
 
 function getScript(vue) {
-    return getTag(vue, 'script').content
+    let sfc = vueCompiler.parse({
+        source:vue,needMap:false
+    }).script;
+    return vue.slice(sfc.start,sfc.end).trim();
 }
 
 function renameMethods() {
-    let AllMethodsKey = [];
+    let AllMethodsKey = pg_map.components.map(pg_com=>{
+        return pg_com.name;
+    });
     let renameList = []
 
     function traverse(list) {
@@ -461,7 +453,7 @@ function renameMethods() {
         newScript = newScript.replace(new RegExp(cleared.pgColonHash, 'g'), ':');
 
         //替换原script部分
-        newVue = node.compiled.replace(script, newScript);
+        let newVue = node.compiled.replace(script, newScript);
 
         //替换compiled
         node.compiled = newVue.replace(new RegExp('@@(' + Object.keys(keys).join('|') + ')([^$\\w])', 'g'), (val, word, suffix) => {
@@ -560,7 +552,7 @@ function renameData() {
         return result;
     }
     traverse(pg_map.components);
-    pg_map.components.forEach(pg_com=>{
+    pg_map.components.forEach(pg_com => {
         pg_com.setDataWrapper = true;
     })
     logger('renameData: pg_map', pg_map)
@@ -580,6 +572,7 @@ function renameData() {
 
     pg_map.renameMap.data = toRename
 
+
     //修改pg_map && 修改compiled
     toRename.forEach(({
         node,
@@ -592,6 +585,7 @@ function renameData() {
         }
 
         let script = getScript(node.compiled);
+
 
         //替换掉@@为合法标识符
         let cleared = clearControlChar(script)
@@ -633,7 +627,7 @@ function renameData() {
 
 
         //替换原script部分
-        newVue = node.compiled.replace(script, newScript);
+        let newVue = node.compiled.replace(script.trim(), newScript);
 
         //替换@@data
         node.compiled = newVue.replace(new RegExp('@@(' + raw + ')([^$\\w])', 'g'), '@@' + value + '$2')
@@ -671,9 +665,15 @@ function getScriptData(vue) {
     });
 
     let ret = {
-        data: getData(ast, script),
+        data: getData(ast, script) || {
+            keys: [],
+            body: ''
+        },
         hooks: getHook(ast, script, HOOKS_NAME),
-        methods: getMethods(ast, script)
+        methods: getMethods(ast, script) || {
+            keys: [],
+            body: ''
+        }
     }
 
     return ret;
@@ -760,7 +760,7 @@ function getScriptData(vue) {
 function clearControlChar(text) {
     const pgHash = pgHashPrefix + Date.now();
     const pgColonHash = pgColonHashPrefix + Date.now();
-    text = text.replace(/@@([$a-zA-Z][$\w]*)?(:)?/g, function(_, word, colon){
+    text = text.replace(/@@([$a-zA-Z][$\w]*)?(:)?/g, function (_, word, colon) {
         if (colon) {
             return pgHash + (word || '') + pgColonHash
         } else {
@@ -813,8 +813,9 @@ function initMap(components, comPaths, root) {
              * 引用其它组件的data/method
              */
             external({
-                value: comName
-            }, varName) {
+                value: comName,
+                property:varName
+            }) {
                 if (!comName || !varName) throw new Error('external参数不合法');
                 return '@@' + comName + '__pg_external__' + varName;
             }

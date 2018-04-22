@@ -39,6 +39,7 @@ Object.keys(COMPONENTS.custom).reduce((target, name) => {
     return target;
 }, allComs);
 
+
 let uuid = 1;
 
 const store = new Vuex.Store({
@@ -46,6 +47,8 @@ const store = new Vuex.Store({
         components: [],
         activeComponent: null,
         dialogs: [],
+        curHover: null,
+        curTemplate: null
     },
     getters: {
         components(state) {
@@ -60,7 +63,7 @@ const store = new Vuex.Store({
         activeComponentSetting(state) {
             return state.activeComponent && scheme2Input(allComsConfig[state.activeComponent.type].props)
         },
-        type2Com(type) {
+        type2Com(state) {
             return allComs
         },
         /**
@@ -75,6 +78,42 @@ const store = new Vuex.Store({
             }
             return target;
         },
+        originComsType() {
+            let target = [];
+            for (let key in COMPONENTS.origin) {
+                if (!allComsConfig[key].isDialog) {
+                    target.push(key);
+                }
+            }
+            return target;
+        },
+        customComsType() {
+            let target = [];
+            for (let key in COMPONENTS.custom) {
+                if (!allComsConfig[key].isDialog) {
+                    target.push(key);
+                }
+            }
+            return target;
+        },
+        originDialogType() {
+            let target = [];
+            for (let key in COMPONENTS.origin) {
+                if (allComsConfig[key].isDialog) {
+                    target.push(key);
+                }
+            }
+            return target;
+        },
+        customDialogType() {
+            let target = [];
+            for (let key in COMPONENTS.custom) {
+                if (allComsConfig[key].isDialog) {
+                    target.push(key);
+                }
+            }
+            return target;
+        },
         allDialogsType() {
             let target = [];
             for (let key in allComsConfig) {
@@ -84,44 +123,30 @@ const store = new Vuex.Store({
             }
             return target;
         },
-        /**
-         * 获取所有组件可引用属性的map
-         * @return {
-         *     comName1:['varName1','varName2'],
-         *      .
-         *      .
-         *      .
-         * }
-         */
-        allExposeMap(state) {
-            let list = state.components.concat(state.dialogs);
-            let map = {}
-
-            function traverse(list) {
-                list.forEach(item => {
-                    let config = allComsConfig[item.type];
-                    if (config.expose && config.expose.length) {
-                        map[item.name] = config.expose;
-                    }
-                    traverse(item.children)
-                })
-            }
-            return map;
-        },
-        /**
-         * @return {Array}  所有已创建组件（包括子组件）
-         */
         componentNameList(state) {
+            return (property) => {
+                let names = [];
+                (function traverse(list) {
+                    if (!list) return;
+                    list.forEach(item => {
+                        if (item !== state.activeComponent &&
+                            item.exposeProperty &&
+                            item.exposeProperty.includes(property)) {
+                            names.push(item.name)
+                        }
+                        traverse(item.children)
+                    })
+                })(state.components.concat(state.dialogs))
+                return names;
+            }
+        },
+        slotComNameList(state) {
             let names = [];
-            (function traverse(list) {
-                if (!list) return;
-                list.forEach(item => {
-                    if (item !== state.activeComponent) {
-                        names.push(item.name)
-                    }
-                    traverse(item.children)
-                })
-            })(state.components.concat(state.dialogs))
+            state.activeComponent.children.forEach(item => {
+                if (!item.__pg_slot__) {
+                    names.push(item.name)
+                }
+            })
             return names;
         }
     },
@@ -200,9 +225,9 @@ const store = new Vuex.Store({
             const config = allComsConfig[type];
 
             let name = config.name;
-            if(utils.isNameExist(this.getters.data,name)){
+            if (utils.isNameExist(this.getters.data, name)) {
                 let nameCounter = 1;
-                while(utils.isNameExist(this.getters.data,name)){
+                while (utils.isNameExist(this.getters.data, name)) {
                     name = config.name + nameCounter++
                 }
             }
@@ -212,6 +237,7 @@ const store = new Vuex.Store({
                 name,
                 type,
                 isDialog: config.isDialog,
+                exposeProperty: config.exposeProperty,
                 props: { ...scheme2Default(config.props),
                     name
                 },
@@ -324,7 +350,7 @@ const store = new Vuex.Store({
                 if (utils.isNameExist(this.getters.data, value)) {
                     me.$message.warning('该组件名已存在');
                     value = oldName;
-                }else if(!utils.isValidIdentifier(value)){
+                } else if (!utils.isValidIdentifier(value)) {
                     me.$message.warning('该组件名不是合法js标识符');
                     value = oldName;
                 } else {
@@ -358,8 +384,9 @@ const store = new Vuex.Store({
             }
             Vue.set(state.activeComponent.props, name, value);
         },
-        employTemplate(state, {id,data}) {
-            let comList = parser(data, allComsConfig);
+        employTemplate(state, template) {
+            state.curTemplate = template;
+            let comList = parser(template.data, allComsConfig);
             state.activeComponent = null;
             state.components = comList.filter(e => {
                 return !e.isDialog
@@ -369,10 +396,18 @@ const store = new Vuex.Store({
             });
         },
         clearData(state) {
+            state.curTemplate = null;
             state.activeComponent = null;
             state.components.splice(0)
             state.dialogs.splice(0)
-        }
+        },
+        hoverMenuItem(state, {
+            comObj
+        }) {
+            if (comObj && comObj.isDialog) return;
+            state.curHover = comObj || null;
+        },
+
     },
     actions: {
         save(state, {

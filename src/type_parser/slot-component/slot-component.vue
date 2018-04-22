@@ -1,11 +1,17 @@
 <template>
-    <el-input 
+    <el-select
+    multiple=""
     v-model="input" 
     :size="size" 
-    placeholder=""
+    placeholder="slot"
     @change="valChange">
-      <!-- <el-option v-for="(com,idx) in $store.getters.allComs" :key="idx" :value="com.name" :label="com.name"></el-option> -->
-    </el-input>
+      <el-option
+        v-for="item in $store.getters.slotComNameList"
+        :key="item"
+        :label="item"
+        :value="item">
+      </el-option>
+    </el-select>
 </template>
 
 <script>
@@ -21,7 +27,7 @@ export default {
   },
   data() {
     return {
-      input: ""
+      input: []
     };
   },
   created() {
@@ -29,12 +35,12 @@ export default {
   },
   methods: {
     val2inp(val) {
-      return val.value.join(',');
+      return val.value;
     },
     inp2val(inp) {
       return {
         type: "__pg_type_slot_component__",
-        value: inp.split(',')
+        value: inp
       };
     },
     valChange(input) {

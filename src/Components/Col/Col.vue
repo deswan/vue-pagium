@@ -1,18 +1,22 @@
 <template>
-      <el-form v-bind="$props">
+      <el-col v-bind="{span,offset,push,pull}">
         <slot></slot>
-      </el-form>
+      </el-col>
 </template>
 <script>
 export default {
-  name: "Form",
+  name: "Col",
   props: [
-    "inline",
-    "labelPosition",
-    "labelWidth",
-    "labelSuffix",
-    "statusIcon",
-    "size"
+    "span",
+    "offset",
+    "push",
+    "pull",
+    "xs",
+    "sm",
+    "md",
+    "lg",
+    "xl",
+    "tag",
   ],
   data() {
     return {

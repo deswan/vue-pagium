@@ -32,7 +32,7 @@ function isValid(defaultValue) {
 
     let keys = Object.keys(defaultValue)
     let valid = keys.every(key => {
-        let conf = format.find(formatConf=>{
+        let conf = format.find(formatConf => {
             return formatConf.name === key
         });
         return conf && getIsValid(conf.value).call(conf, defaultValue[conf.name])
@@ -51,18 +51,21 @@ function patchDefault(value) {
     } = require('../index');
 
     return this.format.reduce((target, conf) => {
-        target[conf.name] = value[conf.name] === undefined ? getDefaultValue(conf.value).call(conf) : getPatchDefault(conf.value).call(conf, value[conf.name])
+        target[conf.name] =
+            value[conf.name] === undefined ?
+            getDefaultValue(conf.value).call(conf) :
+            getPatchDefault(conf.value).call(conf, value[conf.name])
         return target;
     }, {})
 }
 
-function defaultValue(){
+function defaultValue() {
     const {
         getDefaultValue,
     } = require('../index');
 
     return this.format.reduce((target, conf) => {
-        target[conf.name] = getDefaultValue(conf.value).call(conf) 
+        target[conf.name] = getDefaultValue(conf.value).call(conf)
         return target;
     }, {})
 }

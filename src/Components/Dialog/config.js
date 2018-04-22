@@ -1,7 +1,7 @@
 module.exports = {
     "name": 'dialog',
     "isDialog": true,
-    "expose":["open"],
+    "exposeProperty": ["open"],
     "props": [{
         "name": "title",
         "value": "string",
@@ -17,10 +17,12 @@ module.exports = {
     }, {
         "name": "loadComponent",
         "label": "加载组件",
-        "value": "refer-component"
+        "value": "refer-component",
+        property: 'load'
     }, {
         "name": "clearComponent",
         "label": "清空组件",
-        "value": "refer-component"
+        "value": "refer-component",
+        property: 'clear'
     }]
 }

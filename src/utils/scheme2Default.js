@@ -1,3 +1,5 @@
+const {getDefaultValue,getPatchDefault} = require('../type_parser')
+
 module.exports = function (config) {
     let def = {}
     Object.assign(def, conf2Default(config, true))
@@ -5,37 +7,18 @@ module.exports = function (config) {
 
     function getDefault(conf, isRoot) {
         let type = conf.value
-        if (type === 'string') {
-            return ''
-        } else if (type === 'select') {
-            return ''
-        } else if (type === 'slot-component') {
-            return {
-                type: '__pg_type_slot_component__',
-                value: []
-            }
-        } else if (type === 'refer-component') {
-            return {
-                type: '__pg_type_refer_component__',
-                value: ''
-            }
-        } else if (type === 'boolean') {
-            if (conf.on && isRoot) { //仅限Root
-                Object.assign(def, conf2Default(conf.on)) //!!!有副作用
-            }
-            return false;
-        } else if (type === 'object') {
-            return conf2Default(conf.format);
+        if (type === 'string' ||
+            type === 'select' ||
+            type === 'slot-component' ||
+            type === 'refer-component' ||
+            type === 'object' || type === 'boolean' || type === 'number') {
+            return getDefaultValue(type).call(conf)
         } else if (Array.isArray(type) && type.length == 1) {
-            let item = getDefault({ ...conf,
-                value: type[0]
-            })
+            let item = getDefaultValue(type).call(conf)
             Object.assign(def, {
-                [`_${conf.name}`]: JSON.parse(JSON.stringify(item))
+                [`_${conf.name}`]: JSON.parse(JSON.stringify(getDefaultValue(type[0]).call(conf)))
             }) //!!!有副作用
-            return new Array(2).fill('').map(() => {
-                return JSON.parse(JSON.stringify(item)); //防止引用同一个实例
-            })
+            return item
         }
     }
     /**
@@ -46,7 +29,7 @@ module.exports = function (config) {
     function conf2Default(config, isRoot) {
         let def = {};
         config.forEach(conf => {
-            def[conf.name] = conf.default !== undefined ? conf.default : getDefault(conf, isRoot);
+            def[conf.name] = conf.default !== undefined ? getPatchDefault(conf.value).call(conf, conf.default) : getDefault(conf, isRoot);
         })
         return def;
     }

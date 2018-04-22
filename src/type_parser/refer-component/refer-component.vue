@@ -4,9 +4,10 @@
     :size="size" 
     clearable
     filterable
+    no-data-text="无可用组件"
     @change="valChange">
      <el-option
-      v-for="item in $store.getters.componentNameList"
+      v-for="item in $store.getters.componentNameList(conf.property)"
       :key="item"
       :label="item"
       :value="item">
@@ -40,7 +41,8 @@ export default {
     inp2val(inp) {
       return {
         type: "__pg_type_refer_component__",
-        value: inp
+        value: inp,
+        property: this.conf.property
       };
     },
     valChange(input) {
@@ -48,8 +50,8 @@ export default {
       this.input = this.val2inp(this.value);
     }
   },
-  watch:{
-    value(){
+  watch: {
+    value() {
       this.input = this.val2inp(this.value);
     }
   }

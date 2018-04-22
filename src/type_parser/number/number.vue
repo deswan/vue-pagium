@@ -9,7 +9,7 @@
 export default {
   props: {
     conf:{},
-    value: String,
+    value: Number,
     size: {
       default: "small"
     }

@@ -4,7 +4,6 @@
       @on-node-row-click="nodeClick" 
       v-model="draggingNode" 
       :node="data_com" 
-      :all-coms="$store.getters.allComsType" 
       class="hierarchy" 
       @addCom="addCom" 
       @on-change="nodeChange"
@@ -17,7 +16,6 @@
       @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
-      :all-coms="$store.getters.allComsType" 
       isDialog
       class="hierarchy" 
       @addCom="addCom" 
@@ -76,15 +74,16 @@ export default {
 <style scoped>
 .toolbox {
   position: fixed;
-  width: 200px;
+  width: 250px;
   background: #eeeeee;
   left: 0;
   top: 60px;
-  padding: 20px 0 0;
-  height: 100%;
+  bottom:0;
+  padding: 20px 0;
   user-select: none;
-  text-align: left;
   z-index: 999;
+  box-sizing: border-box;
+  word-wrap: break-word;
 }
 
 .add-btn {

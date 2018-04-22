@@ -53,7 +53,7 @@ export default {
     },
     employ(row) {
       this.$store.commit("employTemplate", row);
-      this.$router.push({name:'create',params:{templateId:row.id}})
+      this.$router.push({name:'create'})
     },
     del({ id,name }) {
       this.$confirm(`确认删除模板 ${name} ？`)

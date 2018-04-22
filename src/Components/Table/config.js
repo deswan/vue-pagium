@@ -1,5 +1,6 @@
 module.exports = {
     "name": 'table',
+    "exposeProperty": ["load","clear"],
     "props": [{
         "name": "cols",
         "label": "设置列",
@@ -36,6 +37,22 @@ module.exports = {
             "value": "select",
             "options": ['selection', 'index', 'expand']
         }]
+    }, {
+        "name": "isLoad",
+        "label": "是否立即加载",
+        "value": "boolean"
+    }, {
+        "name": "pagination",
+        "label": "分页器",
+        "value": "boolean"
+    }, {
+        "name": "pageSizes",
+        "label": "可选页数",
+        "value": "string"
+    }, {
+        "name": "paginationLayout",
+        "label": "布局",
+        "value": "string"
     }, {
         "name": "height",
         "label": "height",
@@ -87,18 +104,5 @@ module.exports = {
         "default": "pageSize",
         "label": "请求pageSize字段",
         "value": "string"
-    }, {
-        "name": "pagination",
-        "label": "分页器",
-        "value": "boolean",
-        "on": [{
-            "name": "pageSizes",
-            "label": "可选页数",
-            "value": "string"
-        }, {
-            "name": "paginationLayout",
-            "label": "布局",
-            "value": "string"
-        }]
     }]
 }

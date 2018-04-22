@@ -1,14 +1,12 @@
 <template>
     <el-dialog 
     class="pg-dialog-wrapper"
+    custom-class="pg-dialog"
     :title="title" 
     :visible.sync="show" 
     :modal="false" 
     :modal-append-to-body="false"
     :lock-scroll="false"
-    width="700px"
-    top="100px"
-    custom-class="pg-dialog"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     :show-close="false"
@@ -45,12 +43,5 @@ export default {
 };
 </script>
 <style>
-.pg-dialog{
-  margin-left: 20px;
-}
-.pg-dialog-wrapper{
-  left: 220px;
-  right: 500px;
-}
 </style>
 

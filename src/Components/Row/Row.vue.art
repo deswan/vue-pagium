@@ -1,0 +1,23 @@
+<template>
+    <el-row
+    {{{if gutter}}} gutter="{{{gutter}}}" {{{/if}}}  
+    {{{if type}}} type="{{{type}}}" {{{/if}}}  
+    {{{if justify}}} justify="{{{justify}}}" {{{/if}}}  
+    {{{if align}}} align="{{{align}}}" {{{/if}}}  
+    {{{if tag}}} tag="{{{tag}}}" {{{/if}}}  
+    >
+    {{{insertChildren()}}}
+    </el-row>
+</template>
+<script>
+export default {
+  data() {
+    return {
+    };
+  },
+};
+</script>
+<style scoped>
+
+</style>
+

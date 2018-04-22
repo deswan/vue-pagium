@@ -41,7 +41,7 @@ function getComponentByName(list,comName) {
             if (list[i].name === comName) {
                 return ret = list[i];
             } else {
-                return find(list[i].children)
+                find(list[i].children)
             }
         }
     }
@@ -53,5 +53,6 @@ module.exports = {
     isPlainObject,
     isNameExist,
     isValidIdentifier,
-    getAllPropNameInConfig
+    getAllPropNameInConfig,
+    getComponentByName
 }
