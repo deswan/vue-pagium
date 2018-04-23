@@ -1,10 +1,10 @@
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const ncp = require('ncp')
 const fsExtra = require('fs-extra')
-const logger = require('../logger')('server/util')
+const logger = require('../logger')('lib/helper')
 const constant = require('../const')
 const config = require('../config');
 const {

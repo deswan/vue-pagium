@@ -5,11 +5,13 @@ const COMPONENTS = process.Components;
 
 import scheme2Default from "../../utils/scheme2Default.js";
 import scheme2Input from "../Create/SettingBoard/scheme2Input.js";
-const parser = require('../../server/parser');
+import axios from "axios";
+const parser = require('../../lib/parser');
 const utils = require('../../utils/utils');
-
-const SLOT_TYPE = '__pg_type_slot_component__'
-const REFER_TYPE = '__pg_type_refer_component__'
+const {
+    SLOT_TYPE,
+    REFER_TYPE
+} = require('../../const');
 
 Vue.use(Vuex)
 
@@ -20,22 +22,22 @@ const allComs = {}
 console.log(COMPONENTS)
 
 Object.keys(COMPONENTS.origin).reduce((target, name) => {
-    target[name] = require(`../../Components/${name}/config.js`);
+    target[name] = require(`../../../runtime/${process.ComponentsRoot}/${name}/config.js`);
     return target;
 }, allComsConfig);
 
 Object.keys(COMPONENTS.custom).reduce((target, name) => {
-    target[name] = require(`../../Components/.custom/${name}/config.js`);
+    target[name] = require(`../../../runtime/${process.ComponentsRoot}/.custom/${name}/config.js`);
     return target;
 }, allComsConfig);
 
 Object.keys(COMPONENTS.origin).reduce((target, name) => {
-    target[name] = require(`../../Components/${name}/${name}.vue`).default;
+    target[name] = require(`../../../runtime/${process.ComponentsRoot}/${name}/${name}.vue`).default;
     return target;
 }, allComs);
 
 Object.keys(COMPONENTS.custom).reduce((target, name) => {
-    target[name] = require(`../../Components/.custom/${name}/${name}.vue`).default;
+    target[name] = require(`../../../runtime/${process.ComponentsRoot}/.custom/${name}/${name}.vue`).default;
     return target;
 }, allComs);
 
@@ -142,7 +144,7 @@ const store = new Vuex.Store({
         },
         slotComNameList(state) {
             let names = [];
-            state.activeComponent.children.forEach(item => {
+            state.activeComponent && state.activeComponent.children.forEach(item => {
                 if (!item.__pg_slot__) {
                     names.push(item.name)
                 }
@@ -160,11 +162,32 @@ const store = new Vuex.Store({
             drag,
             drop
         }) {
-            let holder = {}
-            let [comObj] = drag.p.children.splice(drag.i, 1, holder);
+
+            if (drag.p.children[drag.i].__pg_slot__) {
+                let dragName = drag.p.children[drag.i].name;
+                (function traverse(list) {
+                    if (!list) return;
+                    for (let i = 0, len = list.length; i < len; i++) {
+                        let props = list[i].props;
+                        list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
+                            if (this.type === SLOT_TYPE && this.value.length) {
+                                this.value = this.value.filter(e => {
+                                    return e !== dragName
+                                })
+                            }
+                            return v;
+                        })
+                        traverse(list[i].children)
+                    }
+                })(this.getters.data)
+                drag.p.children[drag.i].__pg_slot__ = false;
+            }
+
+            let [comObj] = drag.p.children.splice(drag.i, 1);
 
             drop.p.children.splice(drop.i, 0, comObj)
-            drag.p.children.splice(drag.p.children.indexOf(holder), 1);
+            axios.post('/input',state)
+            
         },
 
         /**
@@ -189,14 +212,14 @@ const store = new Vuex.Store({
             }
             del(parent.children, node);
 
-            //删除组件名引用
+            //删除组件名引用、slot引用
             (function traverse(list) {
                 if (!list) return;
                 for (let i = 0, len = list.length; i < len; i++) {
                     let props = list[i].props;
                     list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
                         if (this.type === SLOT_TYPE) {
-                            this.value = this.value.map(e => {
+                            this.value = this.value.filter(e => {
                                 return e !== node.name
                             })
                         } else if (this.type === REFER_TYPE) {
@@ -208,8 +231,8 @@ const store = new Vuex.Store({
                     })
                     traverse(list[i].children)
                 }
-            })(state.components.concat(state.dialogs))
-
+            })(this.getters.data)
+            axios.post('/input',state)
 
         },
 
@@ -250,6 +273,8 @@ const store = new Vuex.Store({
             this.commit('activateComponent', {
                 comObj
             })
+            axios.post('/input',state)
+            
         },
 
         /**
@@ -260,6 +285,7 @@ const store = new Vuex.Store({
             comObj
         }) {
             state.activeComponent = comObj;
+            axios.post('/input',state)
         },
 
         /**
@@ -270,11 +296,11 @@ const store = new Vuex.Store({
         input(state, {
             me,
             name,
-            value,
-            cb
+            value
         }) {
 
-            function getComponent(comName, list = state.components.concat(state.dialogs)) {
+            let getComponent = (comName, list = this.getters.data) => {
+
                 let ret = null;
 
                 function find(list) {
@@ -307,24 +333,27 @@ const store = new Vuex.Store({
             let slots = []; //TODO:JSON.parse遍历参数循环两次的问题
 
             value = JSON.parse(JSON.stringify(value), function (k, v) {
-                if (this.type === SLOT_TYPE) {
+                if (this.type === SLOT_TYPE && this.value.length) {
                     //去重
                     this.value = this.value.filter((e, idx) => {
                         return this.value.indexOf(e) == idx;
                     })
-                    //过滤非直接子组件以及已经成为slot的子组件
                     this.value = this.value.filter(e => {
+                        //过滤非直接子组件
                         return state.activeComponent.children.some(subCom => {
-                            return e === subCom.name && !subCom.__pg_slot__
-                        }) && slots.every(slot => {
-                            return slot.every(slot => {
-                                return e !== slot;
+                                return e === subCom.name && !subCom.__pg_slot__
                             })
-                        })
+                            //过滤已经成为slot的子组件
+                            &&
+                            slots.every(slot => {
+                                return slot.every(slot => {
+                                    return e !== slot;
+                                })
+                            })
                     })
 
                     slots.push(this.value);
-                } else if (this.type === REFER_TYPE) {
+                } else if (this.type === REFER_TYPE && this.value.length) {
                     //过滤不存在的组件以及自身组件
                     if (!getComponent(this.value) || this.value === state.activeComponent.name) {
                         this.value = '';
@@ -333,10 +362,10 @@ const store = new Vuex.Store({
                 return v;
             })
 
-            //为子组件添加slot标识
-            slots.forEach((slotsName, slotIdx) => {
+            //为子组件添加slot标识（`${属性名}${值序号}`）
+            slots.forEach((slotsNames, slotIdx) => {
                 state.activeComponent.children.forEach(subCom => {
-                    if (slotsName.includes(subCom.name)) {
+                    if (slotsNames.includes(subCom.name)) {
                         subCom.__pg_slot__ = name + (slotIdx + 1);
                         subCom.props.__pg_slot__ = name + (slotIdx + 1);
                     }
@@ -383,6 +412,7 @@ const store = new Vuex.Store({
                 }
             }
             Vue.set(state.activeComponent.props, name, value);
+            axios.post('/input',state)
         },
         employTemplate(state, template) {
             state.curTemplate = template;
@@ -394,12 +424,16 @@ const store = new Vuex.Store({
             state.dialogs = comList.filter(e => {
                 return e.isDialog
             });
+            axios.post('/input',state)
+            
         },
         clearData(state) {
             state.curTemplate = null;
             state.activeComponent = null;
             state.components.splice(0)
             state.dialogs.splice(0)
+            axios.post('/input',state)
+            
         },
         hoverMenuItem(state, {
             comObj
@@ -407,7 +441,14 @@ const store = new Vuex.Store({
             if (comObj && comObj.isDialog) return;
             state.curHover = comObj || null;
         },
-
+        assign(state,data){
+            console.log('assign',state,data)
+            Object.assign(state,data)
+            // Vue.set(state, 'components', data.components);
+            // Vue.set(state, 'activeComponent', data.activeComponent);
+            // Vue.set(state, 'curTemplate', data.curTemplate);
+            // Vue.set(state, 'dialogs', data.dialogs);
+        }
     },
     actions: {
         save(state, {
@@ -419,6 +460,13 @@ const store = new Vuex.Store({
             vm
         }) {
             return vm.$http.post("/preview", state.getters.data);
+        },
+        getLastestInput(state){
+            axios.get('/input').then(({data})=>{
+                if(Object.keys(data.data).length){
+                    this.commit('assign',data.data)
+                }
+            })
         }
     }
 })

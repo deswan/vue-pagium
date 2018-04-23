@@ -1,4 +1,8 @@
-const {getDefaultValue,getPatchDefault} = require('../type_parser')
+const {
+    getIsValid,
+    getDefaultValue,
+    getPatch
+} = require('../type_parser')
 
 module.exports = function (config) {
     let def = {}
@@ -29,7 +33,14 @@ module.exports = function (config) {
     function conf2Default(config, isRoot) {
         let def = {};
         config.forEach(conf => {
-            def[conf.name] = conf.default !== undefined ? getPatchDefault(conf.value).call(conf, conf.default) : getDefault(conf, isRoot);
+            if (conf.default !== undefined) {
+                if (!getIsValid(conf.value).call(conf, conf.default)) {
+                    throw new Error(conf + '\ndefault值不合法')
+                }
+                def[conf.name] = getPatch(conf.value).call(conf, conf.default)
+            }else{
+                def[conf.name] = getDefault(conf, isRoot);
+            }
         })
         return def;
     }

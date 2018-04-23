@@ -1,7 +1,7 @@
 const htmlcs = require('htmlcs');
 const esformatter = require('esformatter');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
 const beautify_html = require('js-beautify').html;
 
 const crypto = require('crypto');
@@ -13,7 +13,6 @@ const outTemplDir = path.join(__dirname, './');
 
 const scheme2Default = require('../utils/scheme2Default');
 const utils = require('../utils/utils')
-const template = require('./art');
 const babylon = require('babylon');
 const vueCompiler = require('@vue/component-compiler-utils');
 const babel_generator = require('babel-generator').default;
@@ -26,7 +25,19 @@ const pgColonHashPrefix = '__pg_colon__';
 
 const HOOKS_NAME = ['created', 'mounted'];
 
-let logger = require('../logger')('postProcessor')
+let logger = require('../logger')('compile')
+
+const template = require('art-template');
+
+//art options
+template.defaults.rules[1].test = /{{{([@#]?)[ \t]*(\/?)([\w\W]*?)[ \t]*}}}/;
+Object.assign(template.defaults, {
+    minimize: false,
+    escape: false,
+})
+Object.assign(template.defaults.imports, {
+    Object,Array,String,JSON
+})
 
 let pg_map = {
     components: [],
@@ -841,7 +852,7 @@ function initMap(components, comPaths, root) {
     logger('initMap', pg_map)
 }
 
-module.exports = (components, comPaths, root) => {
+module.exports = async function(components, comPaths, root){
     initMap(components, comPaths, root);
     return render(merge())
 }

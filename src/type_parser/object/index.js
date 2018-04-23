@@ -44,17 +44,17 @@ function isValid(defaultValue) {
     return true;
 }
 
-function patchDefault(value) {
+function patch(value) {
     const {
         getDefaultValue,
-        getPatchDefault
+        getPatch
     } = require('../index');
 
     return this.format.reduce((target, conf) => {
         target[conf.name] =
             value[conf.name] === undefined ?
             getDefaultValue(conf.value).call(conf) :
-            getPatchDefault(conf.value).call(conf, value[conf.name])
+            getPatch(conf.value).call(conf, value[conf.name])
         return target;
     }, {})
 }
@@ -73,6 +73,6 @@ function defaultValue() {
 module.exports = {
     hasError,
     isValid,
-    patchDefault,
+    patch,
     defaultValue
 }

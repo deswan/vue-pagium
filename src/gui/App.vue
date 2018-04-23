@@ -50,6 +50,9 @@ export default {
       }
     };
   },
+  created(){
+    this.$store.dispatch('getLastestInput')
+  },
   mounted() {
     if (this.$route.name === "create") {
       this.showBtn = true;

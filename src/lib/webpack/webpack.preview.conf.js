@@ -3,8 +3,8 @@ const path = require('path')
 const webpackConfig = require('./webpack.config');
 const merge = require('webpack-merge')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const utils = require('../gui/build/utils')
-const config = require('../gui/config')
+const utils = require('../../gui/build/utils')
+const config = require('../../gui/config')
 
 const previewWebpackConfig = merge(webpackConfig, {
   entry: {
@@ -19,7 +19,7 @@ const previewWebpackConfig = merge(webpackConfig, {
   plugins: [
     new HtmlWebpackPlugin({
       template: 'index.html',
-      filename: path.resolve(__dirname, './index/preview.html'),
+      filename: path.resolve(__dirname, '../dist/preview.html'),
       inject: true,
       chunks: ['preview'],
       minify: {

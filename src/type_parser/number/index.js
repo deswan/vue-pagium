@@ -6,7 +6,7 @@ function isValid(value){
     return typeof value == 'number'
 }
 
-function patchDefault(value) {
+function patch(value) {
     return value;
 }
 
@@ -17,6 +17,6 @@ function defaultValue(){
 module.exports = {
     hasError,
     isValid,
-    patchDefault,
+    patch,
     defaultValue
 }

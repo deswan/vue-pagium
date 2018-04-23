@@ -18,16 +18,16 @@ function isValid(value) {
 
 //前提：isValid
 //值补完
-function patchDefault(value) {
+function patch(value) {
     const {
-        getPatchDefault
+        getPatch
     } = require('../index');
     let innerConf = {
         ...this,
         value: this.value[0]
     }
     return value.map(e => {
-        return getPatchDefault(innerConf.value).call(innerConf, e)
+        return getPatch(innerConf.value).call(innerConf, e)
     })
 }
 
@@ -40,5 +40,5 @@ module.exports = {
     hasError,
     isValid,
     defaultValue,
-    patchDefault
+    patch
 }

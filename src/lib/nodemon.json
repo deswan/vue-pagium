@@ -3,6 +3,6 @@
         "Table/",
         "http.art",
         "postProcessor.js",
-        "server.js"
+        "start.js"
     ]
 }

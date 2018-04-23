@@ -36,8 +36,8 @@ module.exports = {
     getIsValid(type){
         return getType(type) && getType(type).isValid
     },
-    getPatchDefault(type){
-        return getType(type) && getType(type).patchDefault
+    getPatch(type){
+        return getType(type) && getType(type).patch
     },
     getDefaultValue(type){
         return getType(type) && getType(type).defaultValue

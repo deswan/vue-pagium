@@ -40,7 +40,7 @@ function isValid(value){
     })
 }
 
-function patchDefault(value){
+function patch(value){
     return value;
 }
 
@@ -51,6 +51,6 @@ function defaultValue(){
 module.exports = {
     hasError,
     isValid,
-    patchDefault,
+    patch,
     defaultValue
 }

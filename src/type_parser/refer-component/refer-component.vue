@@ -16,6 +16,7 @@
 </template>
 
 <script>
+const {REFER_TYPE} = require('../../const')
 export default {
   name: "PG-REFER-COMPONENT",
   props: {
@@ -40,7 +41,7 @@ export default {
     },
     inp2val(inp) {
       return {
-        type: "__pg_type_refer_component__",
+        type: REFER_TYPE,
         value: inp,
         property: this.conf.property
       };

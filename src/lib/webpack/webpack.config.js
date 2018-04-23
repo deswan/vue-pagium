@@ -1,20 +1,20 @@
 'use strict'
 const path = require('path')
-const utils = require('../gui/build/utils')
+const utils = require('../../gui/build/utils')
 const webpack = require('webpack')
-const config = require('../gui/config')
+const config = require('../../gui/config')
 const merge = require('webpack-merge')
 
-const vueLoaderConfig = require('../gui/build/vue-loader.conf')
+const vueLoaderConfig = require('../../gui/build/vue-loader.conf')
 
 function resolve(dir) {
-  return path.join(__dirname, '../../', dir)
+  return path.join(__dirname, '../../../', dir)
 }
 
 let baseWebpackConfig = {
-  context: path.resolve(__dirname, '../gui'),
+  context: path.resolve(__dirname, '../../gui'),
   output: {
-    path: path.resolve(__dirname, './dist'),
+    path: path.resolve(__dirname, '../dist'),
     filename: utils.assetsPath('js/[name].js'),
     chunkFilename: utils.assetsPath('js/[id].js'),
     publicPath:config.build.assetsPublicPath
@@ -35,7 +35,7 @@ let baseWebpackConfig = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client'),path.resolve('.')]
+        include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,

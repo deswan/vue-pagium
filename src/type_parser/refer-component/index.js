@@ -1,3 +1,5 @@
+const {isPlainObject} = require('../../utils/utils')
+const {REFER_TYPE} = require('../../const')
 let hasError = (conf) => {
     if (conf.default) {
         return '该类型不允许设置default值'
@@ -11,16 +13,28 @@ let hasError = (conf) => {
 }
 
 function isValid(value) {
-    return value.type === '__pg_type_refer_component__' && typeof value.value === 'string' && typeof value.property === 'string';
+    if(isPlainObject(value)){
+        return value.type === REFER_TYPE && typeof value.value === 'string' && typeof value.property === 'string';
+    }else if(typeof value === 'string'){
+        return true;
+    }
 }
 
-function patchDefault(value) {
-    return value;
+function patch(value) {
+    if(isPlainObject(value)){
+        return value;
+    }else if(typeof value === 'string'){
+        return {
+            type: REFER_TYPE,
+            value,
+            property: this.property
+        };
+    }
 }
 
 function defaultValue() {
     return {
-        type: '__pg_type_refer_component__',
+        type: REFER_TYPE,
         value: '',
         property: this.property
     };
@@ -29,6 +43,6 @@ function defaultValue() {
 module.exports = {
     hasError,
     isValid,
-    patchDefault,
+    patch,
     defaultValue
 }

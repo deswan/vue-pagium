@@ -28,7 +28,6 @@
 </template>
 
 <script>
-
 import Hierarchy from "./Hierarchy";
 
 export default {
@@ -54,6 +53,22 @@ export default {
       isRoot: true
     };
   },
+  watch: {
+    "$store.getters.components"() {
+      this.data_com = {
+        name: "组件",
+        children: this.$store.getters.components,
+        isRoot: true
+      };
+    },
+    "$store.getters.dialogs"() {
+      this.data_dialog = {
+        name: "对话框",
+        children: this.$store.getters.dialogs,
+        isRoot: true
+      };
+    }
+  },
   methods: {
     nodeChange(e) {
       this.$store.commit("nodeChange", e);
@@ -78,7 +93,7 @@ export default {
   background: #eeeeee;
   left: 0;
   top: 60px;
-  bottom:0;
+  bottom: 0;
   padding: 20px 0;
   user-select: none;
   z-index: 999;

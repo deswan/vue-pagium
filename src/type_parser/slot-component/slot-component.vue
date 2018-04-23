@@ -15,6 +15,7 @@
 </template>
 
 <script>
+const {SLOT_TYPE} = require('../../const')
 export default {
   name: "PG-SLOT-COMPONENT",
   props: {
@@ -39,7 +40,7 @@ export default {
     },
     inp2val(inp) {
       return {
-        type: "__pg_type_slot_component__",
+        type: SLOT_TYPE,
         value: inp
       };
     },
