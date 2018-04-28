@@ -1,16 +1,16 @@
 <template>
-      <components :is="$store.getters.type2Com[comObj.type]" v-bind="comObj.props" class="pg-com" 
-      :active="$store.state.activeComponent && $store.state.activeComponent.pg === comObj.pg" 
-      :com-name="comObj.name"
-      :subActive="subActive"
-      :id="`pg-com-${comObj.name}`"
+      <components
+      :is="$store.getters.type2Com[comObj.type]"
+      v-bind="comObj.props" 
+      :pg-active="$store.state.activeComponent && $store.state.activeComponent.pg === comObj.pg || subActive"
+      :id="`pg-com-${comObj.name}`" 
       @mouseenter.native="onMouseenter"
-      @mouseleave.native="onMouseleave"
-      :pg="comObj.pg">
+      @mouseleave.native="onMouseleave">
           <template v-if="comObj.children && comObj.children.length">
             <pg-com  @enter="onEnter" @leave="onLeave" :com-obj="subCom" v-for="subCom in comObj.children" :key="subCom.pg"></pg-com>
           </template>
       </components>
+
 </template>
 
 <script>

@@ -1,23 +1,24 @@
 const logger = require('../logger')('create');
-const {
-    checkData
-} = require('../utils/checkTemplateValid');
+const checkData = require('../utils/checkDataValid');
 const {
     getPatch
 } = require('../type_parser');
 const {
-    getOriginComponents,
+    getLocalComponents,
 } = require('../lib/helper');
-const parser = require('../lib/parser');
+const json2compile = require('./json2compile');
 const path = require('path');
 const compile = require('../lib/compile');
+const utils = require('../utils/utils');
 const fs = require('fs-extra');
+const ora = require('ora');
+const chalk = require('chalk');
 
 
 module.exports = async function (info) {
     let json = require(info.source);
 
-    let comPaths = getOriginComponents(info.temporaryDir)
+    let comPaths = getLocalComponents(info.temporaryDir)
 
     logger('comsPath', comPaths)
 
@@ -31,33 +32,7 @@ module.exports = async function (info) {
         return target;
     }, {})
 
-    //验证data的有效性
-    try {
-        checkData(json, allComsConfig)
-    } catch (err) {
-        throw new Error(path.basename(info.source) + ' 解析错误\n' + err.message)
-    }
-
-    //patch default
-    function patch(list) {
-        if (!list) return [];
-        list.forEach(item => {
-            item.props = Object.keys(item.props).reduce((target, propName) => {
-                let conf = allComsConfig[item.type].props.find(e => {
-                    return e.name === propName;
-                })
-
-                target[propName] = getPatch(conf.value).call(conf, item.props[propName]);
-                return target
-            }, {})
-            item.children = patch(item.children);
-            return item;
-        })
-        return list;
-    }
-    json = patch(json);
-
-    let data = parser(json, allComsConfig)
+    let data = json2compile(json, allComsConfig)
 
     const generating = ora({
         text: 'generating page'

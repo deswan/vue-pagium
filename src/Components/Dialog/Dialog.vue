@@ -3,7 +3,7 @@
     class="pg-dialog-wrapper"
     custom-class="pg-dialog"
     :title="title" 
-    :visible.sync="show" 
+    :visible.sync="pgActive" 
     :modal="false" 
     :modal-append-to-body="false"
     :lock-scroll="false"
@@ -18,27 +18,10 @@
 <script>
 export default {
   name: 'Dialog',
-  props:['title','center','active','subActive'],
+  props:['title','center','pg-active'],
   data() {
     return {
-      show:true
     };
-  },
-  created(){
-      this.show = this.active || this.subActive;
-  },
-  methods:{
-     activate(){
-
-     }
-  },
-  watch:{
-    active(){
-      this.show = this.active || this.subActive;
-    },
-    subActive(){
-      this.show = this.active || this.subActive;
-    }
   }
 };
 </script>

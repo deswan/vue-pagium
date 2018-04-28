@@ -13,11 +13,14 @@ const nodeCleanup = require('node-cleanup');
 const config = require('../config');
 const {
     getCustomComponentAndArt,
-    getOriginComponents,
-    linkComponent
+    getLocalComponents,
+    copyComponent
 } = require('../lib/helper');
 const start = require('../lib/start');
 const create = require('../lib/create');
+const {checkConfig} = require('../utils/checkConfigValid');
+
+console.log(process.env.NODE_ENV)
 
 function resolveTarget(target) {
     let p = path.resolve(target)
@@ -26,17 +29,15 @@ function resolveTarget(target) {
         if (stat.isDirectory()) {
             return path.join(p, config.target.pageName)
         } else if (stat.isFile()) {
-            return path.join(p)
+            return p
         } else {
-            console.log(chalk.red(`${p} 不是文件夹或文件`))
-            process.exit(1)
+            throw new Error(`${p} 不是文件夹或文件`)
         }
     } else {
         if (fs.existsSync(path.dirname(p))) {
             return p
         } else {
-            console.log(chalk.red(`${path.dirname(p)} 该目录不存在`))
-            process.exit(1)
+            throw new Error(`${path.dirname(p)} 该目录不存在`)
         }
     }
 }
@@ -48,8 +49,7 @@ function resolveConfigDir(configDir) {
     if (!fs.existsSync(p)) {
         fs.mkdirsSync(p)
     } else if (!fs.statSync(p).isDirectory()) {
-        console.log(`${chalk.red(p)} 不是文件夹`)
-        process.exit(1)
+        throw new Error(`${p} 不是文件夹`)
     }
     return p;
 }
@@ -61,6 +61,9 @@ function createTemporaryDir() {
         tempDirSuffix = tempDirSuffix + 1;
     }
     let uniqueTempDir = config.tempComponentDir + '_' + tempDirSuffix;
+
+    if (process.env.NODE_ENV === 'development') uniqueTempDir = config.devTempComponentDir;
+
     fs.mkdirsSync(uniqueTempDir)
 
     nodeCleanup((code) => {
@@ -72,7 +75,19 @@ function createTemporaryDir() {
     })
 
     //将原生组件拷贝至临时目录
-    fs.copySync(config.componentDir, uniqueTempDir)
+    fs.copySync(config.componentDir, uniqueTempDir);
+
+    if(process.env.NODE_ENV === 'development'){
+        let dirs = fs.readdirSync(config.componentDir);
+        dirs.forEach(filename=>{
+            if(!fs.statSync(path.join(config.componentDir,filename)).isDirectory()) return;
+            try {
+                checkConfig(require(path.join(config.componentDir,filename, 'config.js')));
+            } catch (err) {
+                throw new Error(`${filename} 组件 config.js 格式错误:\n${err.message}`);
+            }
+        })
+    }
 
     return uniqueTempDir;
 }
@@ -83,99 +98,97 @@ prog
     .option('-c, --config <dir1>', 'config dir') //未指定则取当前目录下的.pager目录
     .option('-t, --target <dir1>', 'target') //可以是dir或file；dir:必须已存在 file:可存在可不存在，但其dirname必须存在
     .option('-p, --port <dir1>', 'port') //指定端口
-    .action(function (args, options) {
-
-        let describe = {}
-
-        describe.configDir = resolveConfigDir(options.config)
-
-        describe.target = options.target ? resolveTarget(options.target) : path.join(describe.configDir, config.target.pageName)
-
-        describe.port = options.port || 8001;
-        describe.temporaryDir = createTemporaryDir();
-
-        linkComponent(describe.configDir, describe.temporaryDir).then(_ => {
-            wrapCommand(start)(describe)
-        }).catch(err => {
-            console.log(err.message)
-        })
-    })
+    .action(wrapCommand(beforeStart))
 
     .command('create', 'resolve data')
     .argument('<source>', 'source')
     .argument('[target]', 'target')
     .option('-c, --config <dir>', 'config dir')
-    .action(function (args, options) {
-
-        // const check = ora({
-        //     text: 'checking format'
-        // }).start();
-
-        //验证/获取 pager path（逐级向上查找）
-        let pagerPath = options.config && path.resolve(options.config);
-
-        if (pagerPath) {
-            if (!fs.existsSync(pagerPath)) {
-                throw new Error(pagerPath + ' 不存在')
-            } else if (!fs.statSync(pagerPath).isDirectory()) {
-                throw new Error(pagerPath + ' 不是文件夹')
-            }
-        } else {
-            pagerPath = path.resolve('.', config.target.dir);
-            while (!fs.existsSync(pagerPath) || !fs.statSync(pagerPath).isDirectory()) {
-                if (path.join(pagerPath, '..', config.target.dir) === path.join(pagerPath, '..', config.target.dir)) {
-                    pagerPath = false;
-                    break;
-                }
-                pagerPath = path.join(pagerPath, '..', config.target.dir)
-            }
-        }
-
-        //获取source/target
-        let sourcePath = path.resolve(args.source);
-        if (!fs.existsSync(sourcePath)) {
-            return console.error(chalk.red('source file is not exist'))
-        } else if (!fs.statSync(sourcePath).isFile()) {
-            return console.error(chalk.red('source must be file'))
-        }
-
-        //验证source是否为json文件
-        if (path.extname(sourcePath) !== '.json') {
-            return console.error(chalk.red('target file must be json'))
-        }
-
-        let targetDir = resolveTarget(args.target || '.');
-
-        logger('源文件：' + sourcePath)
-        logger('输出文件夹：' + targetDir)
-
-        logger('pagerPath' + pagerPath)
-
-        let uniqueTempDir = createTemporaryDir()
-
-        if (pagerPath) {
-            console.log(' pager 路径：' + pagerPath)
-            linkComponent(pagerPath, uniqueTempDir).then(_ => {
-                parse();
-            }).catch(err => {
-                console.log(err.message)
-            })
-        } else {
-            parse(); //无自定义组件
-        }
-
-        function parse() {
-            wrapCommand(create)({
-                temporaryDir: uniqueTempDir,
-                target: targetDir,
-                source: sourcePath,
-                configDir: pagerPath
-            })
-        }
-
-    });
+    .action(wrapCommand(beforeCreate));
 
 prog.parse(process.argv);
+
+async function beforeStart(args, options) {
+    let describe = {}
+
+    describe.configDir = resolveConfigDir(options.config)
+
+    describe.target = options.target ? resolveTarget(options.target) : path.join(describe.configDir, config.target.pageName)
+
+    describe.port = options.port || 8001;
+
+    describe.temporaryDir = createTemporaryDir();
+
+    return await copyComponent(describe.configDir, describe.temporaryDir).then(_ => {
+        start(describe)
+    })
+}
+
+async function beforeCreate(args, options) {
+    // const check = ora({
+    //     text: 'checking format'
+    // }).start();
+
+    //验证/获取 pager path（逐级向上查找）
+    let pagerPath = options.config && path.resolve(options.config);
+
+    if (pagerPath) {
+        if (!fs.existsSync(pagerPath)) {
+            throw new Error(pagerPath + ' 不存在')
+        } else if (!fs.statSync(pagerPath).isDirectory()) {
+            throw new Error(pagerPath + ' 不是文件夹')
+        }
+    } else {
+        pagerPath = path.resolve('.', config.target.dir);
+        while (!fs.existsSync(pagerPath) || !fs.statSync(pagerPath).isDirectory()) {
+            if (path.join(pagerPath, '..', config.target.dir) === path.join(pagerPath, '..', config.target.dir)) {
+                pagerPath = false;
+                break;
+            }
+            pagerPath = path.join(pagerPath, '..', config.target.dir)
+        }
+    }
+
+    //获取source/target
+    let sourcePath = path.resolve(args.source);
+    if (!fs.existsSync(sourcePath)) {
+        throw new Error('source file is not exist')
+    } else if (!fs.statSync(sourcePath).isFile()) {
+        throw new Error('source must be file')
+    }
+
+    //验证source是否为json文件
+    if (path.extname(sourcePath) !== '.json') {
+        throw new Error('target file must be json')
+    }
+
+    let targetDir = resolveTarget(args.target || '.');
+
+    logger('源文件：' + sourcePath)
+    logger('输出文件夹：' + targetDir)
+
+    logger('pagerPath' + pagerPath)
+
+    let uniqueTempDir = createTemporaryDir()
+
+    if (pagerPath) {
+        console.log(' pager 路径：' + pagerPath)
+        return copyComponent(pagerPath, uniqueTempDir).then(_ => {
+            return parse();
+        })
+    } else {
+        return parse(); //无自定义组件
+    }
+
+    async function parse() {
+        return create({
+            temporaryDir: uniqueTempDir,
+            target: targetDir,
+            source: sourcePath,
+            configDir: pagerPath
+        })
+    }
+}
 
 function wrapCommand(fn) {
     return (...args) => {

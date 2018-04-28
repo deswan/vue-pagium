@@ -6,7 +6,12 @@ const COMPONENTS = process.Components;
 import scheme2Default from "../../utils/scheme2Default.js";
 import scheme2Input from "../Create/SettingBoard/scheme2Input.js";
 import axios from "axios";
-const parser = require('../../lib/parser');
+import {
+    stat
+} from 'fs';
+const template2Store = require('../../lib/template2Store');
+const checkTemplateValid = require('../../utils/checkTemplateValid');
+const checkDataValid = require('../../utils/checkDataValid');
 const utils = require('../../utils/utils');
 const {
     SLOT_TYPE,
@@ -41,8 +46,13 @@ Object.keys(COMPONENTS.custom).reduce((target, name) => {
     return target;
 }, allComs);
 
-
 let uuid = 1;
+
+function attachUUID(list) {
+    utils.traverse(item => {
+        item.pg = uuid++;
+    }, list);
+}
 
 const store = new Vuex.Store({
     state: {
@@ -150,6 +160,9 @@ const store = new Vuex.Store({
                 }
             })
             return names;
+        },
+        allComsConfig() {
+            return allComsConfig;
         }
     },
     mutations: {
@@ -186,8 +199,8 @@ const store = new Vuex.Store({
             let [comObj] = drag.p.children.splice(drag.i, 1);
 
             drop.p.children.splice(drop.i, 0, comObj)
-            axios.post('/input',state)
-            
+            axios.post('/input', state)
+
         },
 
         /**
@@ -232,7 +245,7 @@ const store = new Vuex.Store({
                     traverse(list[i].children)
                 }
             })(this.getters.data)
-            axios.post('/input',state)
+            axios.post('/input', state)
 
         },
 
@@ -261,9 +274,7 @@ const store = new Vuex.Store({
                 type,
                 isDialog: config.isDialog,
                 exposeProperty: config.exposeProperty,
-                props: { ...scheme2Default(config.props),
-                    name
-                },
+                props: scheme2Default(config.props),
                 children: [],
                 __pg_slot__: false //是否成为slot
             }
@@ -273,8 +284,8 @@ const store = new Vuex.Store({
             this.commit('activateComponent', {
                 comObj
             })
-            axios.post('/input',state)
-            
+            axios.post('/input', state)
+
         },
 
         /**
@@ -285,7 +296,7 @@ const store = new Vuex.Store({
             comObj
         }) {
             state.activeComponent = comObj;
-            axios.post('/input',state)
+            axios.post('/input', state)
         },
 
         /**
@@ -298,86 +309,12 @@ const store = new Vuex.Store({
             name,
             value
         }) {
-
-            let getComponent = (comName, list = this.getters.data) => {
-
-                let ret = null;
-
-                function find(list) {
-                    if (!list) return;
-                    for (let i = 0, len = list.length; i < len; i++) {
-                        if (list[i].name === comName) {
-                            return ret = list[i];
-                        } else {
-                            find(list[i].children)
-                        }
-                    }
-                }
-                find(list)
-                return ret;
-            }
-
-            //清除该变量名下子组件的所有slot标识
-            state.activeComponent.children.forEach((com) => {
-                if (com.__pg_slot__ && com.__pg_slot__.startsWith(name)) {
-                    com.__pg_slot__ = false;
-                }
-            })
-
-            /**
-             * @return [
-             *  0:['form1','form2'],
-             *  1:['table1']
-             * ]
-             */
-            let slots = []; //TODO:JSON.parse遍历参数循环两次的问题
-
-            value = JSON.parse(JSON.stringify(value), function (k, v) {
-                if (this.type === SLOT_TYPE && this.value.length) {
-                    //去重
-                    this.value = this.value.filter((e, idx) => {
-                        return this.value.indexOf(e) == idx;
-                    })
-                    this.value = this.value.filter(e => {
-                        //过滤非直接子组件
-                        return state.activeComponent.children.some(subCom => {
-                                return e === subCom.name && !subCom.__pg_slot__
-                            })
-                            //过滤已经成为slot的子组件
-                            &&
-                            slots.every(slot => {
-                                return slot.every(slot => {
-                                    return e !== slot;
-                                })
-                            })
-                    })
-
-                    slots.push(this.value);
-                } else if (this.type === REFER_TYPE && this.value.length) {
-                    //过滤不存在的组件以及自身组件
-                    if (!getComponent(this.value) || this.value === state.activeComponent.name) {
-                        this.value = '';
-                    }
-                }
-                return v;
-            })
-
-            //为子组件添加slot标识（`${属性名}${值序号}`）
-            slots.forEach((slotsNames, slotIdx) => {
-                state.activeComponent.children.forEach(subCom => {
-                    if (slotsNames.includes(subCom.name)) {
-                        subCom.__pg_slot__ = name + (slotIdx + 1);
-                        subCom.props.__pg_slot__ = name + (slotIdx + 1);
-                    }
-                })
-            })
-
-            if (name === 'name') {
+            if (name === '_name') {
 
                 let oldName = state.activeComponent.name;
 
                 if (utils.isNameExist(this.getters.data, value)) {
-                    me.$message.warning('该组件名已存在');
+                    me.$message.warning(`组件名 ${value} 已存在`);
                     value = oldName;
                 } else if (!utils.isValidIdentifier(value)) {
                     me.$message.warning('该组件名不是合法js标识符');
@@ -410,30 +347,92 @@ const store = new Vuex.Store({
 
                     state.activeComponent.name = value;
                 }
+            } else {
+                const slotRegExp = /^\d+_(.*)$/
+
+                //清除该变量名下子组件的所有slot标识
+                state.activeComponent.children.forEach((com) => {
+                    if (com.__pg_slot__) {
+                        let match = com.__pg_slot__.match(slotRegExp);
+                        match && match[1] === name && (com.__pg_slot__ = false)
+                    }
+                })
+
+                value = utils.parseSlot(name, value, state.activeComponent, (name) => {
+                    return utils.getComponentByName(this.getters.data, name)
+                },(name)=>{
+                    return utils.getComponentByName(this.getters.data, name).exposeProperty
+                },false)
+
+                Vue.set(state.activeComponent.props, name, value);
             }
-            Vue.set(state.activeComponent.props, name, value);
-            axios.post('/input',state)
+            axios.post('/input', state)
         },
-        employTemplate(state, template) {
-            state.curTemplate = template;
-            let comList = parser(template.data, allComsConfig);
-            state.activeComponent = null;
-            state.components = comList.filter(e => {
-                return !e.isDialog
-            })
-            state.dialogs = comList.filter(e => {
-                return e.isDialog
-            });
-            axios.post('/input',state)
-            
+        employTemplate(state, {
+            template,
+            vm
+        }) {
+            let comList;
+            try {
+                checkTemplateValid(template, allComsConfig)
+                comList = template2Store(template.data, allComsConfig);
+            } catch (err) {
+                throw err;
+                vm.$message.error('模板出错：' + err.message);
+                return;
+            }
+
+            let dearthedComName = [];
+            let changedComName = [];
+
+            utils.traverse((item) => {
+                if (!allComsConfig[item.type]) {
+                    !dearthedComName.includes(item.type) && dearthedComName.push(item.type);
+                } else if (item.configSnapShoot !== JSON.stringify(allComsConfig[item.type])) {
+                    !changedComName.includes(item.type) && changedComName.push(item.type);
+                }
+            }, template.data)
+            if (dearthedComName.length || changedComName.length) {
+                vm.$confirm(
+                    dearthedComName.length ?
+                    `组件 ${dearthedComName.join(',')} 缺失，将删除该组件数据\n` : '' +
+                    changedComName.length ?
+                    `组件 ${changedComName.join(',')} 配置已更变，可能缺失部分数据` : '',
+                    '是否继续？').then(_ => {
+                    apply();
+                }).catch(err => {})
+            } else {
+                apply();
+            }
+
+
+            function apply() {
+                state.curTemplate = template;
+                state.activeComponent = null;
+                state.components = comList.filter(e => {
+                    return !e.isDialog
+                })
+                state.dialogs = comList.filter(e => {
+                    return e.isDialog
+                });
+                attachUUID(state.components);
+                attachUUID(state.dialogs);
+
+                axios.post('/input', state)
+                vm.$router.push({
+                    name: 'create'
+                })
+            }
+
+
         },
         clearData(state) {
             state.curTemplate = null;
             state.activeComponent = null;
             state.components.splice(0)
             state.dialogs.splice(0)
-            axios.post('/input',state)
-            
+            axios.post('/input', state)
+
         },
         hoverMenuItem(state, {
             comObj
@@ -441,30 +440,19 @@ const store = new Vuex.Store({
             if (comObj && comObj.isDialog) return;
             state.curHover = comObj || null;
         },
-        assign(state,data){
-            console.log('assign',state,data)
-            Object.assign(state,data)
-            // Vue.set(state, 'components', data.components);
-            // Vue.set(state, 'activeComponent', data.activeComponent);
-            // Vue.set(state, 'curTemplate', data.curTemplate);
-            // Vue.set(state, 'dialogs', data.dialogs);
+        assign(state, data) {
+            attachUUID(data.components);
+            attachUUID(data.dialogs);
+            Object.assign(state, data)
         }
     },
     actions: {
-        save(state, {
-            vm
-        }) {
-            return vm.$http.post("/save", state.getters.data);
-        },
-        preview(state, {
-            vm
-        }) {
-            return vm.$http.post("/preview", state.getters.data);
-        },
-        getLastestInput(state){
-            axios.get('/input').then(({data})=>{
-                if(Object.keys(data.data).length){
-                    this.commit('assign',data.data)
+        getLastestInput(state) {
+            axios.get('/input').then(({
+                data
+            }) => {
+                if (Object.keys(data.data).length) {
+                    this.commit('assign', data.data)
                 }
             })
         }

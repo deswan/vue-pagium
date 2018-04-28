@@ -24,13 +24,14 @@ const {
 } = require('../utils/checkConfigValid');
 const constant = require('../const');
 const compile = require('./compile');
+const utils = require('../utils/utils');
 
 const inquirer = require('inquirer');
 
 const {
     getCustomComponentAndArt,
-    getOriginComponents,
-    linkComponent
+    getLocalComponents,
+    copyComponent
 } = require('./helper');
 
 const config = require('../config')
@@ -144,6 +145,24 @@ function startServer(info) {
                 code: 0
             })
         }).catch(err => {
+            throw err;
+            res.json({
+                data: err.message,
+                code: 1
+            })
+        })
+    });
+
+    //将结果写入用户目录
+    app.post('/saveAsJSON', function (req, res) {
+        let output = builder(req.body)
+        let p = path.join(path.dirname(info.target), path.basename(info.target, '.vue') + '.json')
+        fs.outputFile(p, JSON.stringify(output, null, 2)).then(_ => {
+            res.json({
+                data: p,
+                code: 0
+            })
+        }).catch(err => {
             res.json({
                 data: err.message,
                 code: 1
@@ -182,6 +201,7 @@ function startServer(info) {
             })
         } else if (data.isCover && isNameDuplicate) {
             let output = builder(req.body.data)
+            attachconfigSnapShoot(output,req.body.allComsConfig)
             template.some(e => {
                 if (e.name === data.name) {
                     e.remark = data.remark;
@@ -199,6 +219,9 @@ function startServer(info) {
             let d = new Date();
             let date = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " +
                 d.getHours() + ":" + d.getMinutes() + ':' + d.getSeconds();
+
+            attachconfigSnapShoot(output,req.body.allComsConfig)
+
             template.push({
                 id: template_uuid++,
                 name: data.name,
@@ -211,6 +234,12 @@ function startServer(info) {
                     code: 0
                 })
             })
+        }
+
+        function attachconfigSnapShoot(data,allComsConfig){
+            utils.traverse((item)=>{
+                item.configSnapShoot = JSON.stringify(allComsConfig[item.type]);
+            },data)
         }
     });
 
@@ -263,20 +292,22 @@ function startServer(info) {
     var server = app.listen(info.port, function () {
         var host = server.address().address;
         var port = server.address().port;
-        console.log(`server listening at http://${host}:${port}`);
-        opn(`http://127.0.0.1:${info.port}/`)
+        console.log(`server listening at http://127.0.0.1:${port}`);
+        opn(`http://127.0.0.1:${port}/`)
     });
 }
 
 
 module.exports = async function (info) {
-    allComponentPaths = getOriginComponents(info.temporaryDir)
+    allComponentPaths = getLocalComponents(info.temporaryDir)
 
     await readTemplatesFile(info.configDir); //读取模板
 
     //webpack 打包
-    if (process.env.NODE_ENV === 'production') {
-        return new Promise(resolve=>{
+    if (process.env.NODE_ENV === 'development') {
+        startServer(info);
+    } else {
+        return new Promise(resolve => {
             const spinner = ora('building ...')
             spinner.start()
             rm(path.join('./dist', 'static'), err => {
@@ -285,13 +316,13 @@ module.exports = async function (info) {
                     plugins: [
                         new webpack.DefinePlugin({
                             'process.Components': JSON.stringify(allComponentPaths),
-                            'process.ComponentsRoot':JSON.stringify(path.basename(info.temporaryDir))
+                            'process.ComponentsRoot': JSON.stringify(path.basename(info.temporaryDir))
                         }),
                     ]
                 }), (err, stats) => {
                     spinner.stop()
                     if (err) throw err;
-    
+
                     process.stdout.write(stats.toString({
                         colors: true,
                         modules: false,
@@ -301,12 +332,10 @@ module.exports = async function (info) {
                     }) + '\n\n')
 
                     startServer(info);
-                    
+
                     resolve();
                 })
             })
         })
-    } else {
-        startServer(info);
     }
 }

@@ -1,6 +1,6 @@
 module.exports = {
     "name": 'table',
-    "exposeProperty": ["load","clear"],
+    "exposeProperty": ["load", "clear"],
     "props": [{
         "name": "cols",
         "label": "设置列",
@@ -19,13 +19,13 @@ module.exports = {
             "label": "prop",
             "value": "string"
         }, {
-            "name": "min-width",
+            "name": "minWidth",
             "label": "min-width",
             "value": "string"
         }, {
             "name": "scope",
             "label": "scope",
-            "value": "slot-component"
+            "value": "slot"
         }, {
             "name": "align",
             "label": "align",
@@ -58,7 +58,7 @@ module.exports = {
         "label": "height",
         "value": "string"
     }, {
-        "name": "max-height",
+        "name": "maxHeight",
         "label": "maxHeight",
         "value": "string"
     }, {
@@ -104,5 +104,13 @@ module.exports = {
         "default": "pageSize",
         "label": "请求pageSize字段",
         "value": "string"
+    }, {
+        "name": "marginTop",
+        "label": "margin-top(px)",
+        "value": "number"
+    }, {
+        "name": "marginBottom",
+        "label": "margin-bottom(px)",
+        "value": "number"
     }]
 }

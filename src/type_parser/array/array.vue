@@ -1,5 +1,5 @@
 <template>
-  <div class="pg-table-wrapper">
+  <div>
     <el-table 
     :data="input" size="mini" cell-class-name="pg-table-cell" row-key="__id__">
       <el-table-column width="50">
@@ -17,14 +17,16 @@
         </component>
       </el-table-column>
     </el-table>
+
     <div class="btns">
+      <el-button class="show-detail" icon="el-icon-search" circle type="info" plain size="mini" @click="showDetail"></el-button>
       <el-button plain icon="el-icon-plus" circle type="primary" size="mini" @click="add"></el-button>
-      <el-button icon="el-icon-search" circle type="info" plain size="mini" @click="showDetail"></el-button>
     </div>
+
     <el-dialog :visible.sync="detail.show" append-to-body width="80%" :show-close="false">
         <el-table 
-      :data="input" size="mini" cell-class-name="pg-table-cell" row-key="__id__">
-        <el-table-column>
+      :data="input" size="mini" row-key="__id__">
+        <el-table-column  width="120px">
           <template slot-scope="scope">
             <el-button :disabled="scope.$index === 0" size="small" type="text" @click="upRow(scope.$index)" icon="el-icon-sort-up"></el-button>
             <el-button :disabled="scope.$index === input.length - 1" size="small" type="text" @click="downRow(scope.$index)" icon="el-icon-sort-down"></el-button>
@@ -43,10 +45,11 @@
           </component>
         </el-table-column>
       </el-table>
-    <div class="btns">
-      <el-button icon="el-icon-plus" plain circle type="primary" size="mini" @click="add"></el-button>
-    </div>
+      <div class="btns">
+        <el-button icon="el-icon-plus" plain circle type="primary" size="mini" @click="add"></el-button>
+      </div>
     </el-dialog>
+
   </div>
 </template>
 
@@ -138,12 +141,12 @@ export default {
 </script>
 
 <style>
-.el-table .pg-table-header:hover {
-  background: whitesmoke;
+.pg-table-cell .cell {
+  padding: 0 3px;
 }
-.pg-table-header-cell {
-  background: transparent !important;
-}
+</style>
+
+<style scoped>
 .row {
   display: flex;
   flex-flow: row wrap;
@@ -173,18 +176,6 @@ export default {
   left: 50%;
   transform: translate(-50%, -50%);
 }
-
-.pg-table-cell .cell {
-  padding: 0 3px;
-}
-.pg-table-wrapper{
-  position: relative;
-}
-.pg-table-search-btn{
-  position: absolute;
-  top:5px;
-  left:5px;
-  z-index: 999;
-}
 </style>
+
 

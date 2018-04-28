@@ -5,7 +5,7 @@
           <span class="com-type">{{$store.state.activeComponent.type}}</span>
         </el-form-item>
         <el-form-item label="组件名称">
-            <component :is="StringInput" name="name" @input="handleInput('name',$event)" :value="$store.state.activeComponent.props['name']"></component>
+            <component :is="StringInput" @input="handleInput('_name',$event)" :value="$store.state.activeComponent.name"></component>
         </el-form-item>
         <template v-for="(item,idx) in $store.getters.activeComponentSetting" >
           <el-form-item 
@@ -57,7 +57,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .setting {
   padding: 20px 30px;
   width: 450px;
@@ -75,7 +75,7 @@ export default {
 .com-type{
   font-size: 20px;
 }
-.setting .el-form-item__label{
+.setting >>> .el-form-item__label{
   line-height: 1.4;
   padding-top: 10px;
 }

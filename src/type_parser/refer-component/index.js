@@ -14,7 +14,7 @@ let hasError = (conf) => {
 
 function isValid(value) {
     if(isPlainObject(value)){
-        return value.type === REFER_TYPE && typeof value.value === 'string' && typeof value.property === 'string';
+        return value.type === REFER_TYPE && typeof value.value === 'string' && value.property === this.property;
     }else if(typeof value === 'string'){
         return true;
     }
@@ -40,9 +40,18 @@ function defaultValue() {
     };
 }
 
+function upgrade(value) {
+    if(isValid.call(this,value)){
+        return value
+    }else{
+        return;
+    }
+}
+
 module.exports = {
     hasError,
     isValid,
     patch,
-    defaultValue
+    defaultValue,
+    upgrade
 }

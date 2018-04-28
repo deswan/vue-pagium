@@ -1,3 +1,4 @@
+const {isPlainObject} = require('../../utils/utils')
 const {
     SLOT_TYPE
 } = require('../../const')
@@ -34,9 +35,18 @@ function defaultValue() {
     };
 }
 
+function upgrade(value) {
+    if(isValid.call(this,value)){
+        return value
+    }else{
+        return;
+    }
+}
+
 module.exports = {
     hasError,
     isValid,
     patch,
-    defaultValue
+    defaultValue,
+    upgrade
 }

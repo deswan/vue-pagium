@@ -10,6 +10,12 @@ let hasError = (conf) => {
         return '必须填写 format 属性'
     }
 
+    if(format.some && format.some(conf=>{
+        return Array.isArray(conf.value) || conf.value === 'object';
+    })){
+        return 'object类型不可嵌套array或object类型'
+    }
+    
     try {
         checkProps(format)
     } catch (err) {
@@ -19,23 +25,23 @@ let hasError = (conf) => {
 }
 
 
-function isValid(defaultValue) {
+function isValid(value) {
     const {
         getIsValid,
     } = require('../index');
 
     let format = this.format;
 
-    if (!utils.isPlainObject(defaultValue)) {
+    if (!utils.isPlainObject(value)) {
         return false
     }
 
-    let keys = Object.keys(defaultValue)
+    let keys = Object.keys(value)
     let valid = keys.every(key => {
         let conf = format.find(formatConf => {
             return formatConf.name === key
         });
-        return conf && getIsValid(conf.value).call(conf, defaultValue[conf.name])
+        return conf && getIsValid(conf.value).call(conf, value[conf.name])
     })
 
     if (!valid) {
@@ -70,9 +76,28 @@ function defaultValue() {
     }, {})
 }
 
+function upgrade(value) {
+    let format = this.format;
+    if (utils.isPlainObject(value)) {
+        return Object.keys(value).reduce((target, key) => {
+            let conf = format.find(formatConf => {
+                return formatConf.name === key
+            });
+            if (conf) {
+                let upgraded = require('../index').getUpgrade(conf.value).call(conf, value[key]);
+                if (upgraded !== undefined) target[key] = upgraded;
+            }
+            return target;
+        }, {})
+    } else {
+        return;
+    }
+}
+
 module.exports = {
     hasError,
     isValid,
     patch,
-    defaultValue
+    defaultValue,
+    upgrade
 }

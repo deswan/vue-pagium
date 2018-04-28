@@ -62,14 +62,14 @@ export default {
     "$store.state.curHover"(comObj) {
       if (comObj) {
         let el = document.getElementById(`pg-com-${comObj.name}`);
-        if(!el) return;
+        if (!el) return;
         this.onEnter({
           comObj,
           rect: document
             .getElementById(`pg-com-${comObj.name}`)
             .getBoundingClientRect()
         });
-      }else{
+      } else {
         this.onLeave({});
       }
     }
@@ -77,7 +77,16 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
+.pg-dialog-wrapper {
+  left: 270px;
+  right: 530px;
+  top: 150px;
+}
+.pg-dialog-wrapper >>> .pg-dialog {
+  width: 95%;
+  margin-top: 5vh !important;
+}
 .board-wrapper {
   box-sizing: border-box;
   position: absolute;
@@ -95,19 +104,9 @@ export default {
   background-color: white;
   box-shadow: 0 0 20px lightgray;
 }
-
-.pg-dialog {
-  width: 95%;
-  margin-top: 5vh !important;
-}
-.pg-dialog-wrapper {
-  left: 270px;
-  right: 530px;
-  top: 150px;
-}
 #board-mask {
   position: absolute;
-  z-index: 2010;
+  z-index: 2000;
   background-color: rgba(0, 0, 0, 0.2);
   font-size: 14px;
   text-align: center;

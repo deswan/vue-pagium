@@ -13,8 +13,8 @@ module.exports = function (config) {
         let type = conf.value
         if (type === 'string' ||
             type === 'select' ||
-            type === 'slot-component' ||
-            type === 'refer-component' ||
+            type === 'slot' ||
+            type === 'refer' ||
             type === 'object' || type === 'boolean' || type === 'number') {
             return getDefaultValue(type).call(conf)
         } else if (Array.isArray(type) && type.length == 1) {

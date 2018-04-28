@@ -25,5 +25,13 @@ module.exports = {
         "label": "自定义元素标签",
         "value": "string",
         default: 'div'
+    }, {
+        "name": "marginTop",
+        "label": "margin-top(px)",
+        "value": "number"
+    }, {
+        "name": "marginBottom",
+        "label": "margin-bottom(px)",
+        "value": "number"
     }]
 }

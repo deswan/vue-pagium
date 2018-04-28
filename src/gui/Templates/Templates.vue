@@ -52,8 +52,7 @@ export default {
       });
     },
     employ(row) {
-      this.$store.commit("employTemplate", row);
-      this.$router.push({name:'create'})
+      this.$store.commit("employTemplate", {template:row,vm:this});
     },
     del({ id,name }) {
       this.$confirm(`确认删除模板 ${name} ？`)

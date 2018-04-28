@@ -11,6 +11,7 @@
     <div class="btn-group" :class="{['btn-group-show']:showBtn}">
         <el-button type="primary" size="small" @click="save" :loading="saving">保存</el-button>
         <el-button type="info" size="small" @click="preview" :loading="previewing">预览</el-button>
+        <el-button size="small" @click="saveAsJSON" :loading="savingAsJSON">生成JSON</el-button>
         <el-button type="success" size="small" @click="openSaveAsTemplate">生成模板</el-button>
         <el-button type="danger" size="small" @click="clear">清空</el-button>
     </div>
@@ -38,8 +39,12 @@ export default {
     return {
       defaultActive: "/",
       showBtn: false,
+
+      //按钮加载状态
       saving: false,
+      savingAsJSON: false,
       previewing: false,
+
       saveAsTemplateDialog: {
         show: false,
         commiting: false,
@@ -50,8 +55,8 @@ export default {
       }
     };
   },
-  created(){
-    this.$store.dispatch('getLastestInput')
+  created() {
+    this.$store.dispatch("getLastestInput");
   },
   mounted() {
     if (this.$route.name === "create") {
@@ -61,11 +66,15 @@ export default {
   methods: {
     save() {
       this.saving = true;
-      this.$store
-        .dispatch("save", { vm: this })
+      this.$http
+        .post("/save", this.$store.getters.data)
         .then(({ data }) => {
-          this.saving = false;
-          this.$message.success("保存成功 " + data.data);
+          if (data.code === 0) {
+            this.saving = false;
+            this.$message.success("保存成功 " + data.data);
+          } else {
+            throw new Error(data.data);
+          }
         })
         .catch(err => {
           this.saving = false;
@@ -74,11 +83,15 @@ export default {
     },
     preview() {
       this.previewing = true;
-      this.$store
-        .dispatch("preview", { vm: this })
+      this.$http
+        .post("/preview", this.$store.getters.data)
         .then(({ data }) => {
-          this.previewing = false;
-          window.open("/preview", "_blank");
+          if (data.code === 0) {
+            this.previewing = false;
+            window.open("/preview", "_blank");
+          } else {
+            throw new Error(data.data);
+          }
         })
         .catch(err => {
           this.previewing = false;
@@ -89,35 +102,31 @@ export default {
       if (this.$store.state.curTemplate) {
         this.saveAsTemplateDialog.form.name = this.$store.state.curTemplate.name;
         this.saveAsTemplateDialog.form.remark = this.$store.state.curTemplate.remark;
-      }else{
-        this.saveAsTemplateDialog.form.name = '';
-        this.saveAsTemplateDialog.form.remark = '';
       }
       this.saveAsTemplateDialog.show = true;
     },
     saveAsTemplate() {
       const request = isCover => {
+        this.saveAsTemplateDialog.commiting = true;
         this.$http
           .post("/saveAsTemplate", {
             name: this.saveAsTemplateDialog.form.name,
             remark: this.saveAsTemplateDialog.form.remark,
             data: this.$store.getters.data,
-            isCover: !!isCover
+            isCover: !!isCover,
+            allComsConfig: this.$store.getters.allComsConfig
           })
           .then(({ data }) => {
+            this.saveAsTemplateDialog.commiting = false;
             if (data.code === 0) {
-              this.saveAsTemplateDialog.commiting = false;
               this.saveAsTemplateDialog.show = false;
               this.$message.success("保存模板成功");
             } else if (data.code === 1) {
               this.$confirm("将覆盖原有模板，是否允许？")
                 .then(_ => {
-                  this.saveAsTemplateDialog.commiting = false;
                   request(true);
                 })
-                .catch(_ => {
-                  this.saveAsTemplateDialog.commiting = false;
-                });
+                .catch(_ => {});
             }
           })
           .catch(err => {
@@ -129,7 +138,6 @@ export default {
       this.$refs.saveAsTemplate
         .validate()
         .then(() => {
-          this.saveAsTemplateDialog.commiting = true;
           request();
         })
         .catch(() => {});
@@ -144,6 +152,22 @@ export default {
           this.$store.commit("clearData");
         })
         .catch(err => {});
+    },
+    saveAsJSON() {
+      this.$http
+        .post("/saveAsJSON", this.$store.getters.data)
+        .then(({ data }) => {
+          if (data.code === 0) {
+            this.savingAsJSON = false;
+            this.$message.success("保存成功 " + data.data);
+          } else {
+            throw new Error(data.data);
+          }
+        })
+        .catch(err => {
+          this.savingAsJSON = false;
+          this.$message.success("保存失败 " + data.data);
+        });
     }
   },
   watch: {
@@ -160,7 +184,7 @@ export default {
 
 <style>
 #app {
-      font-family: Consolas, Menlo;
+  font-family: Consolas, Menlo;
 }
 body {
   margin: 0;
@@ -175,7 +199,7 @@ ul {
 }
 .btn-group {
   position: fixed;
-  z-index: 9999999;
+  z-index: 999;
   top: 6px;
   right: 20px;
   background: dimgray;

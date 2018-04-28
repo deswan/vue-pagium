@@ -1,10 +1,10 @@
 module.exports = {
-    "name":'button',
+    "name": 'button',
     "props": [{
         "name": "dialog",
         "label": "打开对话框-选择组件",
-        "value": "refer-component",
-        property:'open'
+        "value": "refer",
+        property: 'open'
     }, {
         "name": "title",
         "label": "文本",
@@ -35,5 +35,9 @@ module.exports = {
         "name": "icon",
         "label": "图标类名",
         "value": "string"
+    },{
+        "name": "marginTop",
+        "label": "margin-top(px)",
+        "value": "number"
     }]
 }

@@ -14,9 +14,18 @@ function defaultValue(){
     return 0;
 }
 
+function upgrade(value) {
+    if(isValid.call(this,value)){
+        return value
+    }else{
+        return;
+    }
+}
+
 module.exports = {
     hasError,
     isValid,
     patch,
-    defaultValue
+    defaultValue,
+    upgrade
 }

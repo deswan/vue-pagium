@@ -16,8 +16,8 @@ const INPUTS = {
     array,
     select,
     number,
-    'slot-component': slot_component,
-    'refer-component': refer_component
+    'slot': slot_component,
+    'refer': refer_component
 }
 
 const propsLoaders = {
@@ -74,10 +74,10 @@ const propsLoaders = {
     number() {
         return {}
     },
-    'slot-component' () {
+    'slot' () {
         return {}
     },
-    'refer-component' () {
+    'refer' () {
         return {}
     }
 }

@@ -10,7 +10,6 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST
@@ -36,7 +35,7 @@ module.exports = {
     cssSourceMap: true,
     proxyTable: {
       '/': {
-        target: 'http://localhost:3000/',
+        target: 'http://localhost:8001/',
         changeOrigin: true
       }
     }

@@ -1,6 +1,6 @@
 <template>
       <el-table :data="input" size="mini">
-        <el-table-column label="label" min-width="30">
+        <el-table-column label="key" min-width="30">
           <span slot-scope="scope">{{scope.row.label}}</span>
         </el-table-column>
         <el-table-column label="value" min-width="40">
@@ -81,7 +81,7 @@ export default {
 </script>
 
 <style scoped>
-.add-row {
+/* .add-row {
   height: 30px;
   line-height: 30px;
   transition: all 0.5s ease;
@@ -90,6 +90,6 @@ export default {
 
 .add-row:hover {
   background-color: whitesmoke;
-}
+} */
 </style>
 

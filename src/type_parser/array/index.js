@@ -1,5 +1,9 @@
 //config是否填写正确
 let hasError = (conf) => {
+    return require('../index').getTypeHasError(conf.value[0])({
+        ...conf,
+        value: conf.value[0]
+    })
 }
 
 //值是否合法
@@ -19,15 +23,12 @@ function isValid(value) {
 //前提：isValid
 //值补完
 function patch(value) {
-    const {
-        getPatch
-    } = require('../index');
     let innerConf = {
         ...this,
         value: this.value[0]
     }
     return value.map(e => {
-        return getPatch(innerConf.value).call(innerConf, e)
+        return require('../index').getPatch(innerConf.value).call(innerConf, e)
     })
 }
 
@@ -36,9 +37,26 @@ function defaultValue() {
     return [];
 }
 
+function upgrade(value) {
+    if (Array.isArray(value)) {
+        let innerConf = {
+            ...this,
+            value: this.value[0]
+        }
+        return value.map(e => {
+            return require('../index').getUpgrade(innerConf.value).call(innerConf, e)
+        }).filter(e => {
+            return e !== undefined
+        })
+    } else {
+        return;
+    }
+}
+
 module.exports = {
     hasError,
     isValid,
     defaultValue,
-    patch
+    patch,
+    upgrade
 }

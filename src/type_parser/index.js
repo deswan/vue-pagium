@@ -14,8 +14,8 @@ const TYPES = {
     array,
     select,
     number,
-    'slot-component':slot_component,
-    'refer-component':refer_component
+    'slot':slot_component,
+    'refer':refer_component
 }
 
 function getType(type){
@@ -28,7 +28,7 @@ function getType(type){
 module.exports = {
     getType,
     getAllTypesString(){
-        return ['string','boolean','object','select','number','slot-component','refer-component','[Any]'];
+        return ['string','boolean','object','select','number','slot','refer','[Any]'];
     },
     getTypeHasError(type){
         return getType(type) && getType(type).hasError
@@ -41,5 +41,8 @@ module.exports = {
     },
     getDefaultValue(type){
         return getType(type) && getType(type).defaultValue
+    },
+    getUpgrade(type){
+        return getType(type) && getType(type).upgrade
     }
 }

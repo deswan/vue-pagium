@@ -48,8 +48,8 @@ function checkProps(props) {
         if (typeof conf.name != 'string') {
             throw new Error('name属性需是字符串')
         }
-        if (conf.name == 'name') {
-            throw new Error('name属性值不能为"name"')
+        if (conf.name.startsWith('_')) {
+            throw new Error('name属性值不能以"_"开头')
         }
         if (!utils.isValidIdentifier(conf.name)) {
             throw new Error('name不是合法js标识符')

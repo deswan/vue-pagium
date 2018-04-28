@@ -3,7 +3,6 @@ const path = require('path')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const ncp = require('ncp')
-const fsExtra = require('fs-extra')
 const logger = require('../logger')('lib/helper')
 const constant = require('../const')
 const config = require('../config');
@@ -11,16 +10,28 @@ const {
     checkConfig
 } = require('../utils/checkConfigValid');
 
-function getCustomComponentAndArt($dir) {
+function warn(info) {
+    console.warn(chalk.yellow(info))
+}
+
+/**
+ * 获取用户自定义组件及其.art文件
+ * @param {Path} root 组件文件夹
+ * @return {art:{name:Path},dir:{name:Path}}
+ */
+function getCustomComponentAndArt(root) {
     let componentPaths = {
         art: {},
-        dir: {}
+        comDir: {}
     }
-    let dirs = fs.readdirSync($dir, 'utf-8');
+    let dirs = fs.readdirSync(root, 'utf-8');
     dirs.forEach(dir => {
-        let dirPath = path.resolve($dir, dir);
+        let dirPath = path.resolve(root, dir);
 
         let stat = fs.statSync(dirPath);
+
+        //忽略隐藏文件
+        if (dir.startsWith('.')) return;
 
         if (path.extname(dir) === '.art' && stat.isFile()) {
             componentPaths.art[dir] = dirPath
@@ -28,27 +39,28 @@ function getCustomComponentAndArt($dir) {
             let files = fs.readdirSync(dirPath, 'utf-8');
             let hasConfig, hasVue, hasArt;
             files.forEach(file => {
-                let filePath = path.join($dir, dir, file);
-                if (!fs.statSync(filePath).isFile()) return;
-                if (file === dir + '.vue') {
-                    hasVue = true;
-                } else if (file === dir + '.vue.art') {
-                    hasArt = true;
-                } else if (file === 'config.js') {
-                    hasConfig = true;
-                }
+                if (!fs.statSync(path.join(root, dir, file)).isFile()) return;
+                file === dir + '.vue' && (hasVue = true);
+                file === dir + '.vue.art' && (hasArt = true);
+                file === 'config.js' && (hasConfig = true);
             })
             if (hasConfig && hasArt && hasVue) {
-                componentPaths.dir[dir] = dirPath
+                componentPaths.comDir[dir] = dirPath
             } else {
-                throw new Error(`组件文件夹${dir}缺少config.js/Vue组件/模板文件`)
+                warn(`组件文件夹${dir}缺少 ${!hasConfig ? 'config.js' : ''} ${!hasArt ? dir+'.vue.art' : ''} ${!hasVue ? dir+'.vue' : ''} 文件`)
             }
         }
     })
     return componentPaths
 }
 
-function getOriginComponents(root = config.componentDir) {
+/**
+ * 获取本地组件（原生+自定义），自定义组件将覆盖原生组件
+ * @param {Path} root 组件文件夹
+ * @return {custom:{name:Path},origin:{name:Path}}
+ */
+function getLocalComponents(root) {
+    if (!fs.existsSync(root)) throw new Error('路径 ' + root + ' 不存在')
     let componentPaths = {
         custom: {},
         origin: {}
@@ -70,97 +82,80 @@ function getOriginComponents(root = config.componentDir) {
         if (fs.statSync(dirPath).isFile() || customNames.includes(dir) || dir.startsWith('.')) return;
         componentPaths.origin[dir] = dirPath
     })
-
     return componentPaths
 }
 
 /**
- * 拷贝用户自定义组件到src/Components中
+ * 拷贝用户自定义组件到本地
  * @param {String} targetDir .pager
- * @param {String} toDir Components
+ * @param {String} toDir ComponentsDir
  */
-function linkComponent(targetDir, toDir) {
-    return new Promise((resolve, reject) => {
+async function copyComponent(targetDir, toDir) {
+    let comPath = path.join(targetDir, config.target.comDir);
 
-        let comPath = path.join(targetDir, config.target.comDir);
+    let customPath = path.join(toDir, '.custom');
+    if (!fs.existsSync(customPath)) {
+        logger('创建 .custom ：' + customPath)
+        fs.mkdirSync(customPath)
+    }
 
-        let customPath = path.join(toDir, '.custom');
-        if (!fs.existsSync(customPath)) {
-            logger('创建 .custom ：' + customPath)
-            fs.mkdirSync(customPath)
-        }
+    if (!fs.existsSync(comPath) || !fs.statSync(comPath).isDirectory()) {
+        logger('自定义组件路径' + comPath + '不合法，不拷贝')
+        return;
+    }
 
-        if (!fs.existsSync(comPath) || !fs.statSync(comPath).isDirectory()) {
-            logger('自定义组件路径' + comPath + '不合法，不拷贝')
-            return resolve();
-        }
+    let allPaths = getCustomComponentAndArt(comPath);
 
-        let allPaths = getCustomComponentAndArt(comPath);
-
-        let duplicated = Object.keys(allPaths.dir).find(name => {
-            return constant.ORIGINAL_COMPONENTS.includes(name)
-        })
-
-        if (duplicated) {
-            inquirer.prompt([{
-                type: 'confirm',
-                name: 'isOverride',
-                message: `是否覆盖原生组件 ${duplicated}`
-            }]).then(answers => {
-                if (answers.isOverride) {
-                    buildLink(allPaths)
-                } else {
-                    delete allPath.dir[duplicated]
-                    buildLink(allPaths)
-                }
-            });
-        } else {
-            buildLink(allPaths)
-        }
-
-        function buildLink(validPath) {
-
-            let counter = Object.keys(validPath.art).length + Object.keys(validPath.dir).length;
-
-            end();
-
-            Object.keys(validPath.dir).forEach(name => {
-                let p = validPath.dir[name]
-                try {
-                    checkConfig(require(path.join(p, 'config.js')));
-                } catch (err) {
-                    throw new Error(chalk.red(`${name} 组件 config.js 格式错误:`)+'\n'+chalk.white(err.message));
-                }
-                logger('config after check',require(path.join(p, 'config.js')))
-                fsExtra.copy(p, path.join(customPath, name), (err) => {
-                    if (err) throw err;
-                    logger('已拷贝 ' + p + ' 至' + path.join(customPath, name))
-                    counter--;
-                    end()
-                })
-            })
-            Object.keys(validPath.art).forEach(name => {
-                let p = validPath.art[name]
-                fsExtra.copy(p, path.join(customPath, name), (err) => {
-                    if (err) throw err;
-                    logger('已拷贝 ' + p + ' 至' + path.join(customPath, name))
-
-                    counter--;
-                    end()
-                })
-            })
-
-            function end() {
-                if (!counter) {
-                    resolve()
-                }
-            }
-        }
+    let duplicated = Object.keys(allPaths.comDir).filter(name => {
+        return constant.ORIGINAL_COMPONENTS.includes(name)
     })
+
+    if (duplicated.length) {
+        return inquirer.prompt([{
+            type: 'confirm',
+            name: 'isOverride',
+            message: `是否覆盖原生组件 ${duplicated.join(',')}`
+        }]).then(answers => {
+            if (answers.isOverride) {
+                return buildLink(allPaths)
+            } else {
+                duplicated.forEach(name => {
+                    delete allPaths.comDir[name]
+                })
+                return buildLink(allPaths)
+            }
+        });
+    } else {
+        return buildLink(allPaths)
+    }
+
+    async function buildLink(validPath) {
+        let promises = []
+
+        Object.keys(validPath.comDir).forEach(name => {
+            let p = validPath.comDir[name]
+            try {
+                checkConfig(require(path.join(p, 'config.js')));
+            } catch (err) {
+                throw new Error(`${name} 组件 config.js 格式错误:\n${err.message}`);
+            }
+            promises.push(fs.copy(p, path.join(customPath, name)).then(_ => {
+                logger('已拷贝 ' + p + ' 至' + path.join(customPath, name))
+            }))
+        })
+        Object.keys(validPath.art).forEach(name => {
+            let p = validPath.art[name]
+            promises.push(fs.copy(p, path.join(customPath, name)).then(_ => {
+                logger('已拷贝 ' + p + ' 至' + path.join(customPath, name))
+            }))
+        })
+        return Promise.all(promises)
+    }
 }
 
 module.exports = {
     getCustomComponentAndArt,
-    getOriginComponents,
-    linkComponent
+    getLocalComponents,
+    copyComponent,
+    warn
 }

@@ -16,6 +16,16 @@ export default {
             {{{$value}}}
         },
     {{{/each}}}
+    {{{if computed.trim()}}}
+    computed:{
+        {{{computed}}}
+    },
+    {{{/if}}}
+    {{{if watch.trim()}}}
+    watch:{
+        {{{watch}}}
+    },
+    {{{/if}}}
     methods: {
         {{{methods}}}
     }

@@ -17,12 +17,12 @@ module.exports = {
     }, {
         "name": "loadComponent",
         "label": "加载组件",
-        "value": "refer-component",
+        "value": "refer",
         property: 'load'
     }, {
         "name": "clearComponent",
         "label": "清空组件",
-        "value": "refer-component",
+        "value": "refer",
         property: 'clear'
     }]
 }

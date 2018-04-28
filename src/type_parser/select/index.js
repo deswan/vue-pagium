@@ -31,7 +31,7 @@ let hasError = (conf) => {
 }
 
 function isValid(value){
-    return this.options.some(e=>{
+    return value === '' || this.options.some(e=>{
         if(e.key && e.value){
             return value === e.key
         }else{
@@ -48,9 +48,18 @@ function defaultValue(){
     return ''
 }
 
+function upgrade(value) {
+    if(isValid.call(this,value)){
+        return value
+    }else{
+        return;
+    }
+}
+
 module.exports = {
     hasError,
     isValid,
     patch,
-    defaultValue
+    defaultValue,
+    upgrade
 }
