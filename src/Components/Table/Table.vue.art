@@ -1,12 +1,14 @@
 <template>
     <div>
-        <el-table :data="@@items" v-loading="@@loading"
-            {{{if !fit}}}
-             :fit="false" 
-             {{{else}}}
-             border
-            {{{/if}}}  
-
+        <el-table 
+        :data="@@items" 
+        v-loading="@@loading"
+            border
+            {{{if !fit}}} :fit="false" {{{/if}}}  
+            {{{if height}}} height="{{{height}}}" {{{/if}}}  
+            {{{if maxHeight}}} maxHeight="{{{maxHeight}}}" {{{/if}}}  
+            {{{if size}}} size="{{{size}}}" {{{/if}}}  
+            style="{{{if marginTop}}} margin-top:{{{marginTop}}}px; {{{/if}}}{{{if marginBottom}}} margin-bottom:{{{marginBottom}}}px; {{{/if}}}"  
         >
             {{{each cols}}}
             <el-table-column 
@@ -17,7 +19,7 @@
             {{{if $value.type}}} type="{{{$value.type}}}" {{{/if}}}  
             {{{if $value.align}}} align="{{{$value.align}}}" {{{/if}}}  
             >
-            {{{if $value.scope.value}}}
+            {{{if $value.scope.value.length}}}
               <template slot-scope="scope">
                 {{{insertSlot($value.scope)}}}
               </template> 
@@ -27,13 +29,13 @@
         </el-table>
         
         {{{if pagination}}}
-          <el-pagination 
+          <el-pagination style="margin-top:10px"
             @size-change="@@handleSizeChange"
             @current-change="@@handleCurrentChange"
-            {{{if pageSizes }}} :page-sizes="{{{pageSizes}}}" {{{/if}}}  
+            :page-sizes="[50, 100]"
             :current-page="@@page"
             :page-size="@@pageSize"
-            {{{if paginationlayout }}} layout="{{{paginationlayout}}}" {{{/if}}}  
+            layout="sizes, prev, pager, next" 
             :total="@@total">
           </el-pagination>
         {{{/if}}}

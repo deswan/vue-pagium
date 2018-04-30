@@ -4,7 +4,8 @@
   props="@@value:last"
   {{{if required}}} :rules="[{required: true, message: '{{{label || ''}}}不能为空'}]" {{{/if}}}
   >
-    <el-input v-model="@@value"
+    <el-input 
+    v-model="@@value"
     {{{if size}}} size="{{{size}}}" {{{/if}}}  
     {{{if width}}} style="width:{{{width}}}" {{{/if}}}  
     {{{if type}}} type="{{{type}}}" {{{/if}}}  
@@ -14,11 +15,7 @@
     {{{if rows}}} rows="{{{rows}}}" {{{/if}}}  
     {{{if autosize}}} autosize="{{{autosize}}}" {{{/if}}}  
     {{{if clearable}}} clearable {{{/if}}}  
-    {{{if disabled}}} disabled {{{/if}}}  
-    {{{if autofocus}}} autofocus {{{/if}}}  
     {{{if readonly}}} readonly {{{/if}}}  
-    {{{if autofocus}}} autofocus {{{/if}}}  
-    {{{if autoComplete}}} auto-complete="on" {{{/if}}}  
     {{{if name}}} name="{{{name}}}" {{{/if}}}  
     ></el-input>
   </el-form-item>

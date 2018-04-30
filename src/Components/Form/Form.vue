@@ -1,5 +1,5 @@
 <template>
-      <el-form v-bind="$props">
+      <el-form v-bind="$props" label-suffix=":">
         <slot></slot>
       </el-form>
 </template>
@@ -10,7 +10,6 @@ export default {
     "inline",
     "labelPosition",
     "labelWidth",
-    "labelSuffix",
     "statusIcon",
     "size"
   ],

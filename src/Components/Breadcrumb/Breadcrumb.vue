@@ -1,5 +1,5 @@
 <template>
-  <el-breadcrumb separator="/" :separator-class="separatorClass">
+  <el-breadcrumb :style="{'margin-top':marginTop+'px','margin-bottom':marginBottom+'px'}">
     <el-breadcrumb-item 
     v-for="(item,idx) in items"
     :key="idx"
@@ -11,7 +11,7 @@
 <script>
 export default {
   name: 'Breadcrumb',
-  props:['items','separator','separatorClass'],
+  props:['items','marginTop','marginBottom'],
   data() {
     return {
     };

@@ -11,7 +11,7 @@
 <script>
 export default {
   name: "Upload",
-  props: ["action", "multiple", "requestName", "withCredentials", "accept","disabled"],
+  props: ["action", "multiple", "requestName", "withCredentials", "accept"],
   data() {
     return {};
   },

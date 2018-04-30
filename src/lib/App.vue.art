@@ -1,36 +1,10 @@
 <template>
-<div>
-    {{{html}}}
-</div>
+    {{{template}}}
 </template>
 <script>
 export default {
     name: 'PG-Page',
-    data() {
-        return {
-            {{{data}}}
-        };
-    },
-    {{{each hooks}}}
-        {{{$index}}}() {
-            {{{$value}}}
-        },
-    {{{/each}}}
-    {{{if computed.trim()}}}
-    computed:{
-        {{{computed}}}
-    },
-    {{{/if}}}
-    {{{if watch.trim()}}}
-    watch:{
-        {{{watch}}}
-    },
-    {{{/if}}}
-    methods: {
-        {{{methods}}}
-    }
+    {{{options}}}
 };
 </script>
-<style scoped>
-</style>
 

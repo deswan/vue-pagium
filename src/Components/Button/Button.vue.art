@@ -1,11 +1,11 @@
 <template>
-  <el-button @click="@@onClick"
+  <el-button {{{if _scope}}} @click="@@onClick({{{_scope}}}.row)" {{{else}}} @click="@@onClick" {{{/if}}}
   {{{if size}}} size="{{{size}}}" {{{/if}}}  
   {{{if type}}} type="{{{type}}}" {{{/if}}}  
   {{{if plain}}} plain {{{/if}}}  
   {{{if round}}} round {{{/if}}}  
-  {{{if disabled}}} disabled {{{/if}}}  
   {{{if icon}}} icon="{{{icon}}}" {{{/if}}}  
+  style="{{{if marginTop}}} margin-top:{{{marginTop}}}px {{{/if}}}"  
   >{{{if title}}} {{{title}}} {{{/if}}}
   </el-button>
 </template>

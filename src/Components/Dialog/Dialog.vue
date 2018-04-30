@@ -10,7 +10,6 @@
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     :show-close="false"
-    :center="center"
     >
     <slot></slot>
     </el-dialog>
@@ -18,7 +17,7 @@
 <script>
 export default {
   name: 'Dialog',
-  props:['title','center','pg-active'],
+  props:['title','pg-active'],
   data() {
     return {
     };

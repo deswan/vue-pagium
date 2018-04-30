@@ -14,10 +14,6 @@ module.exports = {
             value: 'string',
         }]
     }, {
-        "name": "separator",
-        "label": "分隔符",
-        "value": "string"
-    }, {
         "name": "marginTop",
         "label": "margin-top(px)",
         "value": "number"

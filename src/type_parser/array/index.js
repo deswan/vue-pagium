@@ -27,9 +27,13 @@ function patch(value) {
         ...this,
         value: this.value[0]
     }
+    console.log(value.map(e => {
+        return require('../index').getPatch(innerConf.value).call(innerConf, e)
+    }))
     return value.map(e => {
         return require('../index').getPatch(innerConf.value).call(innerConf, e)
     })
+    
 }
 
 //默认值

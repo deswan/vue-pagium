@@ -22,13 +22,8 @@ module.exports = async function (info) {
 
     logger('comsPath', comPaths)
 
-    let customAndOrigin = {
-        ...comPaths.origin,
-        ...comPaths.custom
-    };
-
-    let allComsConfig = Object.keys(customAndOrigin).reduce((target, name) => {
-        target[name] = require(path.join(customAndOrigin[name], 'config.js'))
+    let allComsConfig = Object.keys(comPaths).reduce((target, name) => {
+        target[name] = require(path.join(comPaths[name], 'config.js'))
         return target;
     }, {})
 

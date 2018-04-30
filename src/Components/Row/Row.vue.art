@@ -5,6 +5,7 @@
     {{{if justify}}} justify="{{{justify}}}" {{{/if}}}  
     {{{if align}}} align="{{{align}}}" {{{/if}}}  
     {{{if tag}}} tag="{{{tag}}}" {{{/if}}}  
+    style="{{{if marginTop}}} margin-top:{{{marginTop}}}px; {{{/if}}}{{{if marginBottom}}} margin-bottom:{{{marginBottom}}}px; {{{/if}}}" 
     >
     {{{insertChildren()}}}
     </el-row>

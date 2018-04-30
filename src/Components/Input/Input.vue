@@ -12,14 +12,12 @@ export default {
     "type",
     "placeholder",
     "clearable",
-    "disabled",
     "prefixIcon",
     "suffixIcon",
     "rows",
     "autosize",
     "name",
     "readonly",
-    "autofocus"
   ],
   data() {
     return {};

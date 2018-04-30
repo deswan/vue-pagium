@@ -1,9 +1,9 @@
 <template>
     <el-form
-    :model="@@:wrapper"
+    :model="@@:wrapper" 
+     label-suffix=":"
     {{{if labelPosition}}} label-position="{{{labelPosition}}}" {{{/if}}}  
     {{{if labelWidth}}} label-width="{{{labelWidth}}}" {{{/if}}}  
-    {{{if labelSuffix}}} label-suffix="{{{labelSuffix}}}" {{{/if}}}  
     {{{if inline}}} inline {{{/if}}}  
     {{{if statusIcon}}} status-icon {{{/if}}}  
     {{{if size}}} size="{{{size}}}" {{{/if}}}  

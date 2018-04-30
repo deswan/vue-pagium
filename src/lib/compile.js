@@ -9,8 +9,6 @@ const hash = crypto.createHash('sha256');
 
 const output = './dist';
 
-const outTemplDir = path.join(__dirname, './');
-
 const scheme2Default = require('../utils/scheme2Default');
 const utils = require('../utils/utils')
 const babylon = require('babylon');
@@ -54,7 +52,7 @@ function warn(info) {
 //全局替换标识符 @@varName -> varName
 function replaceIdentifier() {
     let regExp = /@@([$a-zA-Z][$\w]*)?(:[$a-zA-Z][$\w]*)?/g;
-    let externalRegExp = /@@([$a-zA-Z][$\w]*)__pg_external__([$a-zA-Z][$\w]*)/g;
+    let externalRegExp = /@@([$a-zA-Z][$\w]*)__pg_external__([$a-zA-Z][$\w]*)?(:[$a-zA-Z][$\w]*)?/g;
 
     //init pg_com.wrapper for each one
     function calcWrapper(list, wrapper = '') {
@@ -74,7 +72,7 @@ function replaceIdentifier() {
     function doReplace(list) {
         if (!list || !list.length) return;
         list.forEach((pg_com) => {
-            let externalReplaced = pg_com.compiled.replace(externalRegExp, (match, comName, varName) => {
+            let externalReplaced = pg_com.compiled.replace(externalRegExp, (match, comName, varName, modifier) => {
                 let externalCom = utils.getComponentByName(pg_map.components, comName)
                 if (!externalCom) {
                     throw new Error(`${pg_com.name} 引用的组件 ${comName} 组件不存在`)
@@ -82,10 +80,17 @@ function replaceIdentifier() {
 
                 let idx, renamedVarName = varName;
 
-                //修改为rename后的值（data优先级较高）
-                pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, externalCom) || renamedVarName)
-                pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, externalCom) || renamedVarName)
+                if (varName) {
+                    //修改为rename后的值（data优先级较高）
+                    pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, externalCom) || renamedVarName)
+                    pg_map.renameMap.computed && (renamedVarName = getRenamed(pg_map.renameMap.computed, varName, externalCom) || renamedVarName)
+                    pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, externalCom) || renamedVarName)
+                }
 
+                //匹配
+                let isData = externalCom.dataKeys.includes(renamedVarName)
+                let isMethod = externalCom.methodsKeys.includes(renamedVarName);
+                let isComputed = externalCom.computedKeys.includes(renamedVarName);
 
                 function getRenamed(renameMap, varName, comObj) {
                     let idx = renameMap.findIndex(toRename => {
@@ -97,18 +102,32 @@ function replaceIdentifier() {
 
                 }
 
-                //匹配
-                let isData = externalCom.dataKeys.includes(renamedVarName)
-                let isMethod = externalCom.methodsKeys.includes(renamedVarName);
+                modifier && (modifier = modifier.slice(1))
 
-                if (!isData && !isMethod) { //编译后组件的某些属性很有可能不存在，因此不必报错
-                    warn(`${comName} 组件的属性（data/method） ${renamedVarName} 不存在`)
-                } else if (isData) {
-                    return externalCom.wrapper + renamedVarName;
+                if (modifier) {
+                    if (!varName && modifier === 'wrapper') {
+                        let match = externalCom.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
+                        if (match) {
+                            return match[1];
+                        } else {
+                            return '';
+                        }
+                    } else if (modifier === 'last') {
+                        return renamedVarName;
+                    } else {
+                        throw new Error(match + ' 不匹配任何模式')
+                    }
                 } else {
-                    return renamedVarName;
+                    if (isData) { //data
+                        return externalCom.wrapper + renamedVarName;
+                    } else if (isComputed) {
+                        return renamedVarName;
+                    } else if (isMethod) { //methods
+                        return renamedVarName;
+                    } else {
+                        throw new Error('data/methods/computed 标识符不存在：' + match)
+                    }
                 }
-
             })
 
             let replaced = externalReplaced.replace(regExp, (match, word, modifier) => {
@@ -338,9 +357,43 @@ function merge() {
  * 
  * @param {html,data,methods,hooks} data 输出信息
  */
-function render(data) {
+function render(data,vueTemplate) {
     logger('render', data)
-    let output = template(path.join(outTemplDir, 'App.vue.art'), data)
+    let options = template.render(`
+        data() {
+            return {
+                {{{data}}}
+            };
+        },
+        {{{each hooks}}}
+            {{{$index}}}() {
+                {{{$value}}}
+            },
+        {{{/each}}}
+        {{{if computed.trim()}}}
+        computed:{
+            {{{computed}}}
+        },
+        {{{/if}}}
+        {{{if watch.trim()}}}
+        watch:{
+            {{{watch}}}
+        },
+        {{{/if}}}
+        methods: {
+            {{{methods}}}
+        }
+    `, data)
+    let html = template.render(`
+        <div>
+            {{{html}}}
+        </div>
+    `,data)
+    let templPath = vueTemplate || path.join(__dirname,'App.vue.art');
+    let output = template(templPath,{
+        template:html,
+        options
+    })
     return beautify(output);
 }
 
@@ -348,23 +401,20 @@ function render(data) {
 /**
  * 编译模板
  * @param {comObj} comObj 
- * @param {custom:{},origin:{}} comPaths 组件路径 
+ * @param {Function} imports 
+ * @param {name:Path} comPaths 组件路径 
  * @param {String} root 本地组件文件夹路径
  */
-function compile(comObj, imports, comPaths, root = path.resolve(__dirname, '..', 'Components')) {
+function compile(comObj, imports, comPaths, root) {
     Object.assign(template.defaults.imports, imports)
-    var comType = comObj.type;
-    let output;
-    
-    //优先引入自定组件
-    let comPath = comPaths.custom[comType] || comPaths.origin[comType]
-    let config = require(path.join(comPath, 'config.js')); 
-    let art = fs.readFileSync(path.join(comPath, comType + '.vue.art'), 'utf-8');
-    output = template.render(art, comObj.props, {
+
+    let comPath = comPaths[comObj.type]
+    let config = require(path.join(comPath, 'config.js'));
+    let art = fs.readFileSync(path.join(comPath, comObj.type + '.vue.art'), 'utf-8');
+    return template.render(art, comObj.props, {
         ...template.defaults,
-        root: comPaths.origin[comType] ? root : path.join(root, '.custom')
+        root
     })
-    return output;
 }
 
 function getHtml(vue) {
@@ -781,6 +831,7 @@ function getScriptData(vue) {
     let cleared = clearControlChar(script);
     script = cleared.text
 
+    console.log(script);
     var ast = babylon.parse(script, {
         sourceType: 'module'
     });
@@ -878,8 +929,8 @@ function getScriptData(vue) {
             return {
                 keys: block.properties.map((property, idx) => {
                     if (block.properties.findIndex(p => {
-                        return p.key.name === property.key.name;
-                    }) !== idx) throw new Error(`computed ${property.key.name} 重复声明`)
+                            return p.key.name === property.key.name;
+                        }) !== idx) throw new Error(`computed ${property.key.name} 重复声明`)
                     return property.key.name
                 }),
                 body: trimAndReplaceObjectExpression(script.slice(block.start, block.end))
@@ -970,9 +1021,9 @@ function initMap(components, comPaths, root) {
             external({
                 value: comName,
                 property: varName
-            }) {
+            }, modifier) {
                 if (!comName || !varName) throw new Error('external参数不合法');
-                return '@@' + comName + '__pg_external__' + varName;
+                return '@@' + comName + '__pg_external__' + varName + (modifier ? ':' + modifier : '');
             }
         }
 
@@ -997,7 +1048,7 @@ function initMap(components, comPaths, root) {
     logger('initMap', pg_map)
 }
 
-module.exports = async function (components, comPaths, root) {
+module.exports = async function (components, comPaths, root,vueTemplate) {
     initMap(components, comPaths, root);
-    return render(merge())
+    return render(merge(),vueTemplate)
 }

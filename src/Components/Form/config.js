@@ -16,11 +16,6 @@ module.exports = {
         "value": "string",
         "default": "80px"
     }, {
-        "name": "labelSuffix",
-        "label": "标签后缀",
-        "value": "string",
-        "default": ":"
-    }, {
         "name": "statusIcon",
         "label": "是否在输入框中显示校验结果反馈图标",
         "value": "boolean"

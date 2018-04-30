@@ -7,21 +7,18 @@ module.exports = {
     }, {
         "name": "accept",
         "label": "accept",
-        "value": "string"
+        "value": "select",
+        options:['.png,.jpg,.gif','.png']
     }, {
         "name": "multiple",
         "label": "multiple",
-        "value": "boolean"
-    }, {
-        "name": "disabled",
-        "label": "disabled",
         "value": "boolean"
     }, {
         "name": "withCredentials",
         "label": "发送cookie",
         "value": "boolean"
     }, {
-        "name": "requestName",
+        "name": "name",
         "label": "name",
         "value": "string"
     }, {

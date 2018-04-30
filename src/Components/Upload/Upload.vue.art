@@ -2,14 +2,13 @@
       <el-upload 
       :on-success="@@onSuccess"
       :on-error="@@onError"
-      :before-upload="@@beforeUpload"
+      {{{if sizeLimit}}} :before-upload="@@beforeUpload" {{{/if}}}
 
-    :action="@@uploadUrl"
-    {{{if multiple}}} multiple {{{/if}}}  
-    {{{if withCredentials}}} with-credentials {{{/if}}}  
-    {{{if disabled}}} disabled {{{/if}}}  
-    {{{if requestName}}} name="{{{name}}}" {{{/if}}}  
-    {{{if accept}}} accept="{{{accept}}}" {{{/if}}}  
+      :action="@@uploadUrl"
+      {{{if multiple}}} multiple {{{/if}}}  
+      {{{if withCredentials}}} with-credentials {{{/if}}}  
+      {{{if name}}} name="{{{name}}}" {{{/if}}}  
+      {{{if accept}}} accept="{{{accept}}}" {{{/if}}}  
 
       >
       {{{insertChildren()}}}

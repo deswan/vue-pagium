@@ -1,8 +1,6 @@
 <template>
     <el-dialog 
     {{{if title}}} title="{{{title}}}" {{{/if}}}  
-    {{{if showClose}}} show-close {{{/if}}}  
-    {{{if center}}} center {{{/if}}}  
     @close="@@close"
     :visible.sync="@@show">
     {{{insertChildren()}}}

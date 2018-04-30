@@ -1,10 +1,9 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 
-const COMPONENTS = process.Components;
-
 import scheme2Default from "../../utils/scheme2Default.js";
 import scheme2Input from "../Create/SettingBoard/scheme2Input.js";
+import DefaultLive from "../default.vue";
 import axios from "axios";
 import {
     stat
@@ -24,27 +23,23 @@ const allComsConfig = {}
 
 const allComs = {}
 
-console.log(COMPONENTS)
+let r = require.context(`../../../runtime/${process.ComponentsRoot}`, true, /^\.\/(.*)\/(\1.vue|config.js)$/);
+r.keys().forEach(key => {
+    let match = key.match(/^\.\/(.*)\/(\1.vue|config.js)$/);
+    if (match[2] === 'config.js') {
+        allComsConfig[match[1]] = r(key)
+    } else {
+        allComs[match[1]] = r(key).default
+    }
+})
 
-Object.keys(COMPONENTS.origin).reduce((target, name) => {
-    target[name] = require(`../../../runtime/${process.ComponentsRoot}/${name}/config.js`);
-    return target;
-}, allComsConfig);
-
-Object.keys(COMPONENTS.custom).reduce((target, name) => {
-    target[name] = require(`../../../runtime/${process.ComponentsRoot}/.custom/${name}/config.js`);
-    return target;
-}, allComsConfig);
-
-Object.keys(COMPONENTS.origin).reduce((target, name) => {
-    target[name] = require(`../../../runtime/${process.ComponentsRoot}/${name}/${name}.vue`).default;
-    return target;
-}, allComs);
-
-Object.keys(COMPONENTS.custom).reduce((target, name) => {
-    target[name] = require(`../../../runtime/${process.ComponentsRoot}/.custom/${name}/${name}.vue`).default;
-    return target;
-}, allComs);
+Object.keys(allComsConfig).forEach(key => {
+    if (!allComs[key]) {
+        allComs[key] = DefaultLive;
+    }
+})
+console.log(allComs)
+console.log(allComsConfig)
 
 let uuid = 1;
 
@@ -85,42 +80,6 @@ const store = new Vuex.Store({
             let target = [];
             for (let key in allComsConfig) {
                 if (!allComsConfig[key].isDialog) {
-                    target.push(key);
-                }
-            }
-            return target;
-        },
-        originComsType() {
-            let target = [];
-            for (let key in COMPONENTS.origin) {
-                if (!allComsConfig[key].isDialog) {
-                    target.push(key);
-                }
-            }
-            return target;
-        },
-        customComsType() {
-            let target = [];
-            for (let key in COMPONENTS.custom) {
-                if (!allComsConfig[key].isDialog) {
-                    target.push(key);
-                }
-            }
-            return target;
-        },
-        originDialogType() {
-            let target = [];
-            for (let key in COMPONENTS.origin) {
-                if (allComsConfig[key].isDialog) {
-                    target.push(key);
-                }
-            }
-            return target;
-        },
-        customDialogType() {
-            let target = [];
-            for (let key in COMPONENTS.custom) {
-                if (allComsConfig[key].isDialog) {
                     target.push(key);
                 }
             }
@@ -354,15 +313,18 @@ const store = new Vuex.Store({
                 state.activeComponent.children.forEach((com) => {
                     if (com.__pg_slot__) {
                         let match = com.__pg_slot__.match(slotRegExp);
-                        match && match[1] === name && (com.__pg_slot__ = false)
+                        if(match && match[1] === name){
+                            com.__pg_slot__ = false
+                            if(com.props._scope) delete com.props._scope;
+                        }
                     }
                 })
 
                 value = utils.parseSlot(name, value, state.activeComponent, (name) => {
                     return utils.getComponentByName(this.getters.data, name)
-                },(name)=>{
+                }, (name) => {
                     return utils.getComponentByName(this.getters.data, name).exposeProperty
-                },false)
+                }, false)
 
                 Vue.set(state.activeComponent.props, name, value);
             }
@@ -389,6 +351,7 @@ const store = new Vuex.Store({
                 if (!allComsConfig[item.type]) {
                     !dearthedComName.includes(item.type) && dearthedComName.push(item.type);
                 } else if (item.configSnapShoot !== JSON.stringify(allComsConfig[item.type])) {
+                    console.log(item.configSnapShoot)
                     !changedComName.includes(item.type) && changedComName.push(item.type);
                 }
             }, template.data)

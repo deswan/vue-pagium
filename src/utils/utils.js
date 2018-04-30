@@ -67,6 +67,7 @@ function parseSlot(key, value, node, getComName, getExposeProperty, throwError) 
      * ]
      */
     let slots = [];
+    let slotScope = [];
     let newValue = JSON.parse(JSON.stringify(value), function (k, v) {
         if (k === 'type' && v === constant.SLOT_TYPE) {
             //去重
@@ -85,7 +86,10 @@ function parseSlot(key, value, node, getComName, getExposeProperty, throwError) 
             if (throwError && this.value.length !== len) {
                 throw new Error(`${JSON.stringify(value,null,2)}\nslot引用的组件不合法（组件必须为直接子组件/不可重复引用同一个组件）`)
             }
-            this.value.length && slots.push(this.value);
+            if( this.value.length){
+                slots.push(this.value);
+                slotScope.push(this.scope)
+            }
         } else if (k === 'type' && v === constant.REFER_TYPE) {
             if (this.value) {
                 let exposeProperty = getExposeProperty(this.value)
@@ -107,6 +111,7 @@ function parseSlot(key, value, node, getComName, getExposeProperty, throwError) 
         node.children.forEach(subCom => {
             if (slotsName.includes(subCom.name)) {
                 subCom.__pg_slot__ = `${slotIdx + 1}_${key}`;
+                subCom.props._scope = slotScope[slotIdx];
             }
         })
     })
@@ -118,7 +123,7 @@ function traverse(doSth, list) {
     let ret = [];
     list.forEach((item, idx) => {
         ret.push(doSth(item, idx));
-        traverse(doSth, item.children);
+        traverse(doSth, item.children || []);
     })
     return ret;
 }

@@ -1,5 +1,5 @@
 <template>
-      <el-row v-bind="$props">
+      <el-row v-bind="$props" :style="{'margin-top':marginTop+'px','margin-bottom':marginBottom+'px'}">
         <slot></slot>
       </el-row>
 </template>

@@ -25,7 +25,8 @@ module.exports = {
         }, {
             "name": "scope",
             "label": "scope",
-            "value": "slot"
+            "value": "slot",
+            scope: 'scope'
         }, {
             "name": "align",
             "label": "align",
@@ -46,14 +47,6 @@ module.exports = {
         "label": "分页器",
         "value": "boolean"
     }, {
-        "name": "pageSizes",
-        "label": "可选页数",
-        "value": "string"
-    }, {
-        "name": "paginationLayout",
-        "label": "布局",
-        "value": "string"
-    }, {
         "name": "height",
         "label": "height",
         "value": "string"
@@ -61,10 +54,6 @@ module.exports = {
         "name": "maxHeight",
         "label": "maxHeight",
         "value": "string"
-    }, {
-        "name": "stripe",
-        "label": "stripe",
-        "value": "boolean"
     }, {
         "name": "size",
         "label": "size",
@@ -77,22 +66,12 @@ module.exports = {
         "default": true
     }, {
         "name": "method",
-        "default": "get",
-        "label": "method",
-        "value": "string"
+        "label": "请求method",
+        "value": "string",
+        "default": "get"
     }, {
         "name": "url",
-        "label": "接口名称",
-        "value": "string"
-    }, {
-        "name": "totalName",
-        "label": "响应total字段",
-        "default": "total",
-        "value": "string"
-    }, {
-        "name": "itemsName",
-        "label": "响应items字段",
-        "default": "items",
+        "label": "请求url",
         "value": "string"
     }, {
         "name": "pageName",
@@ -103,6 +82,16 @@ module.exports = {
         "name": "pageSizeName",
         "default": "pageSize",
         "label": "请求pageSize字段",
+        "value": "string"
+    }, {
+        "name": "totalName",
+        "label": "响应total字段",
+        "default": "total",
+        "value": "string"
+    }, {
+        "name": "itemsName",
+        "label": "响应items字段",
+        "default": "items",
         "value": "string"
     }, {
         "name": "marginTop",

@@ -23,16 +23,27 @@ function template2Store(data, allComsConfig) {
     function traverse(list) {
         let result = []
         list.forEach(item => {
-            let children = item.children ? traverse(item.children) : [];
             let config = allComsConfig[item.type];
 
-            item.props = utils.patchProps(item.props, config);
+            let node = {
+                name: item.name,
+                type: item.type,
+                isDialog: config.isDialog,
+                exposeProperty: config.exposeProperty,
+                __pg_slot__: false
+            }
+
+            let children = item.children ? traverse(item.children) : [];
+
+            node.children = children;
+
+            node.props = utils.patchProps(item.props, config);
 
             console.log('after patchProps', JSON.stringify(item.props, null, 2))
 
             //parseSlot
-            for (let key in item.props) {
-                item.props[key] = utils.parseSlot(key, item.props[key], item, (name) => {
+            for (let key in node.props) {
+                node.props[key] = utils.parseSlot(key, node.props[key], node, (name) => {
                     return allComsName.find(e => {
                         return e === name
                     })
@@ -42,23 +53,18 @@ function template2Store(data, allComsConfig) {
                         if (item.name === name) {
                             ret = allComsConfig[item.type].exposeProperty
                         }
-                    })
+                    }, data)
                     return ret;
                 })
             }
 
-            result.push({
-                name: item.name,
-                type: item.type,
-                isDialog: config.isDialog,
-                exposeProperty: config.exposeProperty,
-                props: {
-                    ...scheme2Default(config.props),
-                    ...item.props
-                },
-                children,
-                __pg_slot__: false
-            })
+            node.props = {
+                ...scheme2Default(config.props),
+                ...node.props
+            }
+
+
+            result.push(node)
         })
         return result;
     }

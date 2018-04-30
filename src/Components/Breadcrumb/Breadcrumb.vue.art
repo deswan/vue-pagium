@@ -1,7 +1,6 @@
 <template>
   <el-breadcrumb
-  {{{if separator}}} separator="{{{separator}}}" {{{/if}}}  
-  {{{if separatorClass}}} separator-class="{{{separatorClass}}}" {{{/if}}}  
+  style="{{{if marginTop}}} margin-top:{{{marginTop}}}px; {{{/if}}}{{{if marginBottom}}} margin-bottom:{{{marginBottom}}}px; {{{/if}}} " 
   >
   {{{each items}}}
     <el-breadcrumb-item 

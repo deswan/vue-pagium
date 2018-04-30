@@ -29,9 +29,7 @@ const utils = require('../utils/utils');
 const inquirer = require('inquirer');
 
 const {
-    getCustomComponentAndArt,
     getLocalComponents,
-    copyComponent
 } = require('./helper');
 
 const config = require('../config')
@@ -100,11 +98,10 @@ function startServer(info) {
     })
 
     app.post('/preview', function (req, res) {
-        let output = compile(req.body, allComponentPaths, info.temporaryDir);
         let finish = 0;
 
         //将结果写入preview目录下后打包
-        compile(req.body, allComponentPaths, info.temporaryDir).then(output => {
+        compile(req.body, allComponentPaths, info.temporaryDir,info.vueTemplate).then(output => {
             return fs.outputFile(config.previewOutputPath, output)
         }).then(_ => {
             return new Promise((resolve) => {
@@ -137,7 +134,7 @@ function startServer(info) {
     //将结果写入用户目录
     app.post('/save', function (req, res) {
 
-        compile(req.body, allComponentPaths, info.temporaryDir).then(output => {
+        compile(req.body, allComponentPaths, info.temporaryDir,info.vueTemplate).then(output => {
             return fs.outputFile(info.target, output)
         }).then(_ => {
             res.json({
@@ -315,7 +312,6 @@ module.exports = async function (info) {
                 webpack(merge(webpackIndexConfig, {
                     plugins: [
                         new webpack.DefinePlugin({
-                            'process.Components': JSON.stringify(allComponentPaths),
                             'process.ComponentsRoot': JSON.stringify(path.basename(info.temporaryDir))
                         }),
                     ]

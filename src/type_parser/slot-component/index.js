@@ -1,4 +1,6 @@
-const {isPlainObject} = require('../../utils/utils')
+const {
+    isPlainObject
+} = require('../../utils/utils')
 const {
     SLOT_TYPE
 } = require('../../const')
@@ -11,7 +13,7 @@ let hasError = (conf) => {
 //是否该组件的合法性在parser.js中判断
 function isValid(value) {
     if (isPlainObject(value)) {
-        return value.type === SLOT_TYPE && Array.isArray(value.value);
+        return value.type === SLOT_TYPE && Array.isArray(value.value) && (value.scope === this.scope);
     } else if (Array.isArray(value)) {
         return true;
     }
@@ -23,7 +25,8 @@ function patch(value) {
     } else if (Array.isArray(value)) {
         return {
             type: SLOT_TYPE,
-            value
+            value,
+            scope: this.scope
         };
     }
 }
@@ -31,14 +34,15 @@ function patch(value) {
 function defaultValue() {
     return {
         type: SLOT_TYPE,
-        value: []
+        value: [],
+        scope: this.scope
     };
 }
 
 function upgrade(value) {
-    if(isValid.call(this,value)){
+    if (isValid.call(this, value)) {
         return value
-    }else{
+    } else {
         return;
     }
 }

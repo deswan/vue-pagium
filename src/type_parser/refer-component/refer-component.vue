@@ -5,6 +5,7 @@
     clearable
     filterable
     no-data-text="无可用组件"
+    placeholder="refer"
     @change="valChange">
      <el-option
       v-for="item in $store.getters.componentNameList(conf.property)"

@@ -32,6 +32,10 @@ export default {
       }
     };
   },
+  // errorCaptured(err,vm,info){
+  //   console.log(err);
+  //   return false;
+  // },
   methods: {
     onEnter({ comObj, rect }) {
       let { top, left, width, height } = rect;
@@ -80,7 +84,7 @@ export default {
 <style scoped>
 .pg-dialog-wrapper {
   left: 270px;
-  right: 530px;
+  right: 620px;
   top: 150px;
 }
 .pg-dialog-wrapper >>> .pg-dialog {
@@ -92,7 +96,7 @@ export default {
   position: absolute;
   top: 60px;
   left: 250px;
-  right: 510px;
+  right: 600px;
   bottom: 0;
   background-color: whitesmoke;
   overflow: auto;

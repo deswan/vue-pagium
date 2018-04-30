@@ -12,15 +12,14 @@ const rm = require('rimraf');
 const nodeCleanup = require('node-cleanup');
 const config = require('../config');
 const {
-    getCustomComponentAndArt,
-    getLocalComponents,
     copyComponent
 } = require('../lib/helper');
 const start = require('../lib/start');
 const create = require('../lib/create');
-const {checkConfig} = require('../utils/checkConfigValid');
-
-console.log(process.env.NODE_ENV)
+const eject = require('../lib/eject');
+const {
+    checkConfig
+} = require('../utils/checkConfigValid');
 
 function resolveTarget(target) {
     let p = path.resolve(target)
@@ -48,6 +47,7 @@ function resolveConfigDir(configDir) {
     //若文件不存在则创建文件夹，存在则检验是否文件夹
     if (!fs.existsSync(p)) {
         fs.mkdirsSync(p)
+        console.log(chalk.cyan(`${p} created`))
     } else if (!fs.statSync(p).isDirectory()) {
         throw new Error(`${p} 不是文件夹`)
     }
@@ -77,12 +77,12 @@ function createTemporaryDir() {
     //将原生组件拷贝至临时目录
     fs.copySync(config.componentDir, uniqueTempDir);
 
-    if(process.env.NODE_ENV === 'development'){
+    if (process.env.NODE_ENV === 'development') {
         let dirs = fs.readdirSync(config.componentDir);
-        dirs.forEach(filename=>{
-            if(!fs.statSync(path.join(config.componentDir,filename)).isDirectory()) return;
+        dirs.forEach(filename => {
+            if (!fs.statSync(path.join(config.componentDir, filename)).isDirectory()) return;
             try {
-                checkConfig(require(path.join(config.componentDir,filename, 'config.js')));
+                checkConfig(require(path.join(config.componentDir, filename, 'config.js')));
             } catch (err) {
                 throw new Error(`${filename} 组件 config.js 格式错误:\n${err.message}`);
             }
@@ -104,16 +104,50 @@ prog
     .argument('<source>', 'source')
     .argument('[target]', 'target')
     .option('-c, --config <dir>', 'config dir')
-    .action(wrapCommand(beforeCreate));
+    .action(wrapCommand(beforeCreate))
+
+    .command('eject', 'eject components')
+    .argument('[names]', 'choose component/art to eject', prog.LIST, [])
+    .option('-c, --config <dir>', 'config dir')
+    .action(wrapCommand(beforeEject));
 
 prog.parse(process.argv);
+
+async function beforeEject(args, options) {
+    let describe = {}
+
+    let dirs = fs.readdirSync(config.componentDir).filter(e => {
+        return !e.startsWith('.');
+    });
+    args.names.forEach(name => {
+        if (!dirs.includes(name)) {
+            console.log(chalk.red(`eject fail: 组件/公用文件 ${name} 不存在`))
+            process.exit(1);
+        }
+    })
+    if (!args.names.length) {
+        args.names = dirs
+    }
+
+    describe.names = args.names;
+    describe.configDir = resolveConfigDir(options.config)
+    console.log(chalk.white(`config dir: ${describe.configDir}`))
+
+    return await eject(describe);
+}
 
 async function beforeStart(args, options) {
     let describe = {}
 
     describe.configDir = resolveConfigDir(options.config)
+    console.log(chalk.white(`config dir: ${describe.configDir}`))
+
+    if (fs.existsSync(path.join(describe.configDir, 'Page.art'))) {
+        describe.vueTemplate = path.join(describe.configDir, 'Page.art')
+    }
 
     describe.target = options.target ? resolveTarget(options.target) : path.join(describe.configDir, config.target.pageName)
+    console.log(chalk.white(`target file: ${describe.target}`))
 
     describe.port = options.port || 8001;
 
@@ -148,6 +182,12 @@ async function beforeCreate(args, options) {
             pagerPath = path.join(pagerPath, '..', config.target.dir)
         }
     }
+    console.log(chalk.white(`config dir: ${pagerPath || 'none'}`))
+
+    let vueTemplate;
+    if (pagerPath && fs.existsSync(path.join(pagerPath, 'Page.art'))) {
+        vueTemplate = path.join(pagerPath, 'Page.art')
+    }
 
     //获取source/target
     let sourcePath = path.resolve(args.source);
@@ -162,17 +202,19 @@ async function beforeCreate(args, options) {
         throw new Error('target file must be json')
     }
 
-    let targetDir = resolveTarget(args.target || '.');
+    let target = resolveTarget(args.target || '.');
+
+    console.log(chalk.white(`target file: ${target}`))
+
 
     logger('源文件：' + sourcePath)
-    logger('输出文件夹：' + targetDir)
+    logger('输出文件：' + target)
 
     logger('pagerPath' + pagerPath)
 
     let uniqueTempDir = createTemporaryDir()
 
     if (pagerPath) {
-        console.log(' pager 路径：' + pagerPath)
         return copyComponent(pagerPath, uniqueTempDir).then(_ => {
             return parse();
         })
@@ -183,9 +225,10 @@ async function beforeCreate(args, options) {
     async function parse() {
         return create({
             temporaryDir: uniqueTempDir,
-            target: targetDir,
+            target,
             source: sourcePath,
-            configDir: pagerPath
+            configDir: pagerPath,
+            vueTemplate
         })
     }
 }

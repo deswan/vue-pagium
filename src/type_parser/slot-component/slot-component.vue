@@ -1,9 +1,12 @@
 <template>
     <el-select
-    multiple=""
+    multiple
+    clearable
+    filterable
     v-model="input" 
     :size="size" 
     placeholder="slot"
+    no-data-text="无可用组件"
     @change="valChange">
       <el-option
         v-for="item in $store.getters.slotComNameList"
@@ -15,7 +18,7 @@
 </template>
 
 <script>
-const {SLOT_TYPE} = require('../../const')
+const { SLOT_TYPE } = require("../../const");
 export default {
   name: "PG-SLOT-COMPONENT",
   props: {
@@ -41,7 +44,8 @@ export default {
     inp2val(inp) {
       return {
         type: SLOT_TYPE,
-        value: inp
+        value: inp,
+        scope: this.conf.scope
       };
     },
     valChange(input) {
@@ -49,8 +53,8 @@ export default {
       this.input = this.val2inp(this.value);
     }
   },
-  watch:{
-    value(){
+  watch: {
+    value() {
       this.input = this.val2inp(this.value);
     }
   }

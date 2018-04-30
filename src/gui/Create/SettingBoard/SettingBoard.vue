@@ -1,6 +1,11 @@
 <template>
   <div class="setting">
-      <el-form label-suffix=":" v-if="$store.state.activeComponent" :key="$store.state.activeComponent.pg" label-position="left"  label-width="80px">
+      <el-form 
+      label-suffix=":" 
+      v-if="$store.state.activeComponent" 
+      :key="$store.state.activeComponent.pg" 
+      label-position="left"  
+      label-width="120px">
         <el-form-item label="组件类型">
           <span class="com-type">{{$store.state.activeComponent.type}}</span>
         </el-form-item>
@@ -51,7 +56,7 @@ export default {
   },
   methods: {
     handleInput(name, value) {
-      this.$store.commit("input", { me:this,name, value });
+      this.$store.commit("input", { me: this, name, value });
     }
   }
 };
@@ -60,23 +65,25 @@ export default {
 <style scoped>
 .setting {
   padding: 20px 30px;
-  width: 450px;
+  width: 600px;
+  box-sizing: border-box;
   background: white;
   position: fixed;
   right: 0;
   top: 60px;
-  bottom:0;
+  bottom: 0;
   overflow: auto;
   z-index: 999;
 }
 .setting::-webkit-scrollbar {
   display: none;
 }
-.com-type{
+.com-type {
   font-size: 20px;
 }
-.setting >>> .el-form-item__label{
+.setting >>> .el-form-item__label {
   line-height: 1.4;
   padding-top: 10px;
+  word-wrap: break-word;
 }
 </style>
