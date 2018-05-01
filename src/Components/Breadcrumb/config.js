@@ -3,23 +3,23 @@ module.exports = {
     "props": [{
         "name": "items",
         "label": "导航列表",
-        "value": ['object'],
+        "type": ['object'],
         "format": [{
             label: '路由跳转对象',
             "name": 'to',
-            value: 'string',
+            type: 'string',
         }, {
             label: '文本',
             "name": 'title',
-            value: 'string',
+            type: 'string',
         }]
     }, {
         "name": "marginTop",
         "label": "margin-top(px)",
-        "value": "number"
+        "type": "number"
     }, {
         "name": "marginBottom",
         "label": "margin-bottom(px)",
-        "value": "number"
+        "type": "number"
     }]
 }

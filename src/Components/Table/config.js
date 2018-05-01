@@ -4,102 +4,102 @@ module.exports = {
     "props": [{
         "name": "cols",
         "label": "设置列",
-        "value": ["object"],
+        "type": ["object"],
         "format": [{
             "name": "fixed",
             "label": "fixed",
-            "value": "select",
+            "type": "select",
             "options": ["left", "right"]
         }, {
             "name": "label",
             "label": "label",
-            "value": "string"
+            "type": "string"
         }, {
             "name": "prop",
             "label": "prop",
-            "value": "string"
+            "type": "string"
         }, {
             "name": "minWidth",
             "label": "min-width",
-            "value": "string"
+            "type": "string"
         }, {
             "name": "scope",
             "label": "scope",
-            "value": "slot",
+            "type": "slot",
             scope: 'scope'
         }, {
             "name": "align",
             "label": "align",
-            "value": "select",
+            "type": "select",
             "options": ['left', 'center', 'right']
         }, {
             "name": "type",
             "label": "type",
-            "value": "select",
+            "type": "select",
             "options": ['selection', 'index', 'expand']
         }]
     }, {
         "name": "isLoad",
         "label": "是否立即加载",
-        "value": "boolean"
+        "type": "boolean"
     }, {
         "name": "pagination",
         "label": "分页器",
-        "value": "boolean"
+        "type": "boolean"
     }, {
         "name": "height",
         "label": "height",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "maxHeight",
         "label": "maxHeight",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "size",
         "label": "size",
-        "value": "select",
+        "type": "select",
         "options": ['medium', 'small', 'mini']
     }, {
         "name": "fit",
         "label": "宽度是否自撑开",
-        "value": "boolean",
+        "type": "boolean",
         "default": true
     }, {
         "name": "method",
         "label": "请求method",
-        "value": "string",
+        "type": "string",
         "default": "get"
     }, {
         "name": "url",
         "label": "请求url",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "pageName",
         "default": "page",
         "label": "请求page字段",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "pageSizeName",
         "default": "pageSize",
         "label": "请求pageSize字段",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "totalName",
         "label": "响应total字段",
         "default": "total",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "itemsName",
         "label": "响应items字段",
         "default": "items",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "marginTop",
         "label": "margin-top(px)",
-        "value": "number"
+        "type": "number"
     }, {
         "name": "marginBottom",
         "label": "margin-bottom(px)",
-        "value": "number"
+        "type": "number"
     }]
 }

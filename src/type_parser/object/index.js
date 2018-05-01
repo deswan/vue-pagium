@@ -11,7 +11,7 @@ let hasError = (conf) => {
     }
 
     if(format.some && format.some(conf=>{
-        return Array.isArray(conf.value) || conf.value === 'object';
+        return Array.isArray(conf.type) || conf.type === 'object';
     })){
         return 'object类型不可嵌套array或object类型'
     }
@@ -26,22 +26,17 @@ let hasError = (conf) => {
 
 
 function isValid(value) {
-    const {
-        getIsValid,
-    } = require('../index');
-
     let format = this.format;
 
     if (!utils.isPlainObject(value)) {
         return false
     }
 
-    let keys = Object.keys(value)
-    let valid = keys.every(key => {
+    let valid = Object.keys(value).every(key => {
         let conf = format.find(formatConf => {
             return formatConf.name === key
         });
-        return conf && getIsValid(conf.value).call(conf, value[conf.name])
+        return conf && require('../index').getIsValid(conf.type).call(conf, value[key])
     })
 
     if (!valid) {
@@ -59,8 +54,8 @@ function patch(value) {
     return this.format.reduce((target, conf) => {
         target[conf.name] =
             value[conf.name] === undefined ?
-            getDefaultValue(conf.value).call(conf) :
-            getPatch(conf.value).call(conf, value[conf.name])
+            getDefaultValue(conf.type).call(conf) :
+            getPatch(conf.type).call(conf, value[conf.name])
         return target;
     }, {})
 }
@@ -71,7 +66,7 @@ function defaultValue() {
     } = require('../index');
 
     return this.format.reduce((target, conf) => {
-        target[conf.name] = getDefaultValue(conf.value).call(conf)
+        target[conf.name] = getDefaultValue(conf.type).call(conf)
         return target;
     }, {})
 }
@@ -84,7 +79,7 @@ function upgrade(value) {
                 return formatConf.name === key
             });
             if (conf) {
-                let upgraded = require('../index').getUpgrade(conf.value).call(conf, value[key]);
+                let upgraded = require('../index').getUpgrade(conf.type).call(conf, value[key]);
                 if (upgraded !== undefined) target[key] = upgraded;
             }
             return target;

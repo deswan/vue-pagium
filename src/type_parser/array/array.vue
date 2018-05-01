@@ -77,7 +77,7 @@ export default {
   },
   methods: {
     input2Obj(value) {
-      if (this.conf.value[0] === "object") {
+      if (this.conf.type[0] === "object") {
         return value.map(e => {
           return {
             ...e,
@@ -94,7 +94,7 @@ export default {
       }
     },
     objTOInput(input) {
-      if (this.conf.value[0] === "object") {
+      if (this.conf.type[0] === "object") {
         return input.map(e => {
           e = JSON.parse(JSON.stringify(e));
           delete e.__id__;

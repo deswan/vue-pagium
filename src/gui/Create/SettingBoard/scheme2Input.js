@@ -4,9 +4,9 @@ export default function (config) {
     config.forEach((conf) => {
         inputs = inputs.concat({
             name:conf.name,
-            label:conf.label,
-            input:getInput(conf.value).input,
-            props:getInput(conf.value).propsLoader(conf),
+            label:conf.label || conf.name,
+            input:getInput(conf.type).input,
+            props:getInput(conf.type).propsLoader(conf),
             conf
         })
     })

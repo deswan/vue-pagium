@@ -36,11 +36,11 @@ const propsLoaders = {
     },
     array(conf) {
         let props = {}
-        let _itemCOM = scheme2Input([{ ...conf,
-            value: conf.value[0],
-            label: null
+        let _itemCOM = scheme2Input([{ 
+            ...conf,
+            type: conf.type[0]
         }])[0]
-        if (conf.value[0] === 'object' && _itemCOM.props.format) {
+        if (conf.type[0] === 'object' && _itemCOM.props.format) {
             props._itemCOM = _itemCOM.props.format
         } else {
             props._itemCOM = [_itemCOM]
@@ -48,14 +48,13 @@ const propsLoaders = {
         return props;
     },
     select(conf) {
-        let options = conf.options;
         /**
-         * options有两种写法，[Object<key,value>]为标准写法，[String]为简写法
+         * options有两种写法，[{key,value}]为标准写法，[String]为简写法
          * 实现简写->标准写法的转换
          * etc.['name1','name2'] => [{key,value}]
          */
 
-        let ret = options.reduce((arr, item) => {
+        let options = conf.options.reduce((arr, item) => {
             if (typeof item != 'object') {
                 arr.push({
                     key: item,
@@ -68,7 +67,7 @@ const propsLoaders = {
         }, [])
 
         return {
-            options:ret
+            options
         };
     },
     number() {

@@ -3,27 +3,27 @@ module.exports = {
     "props": [{
         "name": "action",
         "label": "上传url",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "accept",
         "label": "accept",
-        "value": "select",
+        "type": "select",
         options:['.png,.jpg,.gif','.png']
     }, {
         "name": "multiple",
         "label": "multiple",
-        "value": "boolean"
+        "type": "boolean"
     }, {
         "name": "withCredentials",
         "label": "发送cookie",
-        "value": "boolean"
+        "type": "boolean"
     }, {
         "name": "name",
         "label": "name",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "sizeLimit",
         "label": "大小限制（KB）",
-        "value": "number"
+        "type": "number"
     }]
 }

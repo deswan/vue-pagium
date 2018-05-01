@@ -3,44 +3,44 @@ module.exports = {
     "props": [{
         "name": "span",
         "label": "列数",
-        "value": "number",
+        "type": "number",
         default: 24
     }, {
         "name": "offset",
         "label": "左侧的间隔格数",
-        "value": "number",
+        "type": "number",
     }, {
         "name": "push",
         "label": "向右移动格数",
-        "value": "number",
+        "type": "number",
     }, {
         "name": "pull",
         "label": "向左移动格数",
-        "value": "number",
+        "type": "number",
     }, {
         "name": "xs",
         "label": "xs",
-        "value": "string",
+        "type": "string",
     }, {
         "name": "sm",
         "label": "sm",
-        "value": "string",
+        "type": "string",
     }, {
         "name": "md",
         "label": "md",
-        "value": "string",
+        "type": "string",
     }, {
         "name": "lg",
         "label": "lg",
-        "value": "string",
+        "type": "string",
     }, {
         "name": "xl",
         "label": "xl",
-        "value": "string",
+        "type": "string",
     }, {
         "name": "tag",
         "label": "tag",
-        "value": "string",
+        "type": "string",
         default: 'div'
     }]
 }

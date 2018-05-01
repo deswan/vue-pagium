@@ -3,35 +3,35 @@ module.exports = {
     "props": [{
         "name": "gutter",
         "label": "栅格间隔",
-        "value": "number"
+        "type": "number"
     }, {
         "name": "type",
         "label": "布局模式，可选 flex",
-        "value": "string",
+        "type": "string",
     }, {
         "name": "justify",
         "label": "flex 布局下的水平排列方式",
-        "value": "select",
+        "type": "select",
         default: 'start',
         options: ['start', 'end', 'center', 'space-around', 'space-between']
     }, {
         "name": "align",
         "label": "flex 布局下的垂直排列方式",
-        "value": "select",
+        "type": "select",
         default: 'top',
         options: ['top', 'middle', 'bottom']
     }, {
         "name": "tag",
         "label": "自定义元素标签",
-        "value": "string",
+        "type": "string",
         default: 'div'
     }, {
         "name": "marginTop",
         "label": "margin-top(px)",
-        "value": "number"
+        "type": "number"
     }, {
         "name": "marginBottom",
         "label": "margin-bottom(px)",
-        "value": "number"
+        "type": "number"
     }]
 }

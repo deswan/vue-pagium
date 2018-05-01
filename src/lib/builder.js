@@ -15,6 +15,15 @@ function traverse(list) {
             return target;
         }, {})
 
+        props = JSON.parse(JSON.stringify(props), function (k, v) {
+            if (v.type === constant.SLOT_TYPE) {
+                v = v.value;
+            } else if (v.type === constant.REFER_TYPE) {
+                v = v.value
+            }
+            return v;
+        })
+
         result.push({
             type: item.type,
             name: item.name,

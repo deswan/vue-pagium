@@ -11,7 +11,7 @@ function upgradeTemplateData(data, allComsConfig) {
                 item.props && (item.props = Object.keys(item.props).reduce((target, propName) => {
                     let conf = utils.getConfByPropName(propName, config);
                     if (conf) {
-                        let upgraded = getUpgrade(conf.value).call(conf, item.props[propName]);
+                        let upgraded = getUpgrade(conf.type).call(conf, item.props[propName]);
                         upgraded !== undefined && (target[propName] = upgraded);
                     }
                     return target;

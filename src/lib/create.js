@@ -33,7 +33,7 @@ module.exports = async function (info) {
         text: 'generating page'
     }).start();
 
-    return compile(data, comPaths, info.temporaryDir).then(output => {
+    return compile(data, comPaths, info.temporaryDir,info.vueTemplate).then(output => {
         return fs.outputFile(info.target, output)
     }).then(_ => {
         generating.succeed(`${chalk.green(path.basename(info.target))} is created in ${chalk.green(info.target)}`)

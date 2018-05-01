@@ -3,57 +3,57 @@ module.exports = {
     "props": [{
         "name": "label",
         "label": "label",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "required",
         "label": "required",
-        "value": "boolean"
+        "type": "boolean"
     },{
         "name": "width",
         "label": "宽度",
-        "value": "string"
+        "type": "string"
     },{
         "name": "size",
         "label": "尺寸",
-        "value": "select",
+        "type": "select",
         "options": ["medium", "small", "mini"]
     }, {
         "name": "type",
         "label": "类型",
-        "value": "select",
+        "type": "select",
         "default": "text",
         "options": ["text", "textarea"]
     }, {
         "name": "placeholder",
         "label": "placeholder",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "clearable",
         "label": "是否可清空",
-        "value": "boolean"
+        "type": "boolean"
     }, {
         "name": "prefixIcon",
         "label": "输入框头部图标",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "suffixIcon",
         "label": "输入框尾部图标",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "rows",
         "label": "输入框行数，只对 type=\"textarea\" 有效",
-        "value": "number"
+        "type": "number"
     }, {
         "name": "autosize",
         "label": "自适应内容高度，只对 type=\"textarea\" 有效",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "name",
         "label": "name",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "readonly",
         "label": "readonly",
-        "value": "boolean"
+        "type": "boolean"
     }]
 }

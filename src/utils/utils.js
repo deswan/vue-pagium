@@ -131,7 +131,7 @@ function traverse(doSth, list) {
 function patchProps(props, config) {
     return Object.keys(props).reduce((target, key) => {
         let conf = getConfByPropName(key, config);
-        target[key] = require('../type_parser').getPatch(conf.value).call(conf, props[key]);
+        target[key] = require('../type_parser').getPatch(conf.type).call(conf, props[key]);
         return target;
     }, {})
 }

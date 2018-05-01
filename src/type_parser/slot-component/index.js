@@ -10,7 +10,6 @@ let hasError = (conf) => {
     }
 }
 
-//是否该组件的合法性在parser.js中判断
 function isValid(value) {
     if (isPlainObject(value)) {
         return value.type === SLOT_TYPE && Array.isArray(value.value) && (value.scope === this.scope);

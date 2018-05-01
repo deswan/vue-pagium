@@ -4,17 +4,17 @@ module.exports = {
     "exposeProperty": ["open"],
     "props": [{
         "name": "title",
-        "value": "string",
+        "type": "string",
         "label": "标题"
     }, {
         "name": "loadComponent",
         "label": "加载组件",
-        "value": "refer",
+        "type": "refer",
         property: 'load'
     }, {
         "name": "clearComponent",
         "label": "清空组件",
-        "value": "refer",
+        "type": "refer",
         property: 'clear'
     }]
 }

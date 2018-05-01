@@ -14,7 +14,7 @@ let hasError = (conf) => {
 
 function isValid(value) {
     if(isPlainObject(value)){
-        return value.type === REFER_TYPE && typeof value.value === 'string' && value.property === this.property;
+        return value.type === REFER_TYPE && typeof value.type === 'string' && value.property === this.property;
     }else if(typeof value === 'string'){
         return true;
     }

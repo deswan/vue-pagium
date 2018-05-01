@@ -59,6 +59,18 @@ npm install pager-element -g
 
 
 
+这三个文件需存放在一个**以组件名命名**的文件夹中，例如，假设有组件MyButton，那么该组件的文件结构应如下：
+
+```bash
+MyButton
+├─ MyButton.vue.art
+├─ config.js
+└─ (可选)MyButton.vue
+
+```
+
+
+
 #### 配置文件 config.js
 
 声明组件需要的参数和类型，以及组件相关的一些属性。一个典型的config.js文件如下
@@ -97,15 +109,33 @@ module.exports = {
 }
 ```
 
-选项说明
+##### 选项说明
 
-- name：组件的默认初始名称
+- name: String 
 
-- exposeProperty：（可选）组件对外暴露的 **最外层**data名、method名或computed名。当任何其它组件的refer类型指定了其`property`选项为这其中的任意一项，那么那个refer类型的值则可以取为该组件的实例名称。
+  组件实例的初始名称
 
-- isDialog：（可选）是否是对话框组件，仅在界面方式启动的情况下有用（在编辑界面将被归为“对话框”一栏）。
+- exposeProperty: Array<String>（可选）
 
-- props：指定该组件的参数，是一个对象数组。每个对象描述一个参数，其中`name`指定参数的变量名，将作为参数传入实时预览组件`[组件名].vue`（prop）和模板文件 `[组件名].vue.art`（模板数据）。
+  组件对外暴露的 **最外层**data名、method名或computed名。当任何其它组件的refer类型指定了其`property`选项为该组件exposeProperty数组中的任意一项，那么那个refer类型的值则可以取为该组件的实例。
+
+- isDialog: Boolean（可选）
+
+  是否是对话框组件，仅在界面方式启动的情况下有用（在编辑界面将被归为“对话框”一栏）。
+
+- props: Array<Object> 
+
+  声明预备传入该组件的参数。每个数组元素对象描述一个参数，详情见“参数配置”。
 
   ​
 
+
+##### 参数配置
+
+- name: String 
+
+  指定参数名。该参数将以此名称作为参数名传入实时预览组件`[组件名].vue`（prop）和模板文件 `[组件名].vue.art`（模板数据）中。
+
+- label: String（可选）
+
+  指定参数的标注名

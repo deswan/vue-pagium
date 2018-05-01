@@ -13,7 +13,7 @@
 <script>
 export default {
   name: 'Table',
-  props:['cols','fit','height','maxHeight','stripe','size','marginTop','marginBottom','pagination'],
+  props:['cols','fit','height','maxHeight','size','marginTop','marginBottom','pagination'],
   data() {
     return {
       data:['','','']

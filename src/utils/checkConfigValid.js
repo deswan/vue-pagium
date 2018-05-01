@@ -43,30 +43,30 @@ function checkProps(props) {
 
     function checkConf(conf) {
         if (!conf.name) {
-            throw new Error('name属性不能为空')
+            throw new Error('name 不能为空')
         }
         if (typeof conf.name != 'string') {
-            throw new Error('name属性需是字符串')
+            throw new Error('name 需是字符串')
         }
         if (conf.name.startsWith('_')) {
-            throw new Error('name属性值不能以"_"开头')
+            throw new Error('name 不能以"_"开头')
         }
         if (!utils.isValidIdentifier(conf.name)) {
-            throw new Error('name不是合法js标识符')
+            throw new Error('name 不是合法js标识符')
         }
-        if (!conf.value) {
-            throw new Error('value属性不能为空')
+        if (!conf.type) {
+            throw new Error('type 不能为空')
         }
-        if (!type_parser.getType(conf.value)) {
-            throw new Error('value值不合法，合法值为' + type_parser.getAllTypesString().map(e => {
+        if (!type_parser.getType(conf.type)) {
+            throw new Error('type 值不合法，合法值为' + type_parser.getAllTypesString().map(e => {
                 return JSON.stringify(e);
             }).join(','))
         }
-        if (type_parser.getTypeHasError(conf.value)(conf)) {
-            throw new Error(type_parser.getTypeHasError(conf.value)(conf))
+        if (type_parser.getTypeHasError(conf.type)(conf)) {
+            throw new Error(type_parser.getTypeHasError(conf.type)(conf))
         }
 
-        if (conf.default && !type_parser.getIsValid(conf.value).call(conf, conf.default)) {
+        if (conf.default && !type_parser.getIsValid(conf.type).call(conf, conf.default)) {
             throw new Error('default值不合法')
         }
     }

@@ -22,16 +22,16 @@ function checkData(data, allComsConfig,noCheckConfig) {
 
     function checkItem(item,config) {
         if (!item.type) {
-            throw new Error('type属性不能为空')
+            throw new Error('type 不能为空')
         }
         if (typeof item.type != 'string') {
-            throw new Error('type属性不合法')
+            throw new Error('type 不合法')
         }
         if (!item.name) {
-            throw new Error('name属性不能为空')
+            throw new Error('name 不能为空')
         }
         if (typeof item.name != 'string' || !utils.isValidIdentifier(item.name)) {
-            throw new Error('name属性不合法')
+            throw new Error('name 不合法')
         }
 
         if (item.props && !noCheckConfig) {
@@ -47,7 +47,7 @@ function checkData(data, allComsConfig,noCheckConfig) {
             if (!conf) {
                 throw new Error(`组件 ${comName} 不存在 prop: ${propName}`)
             }
-            if (!getIsValid(conf.value).call(conf, props[propName])) {
+            if (!getIsValid(conf.type).call(conf, props[propName])) {
                 throw new Error(`prop 不合法: ${propName}`)
             }
         })

@@ -10,7 +10,7 @@ module.exports = function (config) {
     return def;
 
     function getDefault(conf, isRoot) {
-        let type = conf.value
+        let type = conf.type
         if (type === 'string' ||
             type === 'select' ||
             type === 'slot' ||
@@ -34,10 +34,10 @@ module.exports = function (config) {
         let def = {};
         config.forEach(conf => {
             if (conf.default !== undefined) {
-                if (!getIsValid(conf.value).call(conf, conf.default)) {
+                if (!getIsValid(conf.type).call(conf, conf.default)) {
                     throw new Error(conf + '\ndefault值不合法')
                 }
-                def[conf.name] = getPatch(conf.value).call(conf, conf.default)
+                def[conf.name] = getPatch(conf.type).call(conf, conf.default)
             }else{
                 def[conf.name] = getDefault(conf, isRoot);
             }

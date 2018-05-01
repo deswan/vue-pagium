@@ -4,24 +4,24 @@ module.exports = {
     "props": [{
         "name": "title",
         "label": "文本",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "type",
         "label": "主题",
-        "value": "select",
+        "type": "select",
         "options": ["success", "info", "warning", "danger"]
     }, {
         "name": "color",
         "label": "背景色",
-        "value": "string"
+        "type": "string"
     }, {
         "name": "hit",
         "label": "是否有边框描边",
-        "value": "boolean"
+        "type": "boolean"
     }, {
         "name": "size",
         "label": "尺寸",
-        "value": "select",
+        "type": "select",
         "options": ["medium", "small", "mini"]
     }]
 }

@@ -1,8 +1,8 @@
 //config是否填写正确
 let hasError = (conf) => {
-    return require('../index').getTypeHasError(conf.value[0])({
+    return require('../index').getTypeHasError(conf.type[0])({
         ...conf,
-        value: conf.value[0]
+        type: conf.type[0]
     })
 }
 
@@ -12,9 +12,9 @@ function isValid(value) {
         getIsValid
     } = require('../index');
     return Array.isArray(value) && value.every(item => {
-        return getIsValid(this.value[0]).call({
+        return getIsValid(this.type[0]).call({
             ...this,
-            value: this.value[0]
+            type: this.type[0]
         }, item)
     })
 }
@@ -25,13 +25,10 @@ function isValid(value) {
 function patch(value) {
     let innerConf = {
         ...this,
-        value: this.value[0]
+        type: this.type[0]
     }
-    console.log(value.map(e => {
-        return require('../index').getPatch(innerConf.value).call(innerConf, e)
-    }))
     return value.map(e => {
-        return require('../index').getPatch(innerConf.value).call(innerConf, e)
+        return require('../index').getPatch(innerConf.type).call(innerConf, e)
     })
     
 }
@@ -45,10 +42,10 @@ function upgrade(value) {
     if (Array.isArray(value)) {
         let innerConf = {
             ...this,
-            value: this.value[0]
+            type: this.type[0]
         }
         return value.map(e => {
-            return require('../index').getUpgrade(innerConf.value).call(innerConf, e)
+            return require('../index').getUpgrade(innerConf.type).call(innerConf, e)
         }).filter(e => {
             return e !== undefined
         })
