@@ -1,14 +1,11 @@
-const {isPlainObject} = require('../../utils/utils')
+const {isPlainObject,isValidIdentifier} = require('../../utils/utils')
 const {REFER_TYPE} = require('../../const')
 let hasError = (conf) => {
     if (conf.default) {
         return '该类型不允许设置default值'
     }
-    if (!conf.property) {
-        return '请设置property属性以标明所引用的data/methods/computed名称'
-    }
-    if (typeof conf.property != 'string') {
-        return 'property属性必须是字符串类型'
+    if (conf.property && (typeof conf.property != 'string' || !isValidIdentifier(conf.property))) {
+        return 'property属性不合法'
     }
 }
 

@@ -21,6 +21,10 @@ const SLOT_PLACEHOLDER = '_____pg_slot______';
 const pgHashPrefix = 'pg______';
 const pgColonHashPrefix = '__pg_colon__';
 
+const wordRegExp = /^[$a-zA-Z][$\w]*$/
+
+const modifiers = ['wrapper', 'last'];
+
 const HOOKS_NAME = ['beforeCreate', 'created', 'beforeMount', 'mounted', 'beforeUpdate', 'updated', 'beforeDestroy', 'destroyed'];
 
 let logger = require('../logger')('compile')
@@ -77,22 +81,22 @@ function replaceIdentifier() {
             let externalReplaced = pg_com.compiled.replace(externalRegExp, (match, comName, varName, modifier) => {
                 let externalCom = utils.getComponentByName(pg_map.components, comName)
                 if (!externalCom) {
-                    throw new Error(`${pg_com.name} 引用的组件 ${comName} 组件不存在`)
+                    throw new Error(`${pg_com.name} 引用的 ${comName} 组件不存在`)
                 }
 
                 let idx, renamedVarName = varName;
 
+                //匹配
+                let isData = externalCom.initDataKeys.includes(varName)
+                let isMethod = externalCom.initMethodsKeys.includes(varName);
+                let isComputed = externalCom.initComputedKeys.includes(varName);
+
                 if (varName) {
                     //修改为rename后的值（data优先级较高）
-                    pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, externalCom) || renamedVarName)
-                    pg_map.renameMap.computed && (renamedVarName = getRenamed(pg_map.renameMap.computed, varName, externalCom) || renamedVarName)
-                    pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, externalCom) || renamedVarName)
+                    isComputed && pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, externalCom) || renamedVarName)
+                    isMethod && pg_map.renameMap.computed && (renamedVarName = getRenamed(pg_map.renameMap.computed, varName, externalCom) || renamedVarName)
+                    isData && pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, externalCom) || renamedVarName)
                 }
-
-                //匹配
-                let isData = externalCom.dataKeys.includes(renamedVarName)
-                let isMethod = externalCom.methodsKeys.includes(renamedVarName);
-                let isComputed = externalCom.computedKeys.includes(renamedVarName);
 
                 function getRenamed(renameMap, varName, comObj) {
                     let idx = renameMap.findIndex(toRename => {
@@ -107,27 +111,26 @@ function replaceIdentifier() {
                 modifier && (modifier = modifier.slice(1))
 
                 if (modifier) {
-                    if (!varName && modifier === 'wrapper') {
+                    if (modifier === 'wrapper') {
                         let match = externalCom.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
                         if (match) {
                             return match[1];
                         } else {
-                            return '';
+                            throw new Error(`组件${externalCom.name}的wrapper不存在，因该组件及其子组件没有data`)
                         }
                     } else if (modifier === 'last') {
+                        if(!isData && !isMethod && !isComputed) throw new Error(`${externalCom.name}组件的变量${varName}不存在`)
                         return renamedVarName;
                     } else {
-                        throw new Error(match + ' 不匹配任何模式')
+                        throw new Error(externalCom.name + '：' + modifier + ' 修饰符不存在')
                     }
                 } else {
                     if (isData) { //data
                         return externalCom.wrapper + renamedVarName;
-                    } else if (isComputed) {
-                        return renamedVarName;
-                    } else if (isMethod) { //methods
+                    } else if (isComputed || isMethod) {
                         return renamedVarName;
                     } else {
-                        throw new Error('data/methods/computed 标识符不存在：' + match)
+                        throw new Error(`${externalCom.name}组件的变量${varName}不存在`)
                     }
                 }
             })
@@ -142,27 +145,26 @@ function replaceIdentifier() {
                 let isMethod = pg_com.methodsKeys.includes(word);
 
                 if (modifier) {
-                    if (!word && modifier === 'wrapper') {
+                    if (modifier === 'wrapper') {
                         let match = pg_com.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
                         if (match) {
                             return match[1];
                         } else {
-                            return '';
+                            throw new Error(`组件${pg_com.name}的wrapper不存在，因该组件及其子组件没有data`)
                         }
                     } else if (modifier === 'last') {
+                        if(!isData && !isMethod && !isComputed) throw new Error(`${pg_com.name}组件的变量${word}不存在`)
                         return word;
                     } else {
-                        throw new Error(match + ' 不匹配任何模式')
+                        throw new Error(externalCom.name + '：' + modifier + ' 修饰符不存在')
                     }
                 } else {
                     if (isData) { //data
                         return pg_com.wrapper + word;
-                    } else if (isComputed) {
+                    } else if (isComputed || isMethod) {
                         return word;
-                    } else if (isMethod) { //methods
-                        return word;
-                    } else {
-                        throw new Error('data/methods/computed 标识符不存在：' + match)
+                    }  else {
+                        throw new Error(`${pg_com.name}组件的变量${word}不存在`)
                     }
                 }
 
@@ -233,7 +235,6 @@ function merge() {
             //slot组件
             //  { [slotId]:[pg_com1,pg_com2,...] }
             let slots = pg_com.slots || {};
-            console.log(slots)
 
             if (children && children.length) {
                 let childParsed = doMerge(children);
@@ -418,7 +419,7 @@ function getHtml(vue) {
         source: vue,
         needMap: false
     }).template
-    return vue.slice(sfc.start, sfc.end).trim();
+    return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
 }
 
 function getScript(vue) {
@@ -426,6 +427,7 @@ function getScript(vue) {
         source: vue,
         needMap: false
     }).script;
+    if (!sfc) throw new Error('<script>块必须存在')
     return vue.slice(sfc.start, sfc.end).trim();
 }
 
@@ -435,7 +437,7 @@ function renameComputed(allKeys) {
     function traverse(list) {
         list.forEach(e => {
             let newKeys = [] //该组件的methosKey集合
-            e.computedKeys.forEach(key => {
+            e.initComputedKeys.forEach(key => {
                 let newKey = key;
                 if (allKeys.includes(key)) {
                     newKey = prefixComName(e.comObj, key)
@@ -538,7 +540,7 @@ function renameMethods() {
     function traverse(list) {
         list.forEach(e => {
             let newMethodsKey = [] //该组件的methosKey集合
-            e.methodsKeys.forEach(key => {
+            e.initMethodsKeys.forEach(key => {
                 let newKey = key;
                 if (AllMethodsKey.includes(key)) {
                     newKey = prefixComName(e.comObj, key)
@@ -642,17 +644,19 @@ function prefixComName(comObj, key) {
 function renameData() {
     let toRename = []
 
-    function traverse(list) {
+    function traverse(list, isRoot) {
         let result = [];
         list.forEach(e => {
             let children = traverse(e.children);
-            let local = e.dataKeys.map(key => {
+            let local = e.initDataKeys.map(key => {
                 return {
                     node: e,
                     value: key,
                     raw: key
                 }
             })
+
+            e.dataKeys = e.initDataKeys.slice();
 
             let nodes = local.concat(children);
 
@@ -696,36 +700,39 @@ function renameData() {
                 })
             }
 
-            if (nodes.length > 1) {
-                result.push({
-                    node: e,
-                    value: e.comObj.name,
-                    raw: ''
-                })
-                e.setDataWrapper = true;
-            } else if (nodes.length == 1) {
-                if (nodes[0].node === e) { //是本组件的单属性
+            if (!isRoot) {
+                if (nodes.length > 1) {
                     result.push({
                         node: e,
-                        value: prefixComName(e.comObj, nodes[0].value),
-                        raw: nodes[0].value
+                        value: e.comObj.name,
+                        raw: ''
                     })
-                    toRename.push({
-                        node: e,
-                        value: prefixComName(e.comObj, nodes[0].value),
-                        raw: nodes[0].value
-                    })
-                } else { //是子组件的单属性
-                    result.push(nodes[0]);
+                    e.setDataWrapper = true;
+                } else if (nodes.length == 1) {
+                    if (nodes[0].node === e) { //是本组件的单属性
+                        result.push({
+                            node: e,
+                            value: prefixComName(e.comObj, nodes[0].value),
+                            raw: nodes[0].value
+                        })
+                        toRename.push({
+                            node: e,
+                            value: prefixComName(e.comObj, nodes[0].value),
+                            raw: nodes[0].value
+                        })
+                    } else { //是子组件的单属性
+                        result.push(nodes[0]);
+                    }
+                }
+            } else {
+                if (nodes.length > 0) {
+                    e.setDataWrapper = true;
                 }
             }
         })
         return result;
     }
-    traverse(pg_map.components);
-    pg_map.components.forEach(pg_com => {
-        pg_com.setDataWrapper = true;
-    })
+    traverse(pg_map.components, true);
     logger('renameData: toRename', toRename)
 
     if (!toRename.length) return;
@@ -741,7 +748,6 @@ function renameData() {
     }).reverse()
 
     pg_map.renameMap.data = toRename
-
 
     //修改pg_map && 修改compiled
     toRename.forEach(({
@@ -859,10 +865,12 @@ function getScriptData(vue) {
         data(block) { //ObjectExpression
             if (block.type === 'ObjectMethod') {
                 block = block.body;
-            } else if (block.type === 'ObjectProperty' && block.value.type === 'FunctionExpression') {
-                block = block.value.body;
-            } else {
-                throw new Error('data块声明格式不正确')
+            } 
+            // else if (block.type === 'ObjectProperty' && block.value.type === 'FunctionExpression') {
+            //     block = block.value.body;
+            // } 
+            else {
+                throw new Error('data属性必须为一个ES6方法')
             }
 
             let p = block.body; //找出return语句
@@ -902,9 +910,11 @@ function getScriptData(vue) {
             let name = block.key.name;
             if (block.type === 'ObjectMethod') {
                 block = block.body;
-            } else if (block.type === 'ObjectProperty' && block.value.type === 'FunctionExpression') {
-                block = block.value.body;
-            } else {
+            } 
+            // else if (block.type === 'ObjectProperty' && block.value.type === 'FunctionExpression') {
+            //     block = block.value.body;
+            // } 
+            else {
                 throw new Error(name + '块声明格式不正确')
             }
             return {
@@ -1003,10 +1013,10 @@ function initMap(components, comPaths, root) {
             /**
              * 插入slot
              */
-            insertSlot({
-                value: nameArr
-            }) {
-                if (!nameArr) return '';
+            insertSlot(arg) {
+                if(!arg) throw new Error(comObj.name + '：insertSlot参数为空');
+                let nameArr = arg.value;
+                if (!nameArr) throw new Error(comObj.name + '：insertSlot参数为空');
                 let slotId = '';
                 let children = pg_com.children.filter((e) => {
                     if (e.comObj.__pg_slot__ && nameArr.includes(e.name)) {
@@ -1014,7 +1024,7 @@ function initMap(components, comPaths, root) {
                         return true;
                     }
                 });
-                if (!children.length) return '';
+                if (!children.length) throw new Error(comObj.name + '：insertSlot不存在对应的子组件');
                 pg_com.slots || (pg_com.slots = {});
                 pg_com.slots[slotId] = children.sort((a, b) => {
                     return nameArr.indexOf(a.name) - nameArr.indexOf(b.name)
@@ -1024,12 +1034,25 @@ function initMap(components, comPaths, root) {
             /**
              * 引用其它组件的data/method
              */
-            external({
-                value: comName,
-                property: varName
-            }, modifier) {
-                if (!comName || !varName) return '';
-                return '@@' + comName + '__pg_external__' + varName + (modifier ? ':' + modifier : '');
+            external(arg, property, modifier) {
+                if(!arg) throw new Error(comObj.name + '：external参数为空');
+                let comName = arg.value;
+                let varName = arg.property;
+                if (!varName) {
+                    varName = property;
+                } else {
+                    modifier = property;
+                }
+                if (!comName) {
+                    throw new Error(comObj.name + '：external参数为空');
+                } else if (modifier !== 'wrapper' && !varName) {
+                    throw new Error(comObj.name + '：未设置property的refer类型应当为external传入第二个参数引用变量');
+                } else if (varName && !utils.isValidIdentifier(varName)) {
+                    throw new Error(comObj.name + '：external 引用变量名不合法');
+                } else if (modifier && !modifiers.includes(modifier)) {
+                    throw new Error(comObj.name + '：external 修饰符仅支持 wrapper|last');
+                }
+                return '@@' + comName + '__pg_external__' + (varName || '') + (modifier ? ':' + modifier : '');
             }
         }
 
@@ -1038,11 +1061,11 @@ function initMap(components, comPaths, root) {
         try {
             scriptData = getScriptData(pg_com.compiled);
         } catch (err) {
-            throw new Error(comObj.name + ' 组件编译后语法树解析错误：' + err.message + '，请检查模板或参数')
+            throw new Error(comObj.name + ' 组件编译后语法树解析错误：' + err.message)
         }
-        pg_com.dataKeys = scriptData.data.keys;
-        pg_com.methodsKeys = scriptData.methods.keys;
-        pg_com.computedKeys = scriptData.computed.keys;
+        pg_com.initDataKeys = scriptData.data.keys;
+        pg_com.initMethodsKeys = scriptData.methods.keys;
+        pg_com.initComputedKeys = scriptData.computed.keys;
         list.push(pg_com);
     }
     components.forEach((comObj) => {

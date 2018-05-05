@@ -5,7 +5,7 @@
     filterable
     v-model="input" 
     :size="size" 
-    placeholder="slot"
+    :placeholder="'slot' + (conf.scope ? `<${conf.scope}>` : '')"
     no-data-text="无可用组件"
     @change="valChange">
       <el-option

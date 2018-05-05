@@ -400,56 +400,114 @@ module.exports = {
 
   该类型提供一种取得外部组件的首层data名、方法名或计算属性名的入口，作为一种组件间交互的解决方案。
 
-  该类型的值必须是一个js字符串类型，值为要引用组件的**实例名**
+  该类型的值必须是一个js字符串类型，值为要引用组件的**组件实例名称**
 
-  refer类型必须包含一个配置选项`property`，指示要使用外部组件的什么数据。每一个组件都可以在配置的`exposeProperty`选项中说明自身要暴露什么首层data名、方法名或计算属性名（见”参数配置“）。指定了某个首层data名、方法名或计算属性名表明了组件开发者确保该data、方法或计算属性一定会在编译过后的组件模板中存在，以供其它组件引用。
+  refer类型有两种用法：
 
-  refer类型的值所指定的组件必须是在组件配置的`exposeProperty`选项中暴露了该refer类型的property选项值的组件。比如有如下refer类型：
+  1. 有property配置选项
 
-  ```Java
-  {
-    "name": "loadComponent",
-    "label": "加载组件",
-    "type": "refer",
-    "property": 'load'
-  }
-  ```
+     refer类型可包含一个配置选项`property`，指示要使用外部组件的什么数据。每一个组件都可以在配置的`exposeProperty`选项中说明自身要暴露什么首层data名、方法名或计算属性名（见”参数配置“）。指定了某个首层data名、方法名或计算属性名表明了组件开发者确保该data、方法或计算属性一定会在编译过后的组件模板中存在，以供其它组件引用。
 
-  那么该参数可取值为以下Table组件的实例名：
+     指定了property的refer类型所指定的组件必须是在组件配置的`exposeProperty`选项中暴露了该refer类型的property选项值的组件。比如有如下refer类型：
 
-  ```javascript
-  module.exports = {
-    "name": 'table',
-    "exposeProperty": ["load", "clear"],	//包含 'load'
-    "props":[]
-  }
-  ```
+     ```javascript
+     {
+       "name": "loadComponent",
+       "label": "加载组件",
+       "type": "refer",
+       "property": 'load'
+     }
+     ```
 
-  假设有Table组件实例table1，那么该refer类型的参数loadComponent可取值为`'table1'`。
+     那么该参数可取值为以下Table组件的实例名：
 
-  在组件模板中使用该类型值，需要搭配使用函数`external`，并将refer类型值作为其参数，如下例所示，external被调用的位置将被替换为指定组件的首层data名、方法名或计算属性（即property属性中所指定的），在本例中为`load`：
+     ```javascript
+     module.exports = {
+       "name": 'table',
+       "exposeProperty": ["load", "clear"],	//包含 'load'
+       "props":[]
+     }
+     ```
 
-  ```javascript
-  this.{{{external(loadComponent)}}}()
-  ```
+     具体来说：假设有Table组件实例table1，那么该refer类型的参数loadComponent可取值为`'table1'`。
 
-  编译结果如下：
+     在组件模板中使用该类型值，需要搭配使用函数`external`，并将refer类型值作为其参数。被指定的组件实例名称和property属性中所指定的首层data名、方法名或计算属性将被传入该函数。
 
-  ```
-  this.load()
-  ```
+     承接上例，external被调用的位置将被替换为指定组件的`load`方法的处理后的名称：
+
+     ```javascript
+     this.{{{external(loadComponent)}}}()
+     ```
+
+     编译结果如下：
+
+     ```javascript
+     this.load()
+     ```
+
+     也可为external的第二个参数指定修饰符，如：
+
+     ```javascript
+     this.{{{external(loadComponent,'last')}}}
+     ```
+
+     修饰符的使用见“修饰符”
+
+  2. 无property配置选项
+
+     该用法的区别为：不在声明时指定该参数要引用外部组件的什么数据，而是在编译时指定。常用于要引用的数据在声明时不确定，需由用户输入的情况。
+
+     比如有如下refer类型：
+
+     ```javascript
+     {
+       "name": "myRefer",
+       "label": "引用组件",
+       "type": "refer"
+     }
+     ```
+
+     在组件模板搭配使用函数`external`，需要将refer类型值作为第一个参数传入，并将需要引用的数据作为第二个参数传入，如：
+
+     ```javascript
+     this.{{{external(myRefer,'id')}}}
+     ```
+
+     编译结果如下：
+
+     ```javascript
+     this.myReferCom.id
+     ```
+
+     也可为external的第三个参数指定修饰符，如：
+
+     ```javascript
+     this.{{{external(myRefer,'id','last')}}}
+     ```
+
+     当修饰符为`wrapper`时，第二个参数可传入空值：
+
+     ```javascript
+     this.{{{external(myRefer,'','wrapper')}}}
+     ```
+
+     修饰符的使用见“修饰符”
+
+  ​
 
   refer类型的值在内部（编译组件模板之前）会被转化，例如一个值为`'table1'`的refer类型值将被转化为为如下形式：
 
   ```javascript
   {
     "type": "__pg_type_refer_component__",
-    "value": 'refer',	//原本的值
+    "value": 'table1',	//原本的值
     "property":"load"	//配置选项中property的值
   }
   ```
 
-  因此在组件模板中对于是否存在slot类型值的判断要采取适当的形式：如`{{{if myRefer.value}}}`
+  ​
+
+  因此在组件模板slot类型值的判空要采取相应的形式：如`{{{if myRefer.value}}}`
 
   refer类型不允许指定默认值，因为在配置参数时，要引用的其它组件名是不可知的。
 
@@ -491,9 +549,137 @@ module.exports = {
 
 ### 组件模板 .vue.art
 
-组件模板使用art-template模板引擎编译，请查看[文档](http://aui.github.io/art-template/zh-cn/)了解模板语法。
+组件模板使用art-template模板引擎编译，请查看[文档](http://aui.github.io/art-template/zh-cn/)了解基本的模板语法。
 
 art-template 使用了标准语法和原始语法两种语法格式，可交替使用，原始语法与ejs语法一致。标准语法双括号`{{}}`在pager中被修改为三花括号`{{{}}}`，避免与Vue自身的模板语法冲突。
+
+组件模板编译后应当是一个标准的vue单文件组件格式，目前，pager只解析以下区块：
+
+1. <template>
+2. <script>
+
+#### 工作原理介绍
+
+pager截取<template>块中的内容作为组件的模板部分，以及使用分析AST语法树的方式解析<script>标签中使用`export default`导出的vue选项。按照组件层次树将它们进行合并，成为一个单独的.vue文件。
+
+#### <template>块合并
+
+并列组件的模板将按顺序被拼接起来。在每个组件中，组件开发者需要在<template>块中使用`insertChildren`和`insertSlot`函数进行子组件模板的分发。其中`insertChildren()`被调用的位置将被替换为当前组件的非slot子组件按顺序拼接的模板。`insertSlot(mySlot)`被调用的位置被替换为`mySlot`参数指定子组件的按参数输入顺序拼接的模板。
+
+#### <script>块合并
+
+目前，pager解析vue选项对象的以下属性：data、methods、computed、watch、生命周期钩子方法，并分别进行合并。其中，会将data的首层属性名、methods方法名和computed计算属性名保存下来，加入组件模板合并的重命名流程。
+
+##### data的合并和重命名
+
+data解析过程如下：查找出vue选项对象的data属性，data属性必须是ES6方法（ObjectMethod），不能为箭头函数，这是vue的标准写法所规定的。接着寻找方法块中的return语句，return语句必须返回一个对象字面量，该对象即作为该组件的data块。
+
+多个组件的data合并将产生属性名称的重复，因此需要重命名。同时，为了确保data结构的逻辑性，子组件的data需要嵌套到父组件的data中。以下是合并与重命名算法的简要描述：
+
+遍历同一个层次的组件，收集每个组件的**首层data属性名**。嵌套对象的属性名不计，如下：只有`loading`、`items`、`myObj`为首层data属性。
+
+```javascript
+data() {
+  return {
+    loading:false,	//首层data属性
+    items:[],	//首层data属性
+    myObj:{	//首层data属性
+      p1:1,
+      p2:2
+    }
+  };
+},
+```
+
+情况1：无属性，跳过。
+
+情况2：只有一个属性，将其重命名为驼峰化的`组件名称 + 属性名称`，并加入父组件的data，成为父组件的首层data属性，如该属性与父组件中的其它已存在的首层属性名称重复，则继续将该组件重命名为`组件名称 + 属性名称 + '$'`，如仍有重复则继续添加`$`直至无重复为止。
+
+假设组件com1有一子组件com2，合并前如下：
+
+com1：
+
+```javascript
+data() {
+  return {
+    items:[]
+  };
+},
+```
+
+com2：
+
+```javascript
+data() {
+  return {
+    value:0
+  };
+},
+```
+
+合并后如下：
+
+```javascript
+data() {
+  return {
+    items:[],
+    com1Value:0
+  };
+},
+```
+
+情况3：有多个属性，将这些属性用一个新对象包裹起来，并将此对象作为以**组件名称**命名的属性加入父对象中，如该属性名（即该组件名称）与其他已存在的属性名重复，则将**其它属性名**重命名为`属性名 + '$'`，如仍有重复则继续添加`$`直至无重复为止。
+
+继续假设组件com1有一子组件com2，合并前如下：
+
+com1：
+
+```javascript
+data() {
+  return {
+    items:[]
+  };
+},
+```
+
+com2：
+
+```javascript
+data() {
+  return {
+    loading:false,
+    value:0
+  };
+},
+```
+
+合并后如下：
+
+```javascript
+data() {
+  return {
+    items:[],
+    com2:{
+      loading:false,
+	  value:0
+    }
+  };
+},
+```
+
+按照此逻辑递归合并组件直至第一层，组件层次树中第一层的组件将判断自身的data被子组件累加后是否存在属性，若存在任意属性，则将这些属性用一个新对象包裹起来，并作为以**组件名称**命名的属性加入最终页面组件的首层data中。若不存在属性，则忽略。
+
+第一层组件data的处理逻辑与其他组件不同的地方在于，不管存在一个属性还是多个属性，都会用一个新对象包裹起来。这么做的原因在于确保存在任意data属性的组件都会有一个包裹它们的对象，而修饰符`wrapper`可获取这个对象，用以应对一些特殊需求，如element-ui`Form`组件的`model`参数需要传入一个各表单项的包裹对象。
+
+###### methods和computed的合并和重命名
+
+解析过程如下：查找出vue选项对象的methods/computed属性，值须为一个对象字面量。该对象即为该组件的methods/computed。
+
+以methods为例解释合并与重命名算法：
+
+
+
+#### 全局变量
 
 每个组件模板在编译中会被传入以下数据：
 
@@ -517,6 +703,10 @@ art-template 使用了标准语法和原始语法两种语法格式，可交替�
 ```
 
 （自定义公共模板的放置位置见”Components目录结构“）
+
+#### vue选项名称引用
+
+
 
 
 

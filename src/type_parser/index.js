@@ -28,7 +28,7 @@ function getType(type){
 module.exports = {
     getType,
     getAllTypesString(){
-        return ['string','boolean','object','select','number','slot','refer','[Any]'];
+        return ["'string'","'boolean'","'object'","'select'","'number'","'slot'","'refer'",'[Any]'];
     },
     getTypeHasError(type){
         return getType(type) && getType(type).hasError

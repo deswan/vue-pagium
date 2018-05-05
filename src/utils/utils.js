@@ -78,13 +78,12 @@ function parseSlot(key, value, node, getComName, getExposeProperty, throwError) 
 
             //过滤非直接子组件、已经成为slot的子组件
             this.value = this.value.filter(name => {
-                console.log(!~[].concat(...slots).indexOf(name))
                 return node.children.some(subCom => {
                     return name === subCom.name && !subCom.__pg_slot__
                 }) && !~[].concat(...slots).indexOf(name)
             })
             if (throwError && this.value.length !== len) {
-                throw new Error(`${JSON.stringify(value,null,2)}\nslot引用的组件不合法（组件必须为直接子组件/不可重复引用同一个组件）`)
+                throw new Error(`${JSON.stringify(value,null,2)}\nslot引用的组件不合法（组件实例名必须存在/必须为直接子组件/不可重复引用同一个组件）`)
             }
             if( this.value.length){
                 slots.push(this.value);
@@ -92,15 +91,23 @@ function parseSlot(key, value, node, getComName, getExposeProperty, throwError) 
             }
         } else if (k === 'type' && v === constant.REFER_TYPE) {
             if (this.value) {
-                let exposeProperty = getExposeProperty(this.value)
-
-                //过滤不存在的组件以及自身组件
-                if (!getComName(this.value) || this.value === node.name || !exposeProperty || !exposeProperty.includes(this.property)) {
-                    if (throwError) {
-                        throw new Error(`${value}\nrefer引用的组件不合法（组件必须存在/不可引用自身/目标组件必须声明exposeProperty "${this.property}"）`)
-                    }
-                    this.value = '';
+                let hasError;
+                if(!getComName(this.value)){
+                    hasError = true;
+                    if(throwError) throw new Error(JSON.stringify(this,null,2) + '\nrefer引用的组件必须存在')
+                }else if(this.value === node.name){
+                    hasError = true;
+                    if(throwError) throw new Error(JSON.stringify(this,null,2) + '\nrefer不可引用自身')
                 }
+                
+                if(this.property){
+                    let exposeProperty = getExposeProperty(this.value)
+                    if(!exposeProperty || !exposeProperty.includes(this.property)){
+                        hasError = true;
+                        if(throwError) throw new Error(JSON.stringify(this,null,2) + '\n目标组件未在exposeProperty中暴露变量'+this.property)
+                    }
+                }
+                hasError && (this.value = '')
             }
         }
         return v;

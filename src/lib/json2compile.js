@@ -23,9 +23,9 @@ module.exports = function (data, allComsConfig) {
 
             node.children = children;
 
-            node.props = utils.patchProps(item.props, config);
+            node.props = item.props ? utils.patchProps(item.props, config) : {};
 
-            console.log('after patchProps', JSON.stringify(item.props, null, 2))
+            console.log('after patchProps',node.name, JSON.stringify(node.props, null, 2))
 
             //parseSlot
             for (let key in node.props) {
@@ -41,13 +41,15 @@ module.exports = function (data, allComsConfig) {
                         }
                     }, data)
                     return ret;
-                })
+                },true)
             }
 
             node.props = {
                 ...scheme2Default(config.props),
                 ...node.props
             }
+
+            console.log('props',node.props)
 
 
             result.push(node)

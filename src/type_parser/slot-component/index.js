@@ -1,5 +1,5 @@
 const {
-    isPlainObject
+    isPlainObject,isValidIdentifier
 } = require('../../utils/utils')
 const {
     SLOT_TYPE
@@ -7,6 +7,9 @@ const {
 let hasError = (conf) => {
     if (conf.default) {
         return '该类型不允许设置default值'
+    }
+    if (conf.scope && (typeof conf.scope != 'string' || !isValidIdentifier(conf.scope) )) {
+        return 'scope属性不合法'
     }
 }
 

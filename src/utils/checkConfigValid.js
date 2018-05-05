@@ -58,9 +58,7 @@ function checkProps(props) {
             throw new Error('type 不能为空')
         }
         if (!type_parser.getType(conf.type)) {
-            throw new Error('type 值不合法，合法值为' + type_parser.getAllTypesString().map(e => {
-                return JSON.stringify(e);
-            }).join(','))
+            throw new Error('type 值不合法，合法值为' + type_parser.getAllTypesString().join(','))
         }
         if (type_parser.getTypeHasError(conf.type)(conf)) {
             throw new Error(type_parser.getTypeHasError(conf.type)(conf))

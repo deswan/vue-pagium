@@ -20,7 +20,7 @@ module.exports = function (config) {
         } else if (Array.isArray(type) && type.length == 1) {
             let item = getDefaultValue(type).call(conf)
             Object.assign(def, {
-                [`_${conf.name}`]: JSON.parse(JSON.stringify(getDefaultValue(type[0]).call(conf)))
+                [`_${conf.name}`]: JSON.parse(JSON.stringify( conf.default === undefined ? getDefaultValue(type[0]).call(conf) :  getPatch(conf.type).call(conf, conf.default) ))
             }) //!!!有副作用
             return item
         }
@@ -34,9 +34,6 @@ module.exports = function (config) {
         let def = {};
         config.forEach(conf => {
             if (conf.default !== undefined) {
-                if (!getIsValid(conf.type).call(conf, conf.default)) {
-                    throw new Error(conf + '\ndefault值不合法')
-                }
                 def[conf.name] = getPatch(conf.type).call(conf, conf.default)
             }else{
                 def[conf.name] = getDefault(conf, isRoot);

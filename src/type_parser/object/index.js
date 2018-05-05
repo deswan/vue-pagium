@@ -6,8 +6,8 @@ let hasError = (conf) => {
     } = require('../../utils/checkConfigValid');
 
     let format = conf.format;
-    if (!format) {
-        return '必须填写 format 属性'
+    if (!format || !format.length) {
+        return 'format必须存在'
     }
 
     if(format.some && format.some(conf=>{
@@ -54,7 +54,7 @@ function patch(value) {
     return this.format.reduce((target, conf) => {
         target[conf.name] =
             value[conf.name] === undefined ?
-            getDefaultValue(conf.type).call(conf) :
+            conf.default === undefined ? getDefaultValue(conf.type).call(conf) : getPatch(conf.type).call(conf, conf.default) :
             getPatch(conf.type).call(conf, value[conf.name])
         return target;
     }, {})
@@ -63,10 +63,11 @@ function patch(value) {
 function defaultValue() {
     const {
         getDefaultValue,
+        getPatch
     } = require('../index');
 
     return this.format.reduce((target, conf) => {
-        target[conf.name] = getDefaultValue(conf.type).call(conf)
+        target[conf.name] = conf.default === undefined ? getDefaultValue(conf.type).call(conf) : getPatch(conf.type).call(conf, conf.default)
         return target;
     }, {})
 }

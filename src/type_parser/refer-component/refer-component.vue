@@ -5,7 +5,7 @@
     clearable
     filterable
     no-data-text="无可用组件"
-    placeholder="refer"
+    :placeholder="`refer`+ (conf.property ? `<${conf.property}>` : '')"
     @change="valChange">
      <el-option
       v-for="item in $store.getters.componentNameList(conf.property)"

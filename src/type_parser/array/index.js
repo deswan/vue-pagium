@@ -2,7 +2,7 @@
 let hasError = (conf) => {
     if(Array.isArray(conf.type[0])) return 'array类型不可嵌套array类型'
     if(!require('../index').getType(conf.type[0])){
-        return `${conf.type[0]} 类型不合法`
+        return `不存在类型 ${conf.type[0]}`
     }
     return require('../index').getTypeHasError(conf.type[0])({
         ...conf,

@@ -73,9 +73,7 @@ const store = new Vuex.Store({
         type2Com(state) {
             return allComs
         },
-        /**
-         * 获取所有component（非对话框）的
-         */
+        //for 添加组件
         allComs() {
             let target = [];
             for (let key in allComsConfig) {
@@ -88,6 +86,7 @@ const store = new Vuex.Store({
             }
             return target;
         },
+        //for 添加对话框
         allDialogs() {
             let target = [];
             for (let key in allComsConfig) {
@@ -100,23 +99,27 @@ const store = new Vuex.Store({
             }
             return target;
         },
+        //for refer type
         componentNameList(state) {
             return (property) => {
                 let names = [];
-                (function traverse(list) {
-                    if (!list) return;
-                    list.forEach(item => {
+                utils.traverse((item)=>{
+                    if(property){
                         if (item !== state.activeComponent &&
                             item.exposeProperty &&
                             item.exposeProperty.includes(property)) {
                             names.push(item.name)
                         }
-                        traverse(item.children)
-                    })
-                })(state.components.concat(state.dialogs))
+                    }else{
+                        if (item !== state.activeComponent){
+                            names.push(item.name)
+                        }
+                    }
+                },state.components.concat(state.dialogs))
                 return names;
             }
         },
+        //for slot type
         slotComNameList(state) {
             let names = [];
             state.activeComponent && state.activeComponent.children.forEach(item => {
@@ -327,10 +330,12 @@ const store = new Vuex.Store({
                 value = utils.parseSlot(name, value, state.activeComponent, (name) => {
                     return utils.getComponentByName(this.getters.data, name)
                 }, (name) => {
-                    return utils.getComponentByName(this.getters.data, name).exposeProperty
+                    return utils.getComponentByName(this.getters.data, name) && utils.getComponentByName(this.getters.data, name).exposeProperty
                 }, false)
 
+                
                 Vue.set(state.activeComponent.props, name, value);
+                console.log(state.activeComponent.props)
             }
             axios.post('/input', state)
         },

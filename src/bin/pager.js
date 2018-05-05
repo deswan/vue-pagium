@@ -176,11 +176,11 @@ async function beforeCreate(args, options) {
     } else {
         pagerPath = path.resolve('.', config.target.dir);
         while (!fs.existsSync(pagerPath) || !fs.statSync(pagerPath).isDirectory()) {
-            if (path.join(pagerPath, '..', config.target.dir) === path.join(pagerPath, '..', config.target.dir)) {
+            if (pagerPath === path.join(pagerPath, '../../', config.target.dir)) {
                 pagerPath = false;
                 break;
             }
-            pagerPath = path.join(pagerPath, '..', config.target.dir)
+            pagerPath = path.join(pagerPath, '../../', config.target.dir)
         }
     }
     console.log(chalk.white(`config dir: ${pagerPath || 'none'}`))
@@ -188,7 +188,7 @@ async function beforeCreate(args, options) {
     let vueTemplate;
     if (pagerPath && fs.existsSync(path.join(pagerPath, 'Page.art'))) {
         vueTemplate = path.join(pagerPath, 'Page.art')
-        console.log(chalk.white(`template file: ${describe.vueTemplate}`))
+        console.log(chalk.white(`template file: ${vueTemplate}`))
     }
 
     //获取source/target
@@ -202,6 +202,14 @@ async function beforeCreate(args, options) {
     //验证source是否为json文件
     if (path.extname(sourcePath) !== '.json') {
         throw new Error('target file must be json')
+    }
+
+    //是否合法json
+    let source;
+    try{
+        source = require(sourcePath);
+    }catch(err){
+        throw new Error('target file must be valid json')
     }
 
     let target = resolveTarget(args.target || '.');
@@ -228,7 +236,7 @@ async function beforeCreate(args, options) {
         return create({
             temporaryDir: uniqueTempDir,
             target,
-            source: sourcePath,
+            source,
             configDir: pagerPath,
             vueTemplate
         })

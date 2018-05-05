@@ -16,8 +16,6 @@ const chalk = require('chalk');
 
 
 module.exports = async function (info) {
-    let json = require(info.source);
-
     let comPaths = getLocalComponents(info.temporaryDir)
 
     logger('comsPath', comPaths)
@@ -27,7 +25,7 @@ module.exports = async function (info) {
         return target;
     }, {})
 
-    let data = json2compile(json, allComsConfig)
+    let data = json2compile(info.source, allComsConfig)
 
     const generating = ora({
         text: 'generating page'

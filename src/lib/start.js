@@ -142,11 +142,11 @@ function startServer(info) {
                 code: 0
             })
         }).catch(err => {
-            throw err;
             res.json({
                 data: err.message,
                 code: 1
             })
+            throw err;
         })
     });
 
@@ -164,6 +164,7 @@ function startServer(info) {
                 data: err.message,
                 code: 1
             })
+            throw err;
         })
     });
 
