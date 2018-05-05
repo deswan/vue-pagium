@@ -101,7 +101,7 @@ function startServer(info) {
         let finish = 0;
 
         //将结果写入preview目录下后打包
-        compile(req.body, allComponentPaths, info.temporaryDir,info.vueTemplate).then(output => {
+        compile(req.body, allComponentPaths, info.temporaryDir).then(output => {
             return fs.outputFile(config.previewOutputPath, output)
         }).then(_ => {
             return new Promise((resolve) => {

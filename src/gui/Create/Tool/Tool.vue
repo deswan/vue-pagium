@@ -12,7 +12,8 @@
       >
       </hierarchy-tree>      
 
-      <hierarchy-tree 
+      <hierarchy-tree  
+      :style="{marginTop:'14px'}"
       @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
@@ -36,37 +37,23 @@ export default {
   },
   data() {
     return {
-      data_com: {},
-      data_dialog: {},
       draggingNode: null
     };
   },
-  created() {
-    this.data_com = {
-      name: "组件",
-      children: this.$store.getters.components,
-      isRoot: true
-    };
-    this.data_dialog = {
-      name: "对话框",
-      children: this.$store.getters.dialogs,
-      isRoot: true
-    };
-  },
-  watch: {
-    "$store.getters.components"() {
-      this.data_com = {
+  computed:{
+    data_com(){
+      return {
         name: "组件",
         children: this.$store.getters.components,
         isRoot: true
-      };
+      }
     },
-    "$store.getters.dialogs"() {
-      this.data_dialog = {
-        name: "对话框",
+    data_dialog(){
+      return {
+        name: "对话框组件",
         children: this.$store.getters.dialogs,
         isRoot: true
-      };
+      }
     }
   },
   methods: {

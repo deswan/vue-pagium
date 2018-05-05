@@ -1,5 +1,6 @@
 module.exports = {
     "name": 'upload',
+    description:'文件上传',
     "props": [{
         "name": "action",
         "label": "上传url",

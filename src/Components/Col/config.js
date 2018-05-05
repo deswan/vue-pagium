@@ -1,5 +1,6 @@
 module.exports = {
     "name": 'col',
+    description:'栅格列',
     "props": [{
         "name": "span",
         "label": "列数",

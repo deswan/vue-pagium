@@ -16,8 +16,6 @@ module.exports = function (data, allComsConfig) {
             let node = {
                 name: item.name,
                 type: item.type,
-                isDialog: config.isDialog,
-                exposeProperty: config.exposeProperty,
                 __pg_slot__: false
             }
 

@@ -1,5 +1,9 @@
 //config是否填写正确
 let hasError = (conf) => {
+    if(Array.isArray(conf.type[0])) return 'array类型不可嵌套array类型'
+    if(!require('../index').getType(conf.type[0])){
+        return `${conf.type[0]} 类型不合法`
+    }
     return require('../index').getTypeHasError(conf.type[0])({
         ...conf,
         type: conf.type[0]

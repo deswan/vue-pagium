@@ -1,5 +1,6 @@
 module.exports = {
     "name": 'row',
+    description:'栅格行',
     "props": [{
         "name": "gutter",
         "label": "栅格间隔",

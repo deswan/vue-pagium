@@ -1,6 +1,7 @@
 module.exports = {
     "name": 'table',
     "exposeProperty": ["load", "clear"],
+    description:'表格/列表',
     "props": [{
         "name": "cols",
         "label": "设置列",

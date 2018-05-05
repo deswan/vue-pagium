@@ -63,8 +63,8 @@ export default {
      load(){
         this.@@loading = true;
         <% include('http.art',{
-          method:JSON.stringify(method),
-          url:JSON.stringify(url),
+          method,
+          url,
           params:pagination ? {
             [pageName]:'this.@@page',
             [pageSizeName]:'this.@@pageSize'

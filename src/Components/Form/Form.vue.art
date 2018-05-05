@@ -1,7 +1,7 @@
 <template>
     <el-form
     :model="@@:wrapper" 
-     label-suffix=":"
+    label-suffix=":"
     {{{if labelPosition}}} label-position="{{{labelPosition}}}" {{{/if}}}  
     {{{if labelWidth}}} label-width="{{{labelWidth}}}" {{{/if}}}  
     {{{if inline}}} inline {{{/if}}}  
@@ -17,11 +17,6 @@ export default {
     return {
     };
   },
-  created() {},
-  methods: {},
 };
 </script>
-<style scoped>
-
-</style>
 

@@ -1,5 +1,6 @@
 module.exports = {
     "name": 'breadcrumb',
+    description:'面包屑导航',
     "props": [{
         "name": "items",
         "label": "导航列表",

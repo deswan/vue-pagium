@@ -122,7 +122,9 @@ export default {
               this.saveAsTemplateDialog.show = false;
               this.$message.success("保存模板成功");
             } else if (data.code === 1) {
-              this.$confirm("将覆盖原有模板，是否允许？")
+              this.$confirm("将覆盖原有模板，是否允许？", "提示", {
+                type: "info"
+              })
                 .then(_ => {
                   request(true);
                 })
@@ -147,7 +149,9 @@ export default {
       this.saveAsTemplateDialog.commiting = false;
     },
     clear() {
-      this.$confirm("确定清空此页面么")
+      this.$confirm("确定清空此页面么", "提示", {
+        type: "warning"
+      })
         .then(_ => {
           this.$store.commit("clearData");
         })

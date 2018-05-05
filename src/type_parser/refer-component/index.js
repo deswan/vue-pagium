@@ -5,7 +5,7 @@ let hasError = (conf) => {
         return '该类型不允许设置default值'
     }
     if (!conf.property) {
-        return '请设置property属性以标明所引用的data/methods名称'
+        return '请设置property属性以标明所引用的data/methods/computed名称'
     }
     if (typeof conf.property != 'string') {
         return 'property属性必须是字符串类型'

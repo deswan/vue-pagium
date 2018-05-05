@@ -37,6 +37,8 @@ Object.assign(template.defaults.imports, {
     Object,
     Array,
     String,
+    Number,
+    Math,
     JSON
 })
 
@@ -230,14 +232,8 @@ function merge() {
 
             //slot组件
             //  { [slotId]:[pg_com1,pg_com2,...] }
-            let slots = pg_com.children.reduce((target, child) => {
-                let slotId = child.comObj.__pg_slot__;
-                if (slotId) {
-                    target[slotId] || (target[slotId] = []);
-                    target[slotId].push(child)
-                }
-                return target;
-            }, {})
+            let slots = pg_com.slots || {};
+            console.log(slots)
 
             if (children && children.length) {
                 let childParsed = doMerge(children);
@@ -357,7 +353,7 @@ function merge() {
  * 
  * @param {html,data,methods,hooks} data 输出信息
  */
-function render(data,vueTemplate) {
+function render(data, vueTemplate) {
     logger('render', data)
     let options = template.render(`
         data() {
@@ -388,10 +384,10 @@ function render(data,vueTemplate) {
         <div>
             {{{html}}}
         </div>
-    `,data)
-    let templPath = vueTemplate || path.join(__dirname,'App.vue.art');
-    let output = template(templPath,{
-        template:html,
+    `, data)
+    let templPath = vueTemplate || path.join(__dirname, 'App.vue.art');
+    let output = template(templPath, {
+        template: html,
         options
     })
     return beautify(output);
@@ -831,7 +827,6 @@ function getScriptData(vue) {
     let cleared = clearControlChar(script);
     script = cleared.text
 
-    console.log(script);
     var ast = babylon.parse(script, {
         sourceType: 'module'
     });
@@ -985,8 +980,14 @@ function initMap(components, comPaths, root) {
     pg_map.renameMap = {};
 
     function doCompile(comObj, list) {
-        let children = [];
-
+        let pg_com = {
+            name: comObj.name,
+            comObj: comObj,
+            children: []
+        }
+        comObj.children && comObj.children.forEach(subComObj => {
+            doCompile(subComObj, pg_com.children)
+        })
         let imports = {
             /**
              * 插入子组件
@@ -1005,14 +1006,19 @@ function initMap(components, comPaths, root) {
             insertSlot({
                 value: nameArr
             }) {
+                if (!nameArr) return '';
                 let slotId = '';
-                let children = comObj.children.filter((e) => {
-                    if (e.__pg_slot__ && nameArr.includes(e.name)) {
-                        slotId = e.__pg_slot__;
+                let children = pg_com.children.filter((e) => {
+                    if (e.comObj.__pg_slot__ && nameArr.includes(e.name)) {
+                        slotId = e.comObj.__pg_slot__;
                         return true;
                     }
                 });
                 if (!children.length) return '';
+                pg_com.slots || (pg_com.slots = {});
+                pg_com.slots[slotId] = children.sort((a, b) => {
+                    return nameArr.indexOf(a.name) - nameArr.indexOf(b.name)
+                });
                 return SLOT_PLACEHOLDER + slotId;
             },
             /**
@@ -1022,25 +1028,22 @@ function initMap(components, comPaths, root) {
                 value: comName,
                 property: varName
             }, modifier) {
-                if (!comName || !varName) throw new Error('external参数不合法');
+                if (!comName || !varName) return '';
                 return '@@' + comName + '__pg_external__' + varName + (modifier ? ':' + modifier : '');
             }
         }
 
-        let compiled = compile(comObj, imports, comPaths, root);
-        let scriptData = getScriptData(compiled);
-        list.push({
-            name: comObj.name,
-            comObj: comObj,
-            dataKeys: scriptData.data.keys,
-            methodsKeys: scriptData.methods.keys,
-            computedKeys: scriptData.computed.keys,
-            compiled,
-            children
-        });
-        comObj.children && comObj.children.forEach(comObj => {
-            doCompile(comObj, children)
-        })
+        pg_com.compiled = compile(comObj, imports, comPaths, root);
+        let scriptData;
+        try {
+            scriptData = getScriptData(pg_com.compiled);
+        } catch (err) {
+            throw new Error(comObj.name + ' 组件编译后语法树解析错误：' + err.message + '，请检查模板或参数')
+        }
+        pg_com.dataKeys = scriptData.data.keys;
+        pg_com.methodsKeys = scriptData.methods.keys;
+        pg_com.computedKeys = scriptData.computed.keys;
+        list.push(pg_com);
     }
     components.forEach((comObj) => {
         doCompile(comObj, pg_map.components)
@@ -1048,7 +1051,7 @@ function initMap(components, comPaths, root) {
     logger('initMap', pg_map)
 }
 
-module.exports = async function (components, comPaths, root,vueTemplate) {
+module.exports = async function (components, comPaths, root, vueTemplate) {
     initMap(components, comPaths, root);
-    return render(merge(),vueTemplate)
+    return render(merge(), vueTemplate)
 }

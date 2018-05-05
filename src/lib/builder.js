@@ -1,7 +1,7 @@
 /**
  * $store.state.components/$store.state.dialogs -> template.data
  */
-let uuid = 1;
+const constant = require('../const')
 
 function traverse(list) {
     let result = []

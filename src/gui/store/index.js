@@ -76,20 +76,26 @@ const store = new Vuex.Store({
         /**
          * 获取所有component（非对话框）的
          */
-        allComsType() {
+        allComs() {
             let target = [];
             for (let key in allComsConfig) {
                 if (!allComsConfig[key].isDialog) {
-                    target.push(key);
+                    target.push({
+                        name: key,
+                        description: allComsConfig[key].description || ''
+                    });
                 }
             }
             return target;
         },
-        allDialogsType() {
+        allDialogs() {
             let target = [];
             for (let key in allComsConfig) {
                 if (allComsConfig[key].isDialog) {
-                    target.push(key);
+                    target.push({
+                        name: key,
+                        description: allComsConfig[key].description || ''
+                    });
                 }
             }
             return target;
@@ -134,32 +140,29 @@ const store = new Vuex.Store({
             drag,
             drop
         }) {
-
-            if (drag.p.children[drag.i].__pg_slot__) {
-                let dragName = drag.p.children[drag.i].name;
-                (function traverse(list) {
-                    if (!list) return;
-                    for (let i = 0, len = list.length; i < len; i++) {
-                        let props = list[i].props;
-                        list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
-                            if (this.type === SLOT_TYPE && this.value.length) {
-                                this.value = this.value.filter(e => {
-                                    return e !== dragName
-                                })
-                            }
-                            return v;
-                        })
-                        traverse(list[i].children)
-                    }
-                })(this.getters.data)
-                drag.p.children[drag.i].__pg_slot__ = false;
+            let placeHolder = {};
+            let dragNode = drag.p.children[drag.i];
+            if (dragNode.__pg_slot__ && drag.p !== drop.p) {
+                utils.traverse((item)=>{
+                    item.props = JSON.parse(JSON.stringify(item.props), function (k, v) {
+                        if (this.type === SLOT_TYPE && this.value.length) {
+                            this.value = this.value.filter(e => {
+                                return e !== dragNode.name
+                            })
+                        }
+                        return v;
+                    })
+                },this.getters.data)
+                dragNode.__pg_slot__ = false;
             }
 
-            let [comObj] = drag.p.children.splice(drag.i, 1);
+            let [comObj] = drag.p.children.splice(drag.i, 1, placeHolder);
 
             drop.p.children.splice(drop.i, 0, comObj)
-            axios.post('/input', state)
 
+            drag.p.children.splice(drag.p.children.indexOf(placeHolder), 1);
+
+            axios.post('/input', state)
         },
 
         /**
@@ -230,6 +233,7 @@ const store = new Vuex.Store({
             let comObj = {
                 pg: uuid++,
                 name,
+                desciption: config.desciption || '',
                 type,
                 isDialog: config.isDialog,
                 exposeProperty: config.exposeProperty,
@@ -313,9 +317,9 @@ const store = new Vuex.Store({
                 state.activeComponent.children.forEach((com) => {
                     if (com.__pg_slot__) {
                         let match = com.__pg_slot__.match(slotRegExp);
-                        if(match && match[1] === name){
+                        if (match && match[1] === name) {
                             com.__pg_slot__ = false
-                            if(com.props._scope) delete com.props._scope;
+                            if (com.props._scope) delete com.props._scope;
                         }
                     }
                 })
@@ -351,7 +355,6 @@ const store = new Vuex.Store({
                 if (!allComsConfig[item.type]) {
                     !dearthedComName.includes(item.type) && dearthedComName.push(item.type);
                 } else if (item.configSnapShoot !== JSON.stringify(allComsConfig[item.type])) {
-                    console.log(item.configSnapShoot)
                     !changedComName.includes(item.type) && changedComName.push(item.type);
                 }
             }, template.data)
@@ -361,7 +364,9 @@ const store = new Vuex.Store({
                     `组件 ${dearthedComName.join(',')} 缺失，将删除该组件数据\n` : '' +
                     changedComName.length ?
                     `组件 ${changedComName.join(',')} 配置已更变，可能缺失部分数据` : '',
-                    '是否继续？').then(_ => {
+                    '是否继续？', "提示", {
+                        type: "warning"
+                    }).then(_ => {
                     apply();
                 }).catch(err => {})
             } else {

@@ -29,6 +29,7 @@ function template2Store(data, allComsConfig) {
                 name: item.name,
                 type: item.type,
                 isDialog: config.isDialog,
+                description: config.description || '',
                 exposeProperty: config.exposeProperty,
                 __pg_slot__: false
             }

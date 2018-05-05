@@ -1,5 +1,6 @@
 module.exports = {
     "name": 'dialog',
+    description:'对话框',
     "isDialog": true,
     "exposeProperty": ["open"],
     "props": [{

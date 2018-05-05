@@ -15,37 +15,44 @@
     @mouseenter="onMouseEnter" 
     @mouseleave="onMouseLeave" 
     class="tree-node-name" 
-    :style="{'padding-left': level * 16 +10 + 'px','padding-right':'10px'}" 
+    :style="{'padding-left': idx===undefined ? '10px' : level * 14 + 3 + 'px','padding-right':'10px'}" 
     :class="[{'has-name': node.name,'cur-select':node === $store.state.activeComponent}, 'idx_' + idx ]">
-      <div>
-        <span>
-          <span class="el-tree-node__label">
-            <span v-if="!!node.__pg_slot__">
-              <el-tag size="mini" type="info" style="font-size:10px;">
-              slot
-              </el-tag>
-              </span>
-            {{ node.name }}
-          </span>
-          <i @click="emitEvent('nodeName')" 
-            v-if="node.name && node.children && node.children.length > 0" 
-            :class="{'el-icon-arrow-down': hideChildren, 'el-icon-arrow-up': !hideChildren }"></i>
+        <span class="el-tree-node__label" :style="{color:idx === undefined ? '#409EFF' : '#000'
+        }">
+          <el-tag v-if="!!node.__pg_slot__" size="mini" type="info" style="font-size:10px;">
+          slot
+          </el-tag>
+          {{ node.name }}
         </span>
         <span class="tree-node-action" v-if="node.name">
           <el-popover placement="right-end" trigger="click" v-model="showComlib">  
             <div class="com-lib" v-if="isDialog && idx === undefined">
-              <div >
-                <!-- <h6 class="com-lib-title">本地组件库</h6> -->
-                <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in $store.getters.allDialogsType" :key="comType">
-                  <span class="com-lib-item-text">{{comType}}</span>
-                </div>
-              </div>
+              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allDialogs" max-height="500" size="medium">
+                <el-table-column label="添加组件">
+                  <template slot-scope="scope">
+                      <span>{{scope.row.name}}</span>
+                  </template> 
+                </el-table-column>
+                <el-table-column label="描述">
+                  <template slot-scope="scope">
+                      <span>{{scope.row.description}}</span>
+                  </template> 
+                </el-table-column>
+              </el-table>
             </div>
             <div class="com-lib" v-else>
-                <!-- <h6 class="com-lib-title">本地组件库</h6> -->
-                <div @click="emitEvent('addCom',{comType,parent:node})" class="com-lib-item" v-for="comType in $store.getters.allComsType" :key="comType">
-                  <span class="com-lib-item-text">{{comType}}</span>
-                </div>
+              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allComs" max-height="500" size="medium">
+                <el-table-column label="添加组件">
+                  <template slot-scope="scope">
+                      <span>{{scope.row.name}}</span>
+                  </template> 
+                </el-table-column>
+                <el-table-column label="描述">
+                  <template slot-scope="scope">
+                      <span>{{scope.row.description}}</span>
+                  </template> 
+                </el-table-column>
+              </el-table>
             </div>        
             <el-button icon="el-icon-plus" size="mini" type="text" slot="reference" @click.stop="emitEvent('add')">
               </el-button>      
@@ -53,12 +60,10 @@
           <el-button icon="el-icon-delete" v-if="idx !== undefined" size="mini" type="text" slot="reference" @click="emitEvent('delete',{parent:$parent.node,node})">
               </el-button>      
         </span>
-      </div>
     </div>
     <div class="tree-node-children">
       <tree-node
-        v-show="!hideChildren"
-        v-for="(child, $index) in children" :key="$index"
+        v-for="(child, $index) in children" :key="child.pg"
         v-model="valueModel" :node="child" :idx="$index" :level="level+1"
         :type="type"
         >
@@ -83,9 +88,9 @@ export default {
   },
   data: function() {
     return {
-      hideChildren: false,
       unwatchRootNode: () => {},
-      showComlib: false
+      showComlib: false,
+      counter:0,  //dragEnter计数（防止子元素触发多个dragEnter使背景色清空）
     };
   },
   beforeDestroy() {
@@ -140,8 +145,8 @@ export default {
         this.isNextToMe ||
         this.isMeOrMyAncestor ||
         this.isDialogToComponents ||
-        this.isComponentsToDialogsRoot ||
-        this.isDialogNest
+        this.isDialogNest ||
+        this.isComponentsToDialog
       );
     },
     isDialogNest() {
@@ -155,15 +160,15 @@ export default {
       //dialog不可移入“组件”Hierarchy里
       return this.type == "components" && this.value.node.isDialog;
     },
-    isComponentsToDialogsRoot() {
-      //普通组件不可作为“对话框”Hierarchy的根组件
+    isComponentsToDialog() {
       return (
-        !this.node.name &&
-        this.$parent.node.isRoot &&
         this.type == "dialogs" &&
+        this.$parent.node && 
+        this.$parent.node.isRoot &&
+        !this.node.name && 
         !this.value.node.isDialog
       );
-    }
+    },
   },
   methods: {
     onMouseEnter(e) {
@@ -221,13 +226,17 @@ export default {
       // 允许拖放才会显示样式
       if (!this.isAllowToDrop) return;
       if (!this.node.name) {
-        this.$el.style.backgroundColor = "#1ab394";
+        this.$el.style.backgroundColor = "rgb(64,158,255)";
+        this.counter++
       } else {
-        this.$el.style.backgroundColor = "rgba(26, 179, 148, 0.1)";
+        this.$el.style.backgroundColor = "rgba(64,158,255, 0.1)";
+        this.counter++
       }
     },
-    handleDragLeave() {
-      this.clearBgColor();
+    handleDragLeave(e) {
+      if(!--this.counter){
+        this.clearBgColor();
+      }
     },
     handleDragEnd() {
       this.clearBgColor();
@@ -303,14 +312,19 @@ export default {
           this.onCopyBtnClick(this.node);
           break;
         case "delete":
-          this.onDelBtnClick(data);
+          this.$confirm(`确定删除组件 ${data.node.name} ？`, "提示", {
+            type: "warning"
+          })
+            .then(_ => {
+              this.onDelBtnClick(data);
+            })
+            .catch((err = {}));
           break;
         case "nodeRow":
           if (this.idx === undefined) return;
           this.onNodeRowClick(this.node);
           break;
         case "nodeName":
-          this.hideChildren = !this.hideChildren;
           this.onNodeNameClick(this.node);
           break;
       }
@@ -333,7 +347,7 @@ $color-extra-light-black: #999;
   list-style-type: none;
 }
 .tree-node-name.has-name {
-  min-height: 16px;
+  min-height: 12px;
   position: relative;
   &.idx_undefined {
     .tree-node-action {
@@ -341,7 +355,7 @@ $color-extra-light-black: #999;
     }
   }
   .tree-node-action {
-    margin-left: 15px;
+    margin-left: 7px;
     font-size: 14px;
     display: none;
     i {
@@ -359,9 +373,9 @@ $color-extra-light-black: #999;
       height: 14px;
     }
   }
-  &:hover:not(.idx_undefined):not(.cur-select){
-     background: rgba(26, 179, 148, 0.1);
-    box-shadow: 0 2px 10px -2px rgba(26, 179, 148, 0.3);
+  &:hover:not(.idx_undefined):not(.cur-select) {
+    background: rgba(64, 158, 255, 0.1);
+    box-shadow: 0 2px 10px -2px rgba(64, 158, 255, 0.3);
   }
   .el-tree-node__label {
     margin-left: 5px;
@@ -379,29 +393,29 @@ $color-extra-light-black: #999;
 .com-lib {
   width: 300px;
 }
-.com-lib-title{
-    margin:0 0 10px 0;
-  }
-.com-lib-item {
-  position: relative;
-  display: inline-block;
-  width: 75px;
-  height: 75px;
-  text-align: center;
-  border-radius: 10px;
-  word-wrap: break-word;
-}
-.com-lib-item-text{
-  position: absolute;
-  top:0;
-  left:0;
-  width: 100%;
-  margin-top:50%;
-  transform:translateY(-50%)
-}
-.com-lib-item:hover {
-  background-color: whitesmoke;
-}
+// .com-lib-title {
+//   margin: 0 0 10px 0;
+// }
+// .com-lib-item {
+//   position: relative;
+//   display: inline-block;
+//   width: 75px;
+//   height: 75px;
+//   text-align: center;
+//   border-radius: 10px;
+//   word-wrap: break-word;
+// }
+// .com-lib-item-text {
+//   position: absolute;
+//   top: 0;
+//   left: 0;
+//   width: 100%;
+//   margin-top: 50%;
+//   transform: translateY(-50%);
+// }
+// .com-lib-item:hover {
+//   background-color: whitesmoke;
+// }
 .cur-select {
   background-color: lightgrey;
 }

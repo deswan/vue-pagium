@@ -35,7 +35,7 @@ export default {
   data() {
     return {
       table: {
-        loading:false,
+        loading: false,
         items: []
       }
     };
@@ -52,12 +52,14 @@ export default {
       });
     },
     employ(row) {
-      this.$store.commit("employTemplate", {template:row,vm:this});
+      this.$store.commit("employTemplate", { template: row, vm: this });
     },
-    del({ id,name }) {
-      this.$confirm(`确认删除模板 ${name} ？`)
+    del({ id, name }) {
+      this.$confirm(`确认删除模板 ${name} ？`, "提示", {
+        type: "warning"
+      })
         .then(_ => {
-          this.$http.post("delTemplate",{id}).then(({ data }) => {
+          this.$http.post("delTemplate", { id }).then(({ data }) => {
             if (data.code === 0) {
               this.loadList();
             }
@@ -65,9 +67,9 @@ export default {
         })
         .catch(_ => {});
     },
-    newPage(){
+    newPage() {
       this.$store.commit("clearData");
-      this.$router.push({name:'create'})
+      this.$router.push({ name: "create" });
     }
   }
 };

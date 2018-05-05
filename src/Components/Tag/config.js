@@ -1,6 +1,7 @@
 //Table
 module.exports = {
     "name": "tag",
+    description:'标签',
     "props": [{
         "name": "title",
         "label": "文本",

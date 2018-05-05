@@ -2,6 +2,7 @@
     <el-input-number 
     v-model="input" 
     :size="size" 
+    controls-position="right"
     @change="valChange">
     </el-input-number>
 </template>

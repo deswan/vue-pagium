@@ -1,5 +1,6 @@
 module.exports = {
     "name":'input',
+    description:'文本输入框',
     "props": [{
         "name": "label",
         "label": "label",
@@ -23,6 +24,14 @@ module.exports = {
         "type": "select",
         "default": "text",
         "options": ["text", "textarea"]
+    },{
+        "name": "isFormItem",
+        "type": "boolean",
+        default:true
+    },{
+        "name": "scopeRowKey",
+        "label": "scope row key",
+        "type": "string"
     }, {
         "name": "placeholder",
         "label": "placeholder",

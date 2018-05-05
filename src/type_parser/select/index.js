@@ -3,7 +3,8 @@ const {
 } = require('../../utils/utils')
 
 let hasError = (conf) => {
-    if (conf.options) {
+    let options = conf.options;
+    if (options) {
         if (!Array.isArray(options)) {
             return "options 必须是数组"
         } else {

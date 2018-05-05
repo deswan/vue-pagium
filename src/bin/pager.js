@@ -144,6 +144,7 @@ async function beforeStart(args, options) {
 
     if (fs.existsSync(path.join(describe.configDir, 'Page.art'))) {
         describe.vueTemplate = path.join(describe.configDir, 'Page.art')
+        console.log(chalk.white(`template file: ${describe.vueTemplate}`))
     }
 
     describe.target = options.target ? resolveTarget(options.target) : path.join(describe.configDir, config.target.pageName)
@@ -187,6 +188,7 @@ async function beforeCreate(args, options) {
     let vueTemplate;
     if (pagerPath && fs.existsSync(path.join(pagerPath, 'Page.art'))) {
         vueTemplate = path.join(pagerPath, 'Page.art')
+        console.log(chalk.white(`template file: ${describe.vueTemplate}`))
     }
 
     //获取source/target

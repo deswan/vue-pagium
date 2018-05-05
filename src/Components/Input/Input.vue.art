@@ -1,11 +1,14 @@
 <template>
+{{{if isFormItem && !_scope}}}
   <el-form-item 
   {{{if label}}} label="{{{label}}}" {{{/if}}}
   props="@@value:last"
   {{{if required}}} :rules="[{required: true, message: '{{{label || ''}}}不能为空'}]" {{{/if}}}
   >
+{{{/if}}}
+  
     <el-input 
-    v-model="@@value"
+    v-model="{{{if _scope}}} {{{_scope}}}.row.{{{scopeRowKey}}} {{{else}}} @@value {{{/if}}}"
     {{{if size}}} size="{{{size}}}" {{{/if}}}  
     {{{if width}}} style="width:{{{width}}}" {{{/if}}}  
     {{{if type}}} type="{{{type}}}" {{{/if}}}  
@@ -18,19 +21,22 @@
     {{{if readonly}}} readonly {{{/if}}}  
     {{{if name}}} name="{{{name}}}" {{{/if}}}  
     ></el-input>
+
+{{{if isFormItem && !_scope}}}
   </el-form-item>
+{{{/if}}}
 </template>
 <script>
 export default {
   data() {
     return {
+      {{{if !_scope}}}
       value:''
+      {{{/if}}}
     };
   },
   methods:{
   }
 };
 </script>
-<style scoped>
-</style>
 
