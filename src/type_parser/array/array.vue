@@ -87,7 +87,7 @@ export default {
       } else {
         return value.map(e => {
           return {
-            [_itemCOM.name]: e,
+            [this._itemCOM[0].name]: e,
             __id__: this.uuid++
           };
         });
@@ -102,7 +102,7 @@ export default {
         });
       } else {
         return input.map(e => {
-          return e[_itemCOM.name];
+          return e[this._itemCOM[0].name];
         });
       }
     },

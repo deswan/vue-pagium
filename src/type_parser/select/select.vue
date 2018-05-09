@@ -5,7 +5,7 @@
     :placeholder="conf.default || ''"
     clearable
     @change="valChange">
-      <el-option v-for="option in options" :key="option.key" :value="option.key" :label="option.value"></el-option>
+      <el-option v-for="option in options" :key="option.key" :value="option.value" :label="option.label"></el-option>
     </el-select>
 </template>
 

@@ -57,7 +57,7 @@ const propsLoaders = {
         let options = conf.options.reduce((arr, item) => {
             if (typeof item != 'object') {
                 arr.push({
-                    key: item,
+                    label: item,
                     value: item
                 })
             } else {

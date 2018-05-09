@@ -2,7 +2,7 @@ const utils = require('./utils')
 const type_parser = require('../type_parser')
 
 function checkConfig(config) {
-    if (!config.name) {
+    if (config.name === undefined) {
         throw new Error('请填写name属性')
     }
 
@@ -13,12 +13,24 @@ function checkConfig(config) {
     if (!utils.isValidIdentifier(config.name)) {
         throw new Error('name不是合法js标识符')
     }
-
-    if (!config.props) {
-        throw new Error('请填写props属性')
+    if(config.isDialog !== undefined && typeof config.isDialog !== 'boolean'){
+        throw new Error('isDialog属性必须是boolean类型')
+    }
+    if(config.exposeProperty !== undefined){
+        if(!Array.isArray(config.exposeProperty)){
+            throw new Error('exposeProperty属性必须是数组')
+        }        
+        let invalid = config.exposeProperty.some(e=>{
+            return typeof e !== 'string'
+        })
+        if(invalid){
+            throw new Error('exposeProperty数组项必须是字符串')
+        }
     }
 
-    checkProps(config.props)
+    if (config.props !== undefined) {
+        checkProps(config.props)
+    }
 
 }
 

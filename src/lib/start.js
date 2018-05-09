@@ -16,6 +16,7 @@ const ora = require('ora');
 const chalk = require('chalk');
 const opn = require('opn');
 const ncp = require('ncp');
+const dayjs = require('dayjs');
 const builder = require('./builder');
 
 const scheme2Default = require('../utils/scheme2Default');
@@ -86,6 +87,7 @@ async function writeTemplatesFile(configDir) {
 }
 
 function startServer(info) {
+    let jsonTarget = path.join(path.dirname(info.target), path.basename(info.target, '.vue') + '.json')
 
     app.use(express.static(path.resolve(__dirname, './dist')));
 
@@ -134,7 +136,7 @@ function startServer(info) {
     //将结果写入用户目录
     app.post('/save', function (req, res) {
 
-        compile(req.body, allComponentPaths, info.temporaryDir,info.vueTemplate).then(output => {
+        compile(req.body, allComponentPaths, info.temporaryDir, info.vueTemplate).then(output => {
             return fs.outputFile(info.target, output)
         }).then(_ => {
             res.json({
@@ -153,10 +155,9 @@ function startServer(info) {
     //将结果写入用户目录
     app.post('/saveAsJSON', function (req, res) {
         let output = builder(req.body)
-        let p = path.join(path.dirname(info.target), path.basename(info.target, '.vue') + '.json')
-        fs.outputFile(p, JSON.stringify(output, null, 2)).then(_ => {
+        fs.outputFile(jsonTarget, JSON.stringify(output, null, 2)).then(_ => {
             res.json({
-                data: p,
+                data: jsonTarget,
                 code: 0
             })
         }).catch(err => {
@@ -199,7 +200,7 @@ function startServer(info) {
             })
         } else if (data.isCover && isNameDuplicate) {
             let output = builder(req.body.data)
-            attachconfigSnapShoot(output,req.body.allComsConfig)
+            attachconfigSnapShoot(output, req.body.allComsConfig)
             template.some(e => {
                 if (e.name === data.name) {
                     e.remark = data.remark;
@@ -215,10 +216,9 @@ function startServer(info) {
         } else {
             let output = builder(req.body.data)
             let d = new Date();
-            let date = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " +
-                d.getHours() + ":" + d.getMinutes() + ':' + d.getSeconds();
+            let date = dayjs().format('YYYY-MM-DD HH:mm:ss');
 
-            attachconfigSnapShoot(output,req.body.allComsConfig)
+            attachconfigSnapShoot(output, req.body.allComsConfig)
 
             template.push({
                 id: template_uuid++,
@@ -234,10 +234,10 @@ function startServer(info) {
             })
         }
 
-        function attachconfigSnapShoot(data,allComsConfig){
-            utils.traverse((item)=>{
+        function attachconfigSnapShoot(data, allComsConfig) {
+            utils.traverse((item) => {
                 item.configSnapShoot = JSON.stringify(allComsConfig[item.type]);
-            },data)
+            }, data)
         }
     });
 
@@ -268,6 +268,12 @@ function startServer(info) {
                 return e.id === id;
             }),
             code: 0
+        })
+    });
+    app.get('/getSavePath', function (req, res) {
+        res.json({
+            savePath: info.target,
+            jsonSavePath: jsonTarget
         })
     });
 

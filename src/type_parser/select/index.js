@@ -16,10 +16,10 @@ let hasError = (conf) => {
             })
             if (isObject) {
                 let valid = options.every(e => {
-                    return e.key && e.value
+                    return e.label && e.value !== undefined
                 })
                 if (!valid) {
-                    return "options 参数缺少key或value"
+                    return "options 参数缺少label或value"
                 } else {
                     return false
                 }

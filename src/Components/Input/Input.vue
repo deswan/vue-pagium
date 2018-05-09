@@ -1,6 +1,6 @@
 <template>
     <el-form-item :label="label">
-      <el-input v-bind="$props"></el-input>
+      <el-input v-bind="$props" :style="{width:width || 'auto'}" v-model="value"></el-input>
     </el-form-item>
 </template>
 <script>
@@ -9,18 +9,17 @@ export default {
   props: [
     "label",
     "size",
-    "type",
     "placeholder",
     "clearable",
     "prefixIcon",
     "suffixIcon",
-    "rows",
-    "autosize",
-    "name",
     "readonly",
+    "width"
   ],
   data() {
-    return {};
+    return {
+      value:''
+    };
   }
 };
 </script>

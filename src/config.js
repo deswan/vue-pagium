@@ -7,7 +7,7 @@ module.exports = {
     target:{
         dir:'.pager',
         comDir:'Components',
-        tempName:'templates.json',
+        tempName:'.templates.json',
         pageName:'Page.vue'
     }
 }

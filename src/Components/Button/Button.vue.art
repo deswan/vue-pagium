@@ -19,7 +19,12 @@ export default {
   methods:{
     onClick(e){
       {{{if dialog.value}}}
-        this.{{{external(dialog)}}}()
+        this.{{{refer(dialog,'open')}}}()
+      {{{/if}}}
+      {{{if _scope}}}
+        {{{each copy}}}
+        this.{{{refer(dialog,$value.to)}}} = e.{{{$value.row}}}
+        {{{/each}}}
       {{{/if}}}
     } 
   },

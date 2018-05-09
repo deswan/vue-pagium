@@ -9,9 +9,19 @@
       </el-menu>
     </div>
     <div class="btn-group" :class="{['btn-group-show']:showBtn}">
-        <el-button type="primary" size="small" @click="save" :loading="saving">保存</el-button>
+        <el-popover
+          placement="bottom"
+          trigger="hover">
+          <span class="save-path">保存路径：{{savePath}}</span>
+            <el-button slot="reference" type="primary" size="small" @click="save" :loading="saving">保存</el-button>
+        </el-popover>
         <el-button type="info" size="small" @click="preview" :loading="previewing">预览</el-button>
-        <el-button size="small" @click="saveAsJSON" :loading="savingAsJSON">生成JSON</el-button>
+         <el-popover
+          placement="bottom"
+          trigger="hover">
+          <span class="save-path">保存路径：{{jsonSavePath}}</span>
+          <el-button slot="reference" size="small" @click="saveAsJSON" :loading="savingAsJSON">生成JSON</el-button>
+        </el-popover>
         <el-button type="success" size="small" @click="openSaveAsTemplate">生成模板</el-button>
         <el-button type="danger" size="small" @click="clear">清空</el-button>
     </div>
@@ -45,6 +55,10 @@ export default {
       savingAsJSON: false,
       previewing: false,
 
+      //savePath
+      savePath: "",
+      jsonSavePath: "",
+
       saveAsTemplateDialog: {
         show: false,
         commiting: false,
@@ -57,6 +71,10 @@ export default {
   },
   created() {
     this.$store.dispatch("getLastestInput");
+    this.$http.get("/getSavePath").then(({data}) => {
+      this.savePath = data.savePath;
+      this.jsonSavePath = data.jsonSavePath;
+    }).catch(err=>{});
   },
   mounted() {
     if (this.$route.name === "create") {
@@ -71,7 +89,7 @@ export default {
         .then(({ data }) => {
           if (data.code === 0) {
             this.saving = false;
-            this.$message.success("保存成功 " + data.data);
+            this.$message.success("保存成功");
           } else {
             throw new Error(data.data);
           }
@@ -163,7 +181,7 @@ export default {
         .then(({ data }) => {
           if (data.code === 0) {
             this.savingAsJSON = false;
-            this.$message.success("保存成功 " + data.data);
+            this.$message.success("保存成功");
           } else {
             throw new Error(data.data);
           }
@@ -205,7 +223,8 @@ ul {
   position: fixed;
   z-index: 999;
   top: 6px;
-  right: 20px;
+  right: 30px;
+  /* left: 300px; */
   background: dimgray;
   padding: 8px 30px;
   border-radius: 2px;
@@ -215,5 +234,8 @@ ul {
 .btn-group-show {
   transition-duration: 0.5s;
   opacity: 1;
+}
+.save-path{
+  font-size: 12px;
 }
 </style>

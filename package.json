@@ -23,6 +23,7 @@
     "beautify-vue": "0.0.11",
     "caporal": "^0.10.0",
     "d": "^1.0.0",
+    "dayjs": "^1.5.23",
     "ejs": "^2.5.7",
     "element-ui": "^2.3.3",
     "esformatter": "^0.10.0",

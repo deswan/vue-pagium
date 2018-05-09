@@ -37,7 +37,7 @@ npm install pager-element -g
 
    -t , —target 指定输出目录或输出文件，默认为**config目录**下的Page.vue。当指定的是目录时，输出文件将会是该目录下的Page.vue文件（不存在则创建）；当指定的是文件，结果将会输出到该文件中。
 
-   -p , —port 指定本地服务端口，默认为 8001
+   可以指定环境变量`PORT`自定义本地服务端口，默认为 8001
 
 2. 命令行
 
@@ -159,34 +159,35 @@ pg eject
 
 ```javascript
 module.exports = {
-    name: 'table',	//组件的默认初始名称
-  	exposeProperty: ['load'，'clear']	//（可选）组件对外暴露的data（最外层）/method名/computed名
+    name: 'table',	//组件实例的默认名称
+  	exposeProperty: ['load'，'clear']	//（可选）组件对外暴露的数据
   	isDialog:false	//（可选）是否是对话框组件
-    props: [{
-        name: "items",
-        label: "导航列表",
-        value: ['object'],
-        format: [{
+    props: [{	//参数配置
+        name: "items",	//参数名（js标识符）
+        label: "导航列表",	//参数标注(可选)
+        type: ['object'],	//参数类型
+        format: [{	//参数选项
+            name: 'to',
             label: '路由跳转对象',
-            "name": 'to',
-            value: 'string',
+            type: 'string',
         }, {
+		    name: 'title',
             label: '文本',
-            "name": 'title',
-            value: 'string',
-        }]
+            type: 'string',
+        }],
+        default:[{to:'页面1'}]	//参数默认值
     }, {
-        "name": "separator",
-        "label": "分隔符",
-        "value": "string"
+        name: "separator",
+        label: "分隔符",
+        value: "string"
     }, {
-        "name": "marginTop",
-        "label": "margin-top(px)",
-        "value": "number"
+        name: "marginTop",
+        label: "margin-top(px)",
+        value: "number"
     }, {
-        "name": "marginBottom",
-        "label": "margin-bottom(px)",
-        "value": "number"
+        name: "marginBottom",
+        label: "margin-bottom(px)",
+        value: "number"
     }]
 }
 ```
@@ -445,7 +446,7 @@ module.exports = {
      this.load()
      ```
 
-     也可为external的第二个参数指定修饰符，如：
+     也可为refer的第二个参数指定修饰符，如：
 
      ```javascript
      this.{{{external(loadComponent,'last')}}}
@@ -467,7 +468,7 @@ module.exports = {
      }
      ```
 
-     在组件模板搭配使用函数`external`，需要将refer类型值作为第一个参数传入，并将需要引用的数据作为第二个参数传入，如：
+     在组件模板搭配使用函数`refer`，需要将refer类型值作为第一个参数传入，并将需要引用的数据作为第二个参数传入，如：
 
      ```javascript
      this.{{{external(myRefer,'id')}}}
@@ -479,7 +480,7 @@ module.exports = {
      this.myReferCom.id
      ```
 
-     也可为external的第三个参数指定修饰符，如：
+     也可为refer的第三个参数指定修饰符，如：
 
      ```javascript
      this.{{{external(myRefer,'id','last')}}}
@@ -562,17 +563,19 @@ art-template 使用了标准语法和原始语法两种语法格式，可交替�
 
 pager截取<template>块中的内容作为组件的模板部分，以及使用分析AST语法树的方式解析<script>标签中使用`export default`导出的vue选项。按照组件层次树将它们进行合并，成为一个单独的.vue文件。
 
+![编译流程 (2)](/Users/wang/Downloads/编译流程 (2).png)
+
 #### <template>块合并
 
 并列组件的模板将按顺序被拼接起来。在每个组件中，组件开发者需要在<template>块中使用`insertChildren`和`insertSlot`函数进行子组件模板的分发。其中`insertChildren()`被调用的位置将被替换为当前组件的非slot子组件按顺序拼接的模板。`insertSlot(mySlot)`被调用的位置被替换为`mySlot`参数指定子组件的按参数输入顺序拼接的模板。
 
 #### <script>块合并
 
-目前，pager解析vue选项对象的以下属性：data、methods、computed、watch、生命周期钩子方法，并分别进行合并。其中，会将data的首层属性名、methods方法名和computed计算属性名保存下来，加入组件模板合并的重命名流程。
+目前，pager解析vue选项对象的以下属性：data、methods、computed、watch、生命周期钩子方法，并分别进行合并。其中，会依次进行data的重命名、methods方法的重命名和computed计算属性的重命名，然后合并组件。这三个部分重命名算法是由它们的合并方法所决定的。
 
 ##### data的合并和重命名
 
-data解析过程如下：查找出vue选项对象的data属性，data属性必须是ES6方法（ObjectMethod），不能为箭头函数，这是vue的标准写法所规定的。接着寻找方法块中的return语句，return语句必须返回一个对象字面量，该对象即作为该组件的data块。
+data块的AST查找过程如下：查找出vue选项对象的data属性，data属性必须是ES6方法（ObjectMethod），不能为箭头函数，这是vue的标准写法所规定的。接着寻找方法块中的return语句，return语句必须返回一个对象字面量，该对象即作为该组件的data块。
 
 多个组件的data合并将产生属性名称的重复，因此需要重命名。同时，为了确保data结构的逻辑性，子组件的data需要嵌套到父组件的data中。以下是合并与重命名算法的简要描述：
 
@@ -593,7 +596,7 @@ data() {
 
 情况1：无属性，跳过。
 
-情况2：只有一个属性，将其重命名为驼峰化的`组件名称 + 属性名称`，并加入父组件的data，成为父组件的首层data属性，如该属性与父组件中的其它已存在的首层属性名称重复，则继续将该组件重命名为`组件名称 + 属性名称 + '$'`，如仍有重复则继续添加`$`直至无重复为止。
+情况2：只有一个属性，将其重命名为驼峰化的`组件名称 + 属性名称`，并加入父组件的data，成为父组件的**首层data属性**，如该属性与父组件中的其它已存在的首层属性名称重复，则往后添加`'$'`直至无重复为止。
 
 假设组件com1有一子组件com2，合并前如下：
 
@@ -623,7 +626,7 @@ data() {
 data() {
   return {
     items:[],
-    com1Value:0
+    com2Value:0
   };
 },
 ```
@@ -667,15 +670,29 @@ data() {
 },
 ```
 
-按照此逻辑递归合并组件直至第一层，组件层次树中第一层的组件将判断自身的data被子组件累加后是否存在属性，若存在任意属性，则将这些属性用一个新对象包裹起来，并作为以**组件名称**命名的属性加入最终页面组件的首层data中。若不存在属性，则忽略。
+按照此逻辑递归合并组件直至第一层，组件层次树中第一层的组件将判断自身的data被子组件累加后是否存在属性，若存在任意属性，则将这些属性用一个新对象包裹起来，并作为以**组件名称**命名的属性加入最终页面组件的首层data。若不存在属性，则忽略。
 
-第一层组件data的处理逻辑与其他组件不同的地方在于，不管存在一个属性还是多个属性，都会用一个新对象包裹起来。这么做的原因在于确保存在任意data属性的组件都会有一个包裹它们的对象，而修饰符`wrapper`可获取这个对象，用以应对一些特殊需求，如element-ui`Form`组件的`model`参数需要传入一个各表单项的包裹对象。
+第一层组件data的处理逻辑与其他组件不同的地方在于，不管存在一个属性还是多个属性，都会用一个新对象包裹起来。这么做的原因在于确保任意data属性都会有一个包裹它们的对象，而修饰符`wrapper`可获取这个对象，用以应对一些特殊需求，如element-ui`Form`组件的`model`参数需要传入一个各表单项的包裹对象。
 
 ###### methods和computed的合并和重命名
 
 解析过程如下：查找出vue选项对象的methods/computed属性，值须为一个对象字面量。该对象即为该组件的methods/computed。
 
+由于data、methods方法和computed计算属性都会挂载为vue实例的属性，因此需要确保它们的名称不互相冲突。
+
+methods和computed块的共同特点是，所有的属性都处在同一层级，没有嵌套关系。
+
 以methods为例解释合并与重命名算法：
+
+合并算法：按顺序拼接每个组件的method块，每个组件的子组件的method块拼接在其父组件的后面。
+
+根据此合并算法，重命名算法如下实现：维护一个名称数组，为了防止与首层data名称冲突，将其初始化为合并和重命名过的首层data。遍历每个组件，使用AST分析收集methods对象中的属性名，检测名称是否与名称数组中的任意元素重复，若有重复则将该属性重命名为驼峰化的`组件名称 + 属性名`，仍有重复往后添加`$`直至无重复为止。然后将该属性名加入名称数组。每个组件重复上述过程。
+
+computed的合并与重命名算法与methods类似，区别仅在于为了防止与methods方法也冲突，名称数组需初始化为首层data加上全部合并和重命名过后的methods方法。
+
+###### watch和生命周期钩子方法块的合并
+
+watch和生命周期钩子方法块的合并不需要重命名，因此他它们的合并只需要进行简单的按顺序拼接即可。
 
 
 
@@ -684,7 +701,7 @@ data() {
 每个组件模板在编译中会被传入以下数据：
 
 1. 当前组件配置文件config.js中定义的所有参数，作为全局变量或通过`$data`的属性访问。如果未填写某些参数，则会传入它们的默认值。
-2. 功能函数`insertChildren` 、`insertSlot`以及 `external`，作为全局变量或通过`$imports`的属性访问
+2. 功能函数`insertChildren` 、`insertSlot`以及 `refer`，作为全局变量或通过`$imports`的属性访问
 3. Javascript原生函数`Object`,`Array`,`String`,`Number`,`Math`,`JSON`，作为全局变量或通过`$imports`的属性访问
 
 组件模板可以使用模板引擎的`include`语法引入公共模板，如：
@@ -706,7 +723,185 @@ data() {
 
 #### vue选项名称引用
 
+经过了编译器对组件数据的重命名和合并，组件模板中原有的对组件数据的引用将不再正确。因此，需要一种方法跟踪和处理组件数据的引用。
 
+基于非运行时的特性，pager将使用字符串匹配的方式解析整个模板中的`@@`字符串，并将其后紧跟着的一串合法js标识符视为对本组件数据的引用，如`@@value`，而后将其替换为合并与重命名之后的对原数据正确的引用。
+
+使用`@@`的原因在于vue运行时中不存在对该字符串的解析，因此不会与vue的特性相冲突。
+
+使用`@@`引用的标识符将被识别是一个data、methods还是computed名称，根据类别有不同的字符串替换策略。
+
+1. 引用data属性：将用`.`连接起正确的嵌套路径，并修改为重命名之后的属性名，如：
+
+   ```vue
+   <template>
+     <input v-model="@@value" />
+   </template>
+   <script>
+   export default {
+     data() {
+       return {
+         value:''
+       };
+     }
+   };
+   </script>
+   ```
+
+   编译后：
+
+   ```vue
+   <template>
+     <input v-model="myInput.value" />
+   </template>
+   <script>
+   export default {
+     data() {
+       return {
+         myInput:{
+           value:''
+         }
+       };
+     }
+   };
+   </script>
+   ```
+
+2. 引用methods方法、computed计算属性：将修改为重命名之后的属性名，如：
+
+   ```vue
+   <template>
+     <input v-model="@@load" />
+   </template>
+   <script>
+   export default {
+     data() {
+       return {
+         value:''
+       };
+     },
+     methods:{
+       load(){
+         //...
+       }
+     }
+   };
+   </script>
+   ```
+
+   编译后：
+
+   ```vue
+   <template>
+     <input v-model="load" />
+   </template>
+   <script>
+   export default {
+     data() {
+       return {
+         myInput:{
+           value:''
+         }
+       };
+     },
+     methods:{
+       load(){
+         //...
+       }
+     }
+   };
+   </script>
+   ```
+
+
+
+此外，`@@`标识符后还可使用冒号`:`添加修饰符，以应对特殊的需求，目前仅支持针对data的两种修饰符：
+
+###### wrapper 修饰符
+
+获取组件的包裹对象，如组件无包裹对象（出现在组件中不存在属性的情况）则报错。使用此修饰符无需指定引用的数据。如：
+
+```vue
+<template>
+  <el-form :model="@@:wrapper">
+  </el-form>
+</template>
+<script>
+export default {
+  data() {
+    return {
+        value:''
+    };
+  }
+};
+</script>
+```
+
+编译后：
+
+```vue
+<template>
+  <el-form :model="myInput">
+  </el-form>
+</template>
+<script>
+export default {
+  data() {
+    return {
+        myInput:{
+          value:''
+        }
+    };
+  }
+};
+</script>
+```
+
+
+
+###### last 修饰符
+
+获取对象引用链中的最末端属性名，如原有要替换为`myInput.value`的添加此修饰符后将被替换为`value`：
+
+```vue
+<template>
+  <el-form :model="@@:wrapper" >
+	  <el-input prop="@@value:last">
+  </el-form>
+</template>
+<script>
+export default {
+  data() {
+    return {
+        value:''
+    };
+  }
+};
+</script>
+```
+
+编译后：
+
+```vue
+<template>
+  <el-form :model="myInput" >
+	  <el-input prop="value">
+  </el-form>
+</template>
+<script>
+export default {
+  data() {
+    return {
+        myInput:{
+          value:''
+        }
+    };
+  }
+};
+</script>
+```
+
+值得注意的是，data、methods和computed属性的声明部分不能使用`@@`引用数据，因为vue数据属性名的收集是在替换字符串`@@`之前的。
 
 
 
@@ -727,7 +922,7 @@ data() {
     class="pg-dialog-wrapper"
     custom-class="pg-dialog"
     :title="title" 
-    :visible.sync="pgActive" 
+    :visible="pgActive" 
     :modal="false" 
     :lock-scroll="false"
     >

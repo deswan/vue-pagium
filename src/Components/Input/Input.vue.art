@@ -11,15 +11,11 @@
     v-model="{{{if _scope}}} {{{_scope}}}.row.{{{scopeRowKey}}} {{{else}}} @@value {{{/if}}}"
     {{{if size}}} size="{{{size}}}" {{{/if}}}  
     {{{if width}}} style="width:{{{width}}}" {{{/if}}}  
-    {{{if type}}} type="{{{type}}}" {{{/if}}}  
     {{{if placeholder}}} placeholder="{{{placeholder}}}" {{{/if}}}  
     {{{if prefixIcon}}} prefix-icon="{{{prefixIcon}}}" {{{/if}}}  
     {{{if suffixIcon}}} suffix-icon="{{{suffixIcon}}}" {{{/if}}}  
-    {{{if rows}}} rows="{{{rows}}}" {{{/if}}}  
-    {{{if autosize}}} autosize="{{{autosize}}}" {{{/if}}}  
     {{{if clearable}}} clearable {{{/if}}}  
     {{{if readonly}}} readonly {{{/if}}}  
-    {{{if name}}} name="{{{name}}}" {{{/if}}}  
     ></el-input>
 
 {{{if isFormItem && !_scope}}}
@@ -34,8 +30,6 @@ export default {
       value:''
       {{{/if}}}
     };
-  },
-  methods:{
   }
 };
 </script>

@@ -91,28 +91,30 @@ async function copyComponent(targetDir, toDir) {
         return originDirs.includes(name)
     })
 
-    if (duplicated.length) {
-        return inquirer.prompt([{
-            type: 'confirm',
-            name: 'isOverride',
-            message: `是否覆盖原生组件/公用模板 ${duplicated.join(',')}`
-        }]).then(answers => {
-            if (answers.isOverride) {
-                return buildLink(allPaths)
-            } else {
-                duplicated.forEach(name => {
-                    if(allPaths.art[name]){
-                        delete allPaths.art[name]
-                    }else{
-                        delete allPaths.comDir[name]
-                    }
-                })
-                return buildLink(allPaths)
-            }
-        });
-    } else {
-        return buildLink(allPaths)
-    }
+    // if (duplicated.length) {
+    //     return inquirer.prompt([{
+    //         type: 'confirm',
+    //         name: 'isOverride',
+    //         message: `是否覆盖原生组件/公用模板 ${duplicated.join(',')}`
+    //     }]).then(answers => {
+    //         if (answers.isOverride) {
+    //             return buildLink(allPaths)
+    //         } else {
+    //             duplicated.forEach(name => {
+    //                 if(allPaths.art[name]){
+    //                     delete allPaths.art[name]
+    //                 }else{
+    //                     delete allPaths.comDir[name]
+    //                 }
+    //             })
+    //             return buildLink(allPaths)
+    //         }
+    //     });
+    // } else {
+    //     return buildLink(allPaths)
+    // }
+    console.log(chalk.yellow(`原生组件 ${duplicated.join(',')} 将被覆盖`))
+    return buildLink(allPaths)
 
     async function buildLink(validPath) {
         let promises = []

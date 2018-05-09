@@ -97,7 +97,6 @@ prog
     .command('start', 'launch GUI')
     .option('-c, --config <dir1>', 'config dir') //未指定则取当前目录下的.pager目录
     .option('-t, --target <dir1>', 'target') //可以是dir或file；dir:必须已存在 file:可存在可不存在，但其dirname必须存在
-    .option('-p, --port <dir1>', 'port') //指定端口
     .action(wrapCommand(beforeStart))
 
     .command('create', 'resolve data')
@@ -150,7 +149,7 @@ async function beforeStart(args, options) {
     describe.target = options.target ? resolveTarget(options.target) : path.join(describe.configDir, config.target.pageName)
     console.log(chalk.white(`target file: ${describe.target}`))
 
-    describe.port = options.port || 8001;
+    describe.port = process.env.PORT || 8001;
 
     describe.temporaryDir = createTemporaryDir();
 

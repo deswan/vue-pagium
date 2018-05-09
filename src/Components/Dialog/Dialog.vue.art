@@ -19,12 +19,12 @@ export default {
       open(){
         this.@@show = true;
         {{{if loadComponent.value}}}
-          this.{{{external(loadComponent)}}}()
+          this.{{{refer(loadComponent)}}}()
         {{{/if}}}
       },
       close(){
         {{{if clearComponent.value}}}
-          this.{{{external(clearComponent)}}}()
+          this.{{{refer(clearComponent)}}}()
         {{{/if}}}
       }
   },

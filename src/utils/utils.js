@@ -68,6 +68,22 @@ function parseSlot(key, value, node, getComName, getExposeProperty, throwError) 
      */
     let slots = [];
     let slotScope = [];
+
+    const slotRegExp = /^\d+_(.*)$/;
+
+    node.children || (node.children = [])
+
+    //清除该变量名下子组件的所有slot标识
+    node.children.forEach((com) => {
+        if (com.__pg_slot__) {
+            let match = com.__pg_slot__.match(slotRegExp);
+            if (match && match[1] === key) {
+                com.__pg_slot__ = false
+                if (com.props._scope) delete com.props._scope;
+            }
+        }
+    })
+
     let newValue = JSON.parse(JSON.stringify(value), function (k, v) {
         if (k === 'type' && v === constant.SLOT_TYPE) {
             //去重

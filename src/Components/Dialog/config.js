@@ -1,21 +1,21 @@
 module.exports = {
-    "name": 'dialog',
+    name: 'dialog',
     description:'对话框',
-    "isDialog": true,
-    "exposeProperty": ["open"],
-    "props": [{
-        "name": "title",
-        "type": "string",
-        "label": "标题"
+    isDialog: true,
+    exposeProperty: ["open"],
+    props: [{
+        name: "title",
+        type: "string",
+        label: "标题"
     }, {
-        "name": "loadComponent",
-        "label": "加载组件",
-        "type": "refer",
+        name: "loadComponent",
+        label: "加载组件",
+        type: "refer",
         property: 'load'
     }, {
-        "name": "clearComponent",
-        "label": "清空组件",
-        "type": "refer",
+        name: "clearComponent",
+        label: "清空组件",
+        type: "refer",
         property: 'clear'
     }]
 }

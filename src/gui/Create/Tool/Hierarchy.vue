@@ -19,10 +19,10 @@
     :class="[{'has-name': node.name,'cur-select':node === $store.state.activeComponent}, 'idx_' + idx ]">
         <span class="el-tree-node__label" :style="{color:idx === undefined ? '#409EFF' : '#000'
         }">
+          {{ node.name }}
           <el-tag v-if="!!node.__pg_slot__" size="mini" type="info" style="font-size:10px;">
           slot
           </el-tag>
-          {{ node.name }}
         </span>
         <span class="tree-node-action" v-if="node.name">
           <el-popover placement="right-end" trigger="click" v-model="showComlib">  
@@ -227,16 +227,16 @@ export default {
       if (!this.isAllowToDrop) return;
       if (!this.node.name) {
         this.$el.style.backgroundColor = "rgb(64,158,255)";
-        this.counter++
+        // this.counter++
       } else {
         this.$el.style.backgroundColor = "rgba(64,158,255, 0.1)";
-        this.counter++
+        // this.counter++
       }
     },
     handleDragLeave(e) {
-      if(!--this.counter){
+      // if(!--this.counter){
         this.clearBgColor();
-      }
+      // }
     },
     handleDragEnd() {
       this.clearBgColor();
@@ -318,7 +318,7 @@ export default {
             .then(_ => {
               this.onDelBtnClick(data);
             })
-            .catch((err = {}));
+            .catch((err => {}));
           break;
         case "nodeRow":
           if (this.idx === undefined) return;

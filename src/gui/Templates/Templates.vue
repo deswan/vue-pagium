@@ -1,13 +1,12 @@
 <template>
   <div class="template-list">
-    <el-button type="primary" @click="newPage">生成空白页</el-button>
     <el-table
     v-loading="table.loading"
       :data="table.items" style="margin-top:10px;">
       <el-table-column
         prop="date"
         label="创建日期"
-        width="180"
+        width="200"
         >
       </el-table-column>
       <el-table-column
@@ -20,7 +19,8 @@
         label="备注">
       </el-table-column>
       <el-table-column
-        label="操作">
+        label="操作"
+        width="300">
         <template slot-scope="scope">
           <el-button size="small" @click="employ(scope.row)">生成页面</el-button>
           <el-button size="small" type="warning" @click="del(scope.row)">删除模板</el-button>
@@ -66,10 +66,6 @@ export default {
           });
         })
         .catch(_ => {});
-    },
-    newPage() {
-      this.$store.commit("clearData");
-      this.$router.push({ name: "create" });
     }
   }
 };
