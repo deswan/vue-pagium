@@ -18,26 +18,17 @@ const {
 
 Vue.use(Vuex)
 
+const COMPONENTS = process.Components;
+
 const allComsConfig = {}
 
-const allComs = {}
-
-let r = require.context(`../../../runtime/${process.ComponentsRoot}`, true, /^\.\/(.*)\/(\1.vue|config.js)$/);
-r.keys().forEach(key => {
-    let match = key.match(/^\.\/(.*)\/(\1.vue|config.js)$/);
-    if (match[2] === 'config.js') {
-        allComsConfig[match[1]] = r(key)
-    } else {
-        allComs[match[1]] = r(key).default
-    }
+Object.keys(COMPONENTS.local).forEach(comName => {
+    allComsConfig[comName] = require(`../../Components/${comName}/config.js`)
+})
+Object.keys(COMPONENTS.custom).forEach(comName => {
+    allComsConfig[comName] = require(`${process.ComponentsRoot}/${comName}/config.js`)
 })
 
-Object.keys(allComsConfig).forEach(key => {
-    if (!allComs[key]) {
-        allComs[key] = DefaultLive;
-    }
-})
-console.log(allComs)
 console.log(allComsConfig)
 
 let uuid = 1;
@@ -46,6 +37,18 @@ function attachUUID(list) {
     utils.traverse(item => {
         item.pg = uuid++;
     }, list);
+}
+
+function props2qs(props) {
+    let qs = [];
+    Object.keys(props).forEach(name => {
+        qs.push(encodeURIComponent(name) + '=' + encodeURIComponent(JSON.stringify(props[name])))
+    })
+    if (qs.length) {
+        return qs.join('&');
+    } else {
+        return '';
+    }
 }
 
 const store = new Vuex.Store({
@@ -68,9 +71,6 @@ const store = new Vuex.Store({
         },
         activeComponentSetting(state) {
             return state.activeComponent && scheme2Input(allComsConfig[state.activeComponent.type].props)
-        },
-        type2Com(state) {
-            return allComs
         },
         //for 添加组件
         allComs() {
@@ -251,17 +251,22 @@ const store = new Vuex.Store({
                 type,
                 isDialog: config.isDialog,
                 exposeProperty: config.exposeProperty,
-                props: scheme2Default(config.props),
+                props: scheme2Default(config.props, true),
                 children: [],
+                realTimePreview: null,
                 __pg_slot__: false //是否成为slot
             }
-
             parent.children.push(comObj);
+            window.httpVueLoader(`preview.vue?com=${type}&props=${ encodeURIComponent(JSON.stringify(scheme2Default(config.props))) }`)()
+                .then(data => {
+                    console.log(data);
+                    comObj.realTimePreview = data;
+                    axios.post('/input', state)
+                })
 
             this.commit('activateComponent', {
                 comObj
             })
-            axios.post('/input', state)
 
         },
 
@@ -273,7 +278,6 @@ const store = new Vuex.Store({
             comObj
         }) {
             state.activeComponent = comObj;
-            axios.post('/input', state)
         },
 
         /**
@@ -331,11 +335,13 @@ const store = new Vuex.Store({
                     return utils.getComponentByName(this.getters.data, name) && utils.getComponentByName(this.getters.data, name).exposeProperty
                 }, false)
 
-
                 Vue.set(state.activeComponent.props, name, value);
-                console.log(state.activeComponent.props)
+                window.httpVueLoader(`preview.vue?com=${state.activeComponent.type}&props=${ encodeURIComponent(JSON.stringify(state.activeComponent.props)) }`)()
+                    .then(data => {
+                        state.activeComponent.realTimePreview = data;
+                        axios.post('/input', state)
+                    })
             }
-            axios.post('/input', state)
         },
         employTemplate(state, {
             template,
@@ -390,14 +396,20 @@ const store = new Vuex.Store({
                 function apply() {
                     state.curTemplate = template;
                     state.activeComponent = null;
+                    state.curHover = null;
+                    
+                    attachUUID(state.components);
+                    attachUUID(state.dialogs);
+                    utils.traverse(item=>{
+                        item.realTimePreview = window.httpVueLoader(`preview.vue?com=${item.type}&props=${ encodeURIComponent(JSON.stringify(item.props)) }`)
+                    },comList)
+
                     state.components = comList.filter(e => {
                         return !e.isDialog
                     })
                     state.dialogs = comList.filter(e => {
                         return e.isDialog
                     });
-                    attachUUID(state.components);
-                    attachUUID(state.dialogs);
 
                     axios.post('/input', state)
                     vm.$router.push({
@@ -408,11 +420,11 @@ const store = new Vuex.Store({
         },
         clearData(state) {
             state.curTemplate = null;
+            state.curHover = null;
             state.activeComponent = null;
             state.components.splice(0)
             state.dialogs.splice(0)
             axios.post('/input', state)
-
         },
         hoverMenuItem(state, {
             comObj
@@ -421,9 +433,15 @@ const store = new Vuex.Store({
             state.curHover = comObj || null;
         },
         assign(state, data) {
-            attachUUID(data.components);
-            attachUUID(data.dialogs);
-            Object.assign(state, data)
+            attachUUID([...data.components,...data.dialogs]);
+            utils.traverse(item=>{
+                item.realTimePreview = window.httpVueLoader(`preview.vue?com=${item.type}&props=${ encodeURIComponent(JSON.stringify(item.props)) }`)
+            },[...data.components,...data.dialogs])
+            Object.assign(state, {
+                components:data.components,
+                dialogs:data.dialogs,
+                curTemplate:data.curTemplate
+            })
         }
     },
     actions: {

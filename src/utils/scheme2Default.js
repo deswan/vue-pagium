@@ -4,12 +4,12 @@ const {
     getPatch
 } = require('../type_parser')
 
-module.exports = function (config) {
+module.exports = function (config, inEditor) {
     let def = {}
-    Object.assign(def, conf2Default(config, true))
+    Object.assign(def, conf2Default(config))
     return def;
 
-    function getDefault(conf, isRoot) {
+    function getDefault(conf) {
         let type = conf.type
         if (type === 'string' ||
             type === 'select' ||
@@ -19,8 +19,8 @@ module.exports = function (config) {
             return getDefaultValue(type).call(conf)
         } else if (Array.isArray(type) && type.length == 1) {
             let item = getDefaultValue(type).call(conf)
-            Object.assign(def, {
-                [`_${conf.name}`]: JSON.parse(JSON.stringify( conf.default === undefined ? getDefaultValue(type[0]).call(conf) :  getPatch(conf.type).call(conf, conf.default) ))
+            inEditor && Object.assign(def, {
+                [`__${conf.name}`]: JSON.parse(JSON.stringify(conf.default === undefined ? getDefaultValue(type[0]).call(conf) : getPatch(conf.type).call(conf, conf.default)))
             }) //!!!有副作用
             return item
         }
@@ -28,15 +28,14 @@ module.exports = function (config) {
     /**
      * 
      * @param { Array<conf> } config 
-     * @param { Boolean } isRoot 是否是根config
      */
-    function conf2Default(config, isRoot) {
+    function conf2Default(config) {
         let def = {};
         config.forEach(conf => {
             if (conf.default !== undefined) {
                 def[conf.name] = getPatch(conf.type).call(conf, conf.default)
-            }else{
-                def[conf.name] = getDefault(conf, isRoot);
+            } else {
+                def[conf.name] = getDefault(conf);
             }
         })
         return def;

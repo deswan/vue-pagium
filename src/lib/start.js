@@ -19,12 +19,12 @@ const dayjs = require('dayjs');
 const portfinder = require('portfinder');
 const builder = require('./builder');
 
-const scheme2Default = require('../utils/scheme2Default');
 const {
     checkConfig
 } = require('../utils/checkConfigValid');
 const constant = require('../const');
 const compile = require('./compile');
+const compilePreview = require('./compilePreview');
 const utils = require('../utils/utils');
 
 const inquirer = require('inquirer');
@@ -48,9 +48,19 @@ let template_uuid = 1;
 
 let template = []
 
-let allComponentPaths = {};
-
 let inputData = [];
+
+const realTimeComs = {}
+
+function clearEditorProps(data) {
+    utils.traverse(item => {
+        for (let key in item.props) {
+            if (key.startsWith('__')) {
+                delete item.props[key];
+            }
+        }
+    },data)
+}
 
 /**
  * 读取用户目录下的模板数据到template变量中并添加id
@@ -87,6 +97,7 @@ async function writeTemplatesFile(configDir) {
 }
 
 function startServer(info) {
+    
     let jsonTarget = path.join(path.dirname(info.target), path.basename(info.target, '.vue') + '.json')
 
     app.use(express.static(path.resolve(__dirname, './dist')));
@@ -101,9 +112,9 @@ function startServer(info) {
 
     app.post('/preview', function (req, res) {
         let finish = 0;
-
+        clearEditorProps(req.body)
         //将结果写入preview目录下后打包
-        compile(req.body, allComponentPaths).then(output => {
+        compile(req.body, info.componentPaths).then(output => {
             return fs.outputFile(config.previewOutputPath, output)
         }).then(_ => {
             return new Promise((resolve) => {
@@ -135,7 +146,9 @@ function startServer(info) {
 
     //将结果写入用户目录
     app.post('/save', function (req, res) {
-        compile(req.body, allComponentPaths, info.vueTemplate).then(output => {
+        clearEditorProps(req.body)
+        console.log(JSON.stringify(req.body,null,2));
+        compile(req.body, info.componentPaths, info.vueTemplate).then(output => {
             return fs.outputFile(info.target, output)
         }).then(_ => {
             res.json({
@@ -275,12 +288,13 @@ function startServer(info) {
             jsonSavePath: jsonTarget
         })
     });
-    // app.get('/', function (req, res) {
-    //     res.json({
-    //         savePath: info.target,
-    //         jsonSavePath: jsonTarget
-    //     })
-    // });
+
+    app.get('/preview.vue', function (req, res) {
+        let type = req.query.com;
+        let props = JSON.parse(req.query.props);
+        res.send(compilePreview(type, info.componentPaths.custom[type] || info.componentPaths.local[type], props))
+    });
+
 
     /**
      * 删除模板
@@ -307,8 +321,6 @@ function startServer(info) {
 
 
 module.exports = async function (info) {
-    allComponentPaths = getLocalComponents(info.temporaryDir)
-
     await readTemplatesFile(info.configDir); //读取模板
 
     //webpack 打包
@@ -323,7 +335,8 @@ module.exports = async function (info) {
                 webpack(merge(webpackIndexConfig, {
                     plugins: [
                         new webpack.DefinePlugin({
-                            'process.ComponentsRoot': JSON.stringify(path.basename(info.temporaryDir))
+                            'process.Components': JSON.stringify(info.componentPaths),
+                            'process.ComponentsRoot': JSON.stringify(info.componentsRoot)
                         }),
                     ]
                 }), (err, stats) => {

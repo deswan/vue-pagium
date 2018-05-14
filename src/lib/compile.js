@@ -6,9 +6,6 @@ const beautify_html = require('js-beautify').html;
 const crypto = require('crypto');
 const hash = crypto.createHash('sha256');
 
-const output = './dist';
-
-const scheme2Default = require('../utils/scheme2Default');
 const utils = require('../utils/utils')
 const babylon = require('babylon');
 const vueCompiler = require('@vue/component-compiler-utils');
@@ -28,23 +25,7 @@ const HOOKS_NAME = ['beforeCreate', 'created', 'beforeMount', 'mounted', 'before
 
 let logger = require('../logger')('compile')
 
-const template = require('art-template');
-
-//art options
-template.defaults.cache = false;
-template.defaults.rules[1].test = /{{{([@#]?)[ \t]*(\/?)([\w\W]*?)[ \t]*}}}/;
-Object.assign(template.defaults, {
-    minimize: false,
-    escape: false,
-})
-Object.assign(template.defaults.imports, {
-    Object,
-    Array,
-    String,
-    Number,
-    Math,
-    JSON
-})
+const template = require('./art');
 
 let pg_map = {
     components: [],
@@ -1078,6 +1059,7 @@ function initMap(components, comPaths) {
 }
 
 module.exports = async function (components, comPaths, vueTemplate) {
+    comPaths = Object.assign({},comPaths.custom,comPaths.local)
     initMap(components, comPaths);
     let output = render(merge(), vueTemplate);
     return output

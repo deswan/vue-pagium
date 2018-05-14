@@ -16,31 +16,16 @@
           <el-form-item 
           :label="item.label" 
           :key="idx">
-              <!-- 输入组件
-                arrItem: 数组默认值            
-               -->
+              <!-- arrItem: 数组默认值 -->
               <component 
               :is="item.input" 
               @input="handleInput(item.name,$event)" 
-              :arrItem="$store.state.activeComponent.props['_'+item.name]"
+              :arrItem="$store.state.activeComponent.props['__'+item.name]"
               :value="$store.state.activeComponent.props[item.name]" 
               v-bind="item.props" 
               :conf="item.conf">
               </component>
           </el-form-item>
-          <!-- Boolean.on -->
-          <div class="expand" :key="idx + 'expand'" v-if="item.props.subInput && item.props.subInput.length && $store.state.activeComponent.props[item.name]">
-              <el-form-item v-for="(subInput,idx) in item.props.subInput" :label="subInput.label" :key="idx">
-                <component 
-                :is="subInput.input" 
-                @input="handleInput(subInput.name,$event)" 
-                :arrItem="$store.state.activeComponent.props['_'+subInput.name]" 
-                :value="$store.state.activeComponent.props[subInput.name]" 
-                v-bind="subInput.props" 
-                :conf="subInput.conf">
-                </component>
-              </el-form-item>            
-          </div>
         </template>
       </el-form>
   </div>
