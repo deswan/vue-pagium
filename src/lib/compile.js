@@ -1,4 +1,3 @@
-const htmlcs = require('htmlcs');
 const esformatter = require('esformatter');
 const path = require('path');
 const fs = require('fs-extra');
@@ -32,6 +31,7 @@ let logger = require('../logger')('compile')
 const template = require('art-template');
 
 //art options
+template.defaults.cache = false;
 template.defaults.rules[1].test = /{{{([@#]?)[ \t]*(\/?)([\w\W]*?)[ \t]*}}}/;
 Object.assign(template.defaults, {
     minimize: false,
@@ -51,14 +51,22 @@ let pg_map = {
     renameMap: {}
 }
 
-function warn(info) {
-    console.warn('解析警告:' + info)
-}
-
 //全局替换标识符 @@varName -> varName
 function replaceIdentifier() {
     let regExp = /@@([$a-zA-Z][$\w]*)?(:[$a-zA-Z][$\w]*)?/g;
     let referRegExp = /@@([$a-zA-Z][$\w]*)__pg_refer__([$a-zA-Z][$\w]*)?(:[$a-zA-Z][$\w]*)?/g;
+
+    let filterStyle = (function () {
+        let existCom = [];
+        return (pg_com) => {
+            let type = pg_com.comObj.type;
+            if (existCom.includes(type)) {
+                pg_com.ignoreStyle = true;
+            } else {
+                existCom.push(type);
+            }
+        }
+    })();
 
     //init pg_com.wrapper for each one
     function calcWrapper(list, wrapper = '') {
@@ -69,130 +77,85 @@ function replaceIdentifier() {
                 curWrapper = curWrapper + pg_com.comObj.name + '.';
             }
             pg_com.wrapper = curWrapper
+            filterStyle(pg_com);
             calcWrapper(pg_com.children, curWrapper)
         })
     }
 
     calcWrapper(pg_map.components);
 
-    function doReplace(list) {
-        if (!list || !list.length) return;
-        list.forEach((pg_com) => {
-            let referReplaced = pg_com.compiled.replace(referRegExp, (match, comName, varName, modifier) => {
-                let referCom = utils.getComponentByName(pg_map.components, comName)
-                if (!referCom) {
-                    throw new Error(`${pg_com.name} 引用的 ${comName} 组件不存在`)
-                }
 
-                let renamedVarName = varName;
+    utils.traverse(pg_com => {
+        let referReplaced = pg_com.compiled.replace(referRegExp, (match, comName, varName, modifier) => {
+            let referCom = utils.getComponentByName(pg_map.components, comName)
+            if (!referCom) {
+                throw new Error(`${pg_com.name} 引用的 ${comName} 组件不存在`)
+            }
+            modifier && (modifier = modifier.slice(1))
 
-                //匹配
-                let isData = referCom.initDataKeys.includes(varName)
-                let isMethod = referCom.initMethodsKeys.includes(varName);
-                let isComputed = referCom.initComputedKeys.includes(varName);
-
-                if (varName) {
-                    isComputed && pg_map.renameMap.computed && (renamedVarName = getRenamed(pg_map.renameMap.computed, varName, referCom) || renamedVarName)
-                    isMethod && pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, referCom) || renamedVarName)
-                    isData && pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, referCom) || renamedVarName)
-                }
-
-                function getRenamed(renameMap, varName, comObj) {
-                    let idx = renameMap.findIndex(toRename => {
-                        return toRename.node === comObj && toRename.raw === varName
-                    })
-                    if (~idx) {
-                        return renameMap[idx].value
-                    }
-
-                }
-
-                modifier && (modifier = modifier.slice(1))
-
-                if (modifier) {
-                    if (modifier === 'wrapper') {
-                        let match = referCom.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
-                        if (match) {
-                            return match[1];
-                        } else {
-                            throw new Error(`组件${referCom.name}的wrapper不存在，因该组件及其子组件没有data`)
-                        }
-                    } else if (modifier === 'last') {
-                        if (!isData && !isMethod && !isComputed) throw new Error(`${referCom.name}组件的变量${varName}不存在`)
-                        return renamedVarName;
-                    } else {
-                        throw new Error(referCom.name + '：' + modifier + ' 修饰符不存在')
-                    }
-                } else {
-                    if (isData) { //data
-                        return referCom.wrapper + renamedVarName;
-                    } else if (isComputed || isMethod) {
-                        return renamedVarName;
-                    } else {
-                        throw new Error(`${referCom.name}组件的变量${varName}不存在`)
-                    }
-                }
-            })
-
-            let replaced = referReplaced.replace(regExp, (match, varName, modifier) => {
-
-                modifier && (modifier = modifier.slice(1))
-
-                let renamedVarName = varName;
-
-                //匹配
-                let isData = pg_com.initDataKeys.includes(varName)
-                let isMethod = pg_com.initMethodsKeys.includes(varName);
-                let isComputed = pg_com.initComputedKeys.includes(varName);
-
-                if (varName) {
-                    isComputed && pg_map.renameMap.computed && (renamedVarName = getRenamed(pg_map.renameMap.computed, varName, pg_com) || renamedVarName)
-                    isMethod && pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, pg_com) || renamedVarName)
-                    isData && pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, pg_com) || renamedVarName)
-                }
-
-                function getRenamed(renameMap, varName, comObj) {
-                    let idx = renameMap.findIndex(toRename => {
-                        return toRename.node === comObj && toRename.raw === varName
-                    })
-                    if (~idx) {
-                        return renameMap[idx].value
-                    }
-                }
-
-                if (modifier) {
-                    if (modifier === 'wrapper') {
-                        let match = pg_com.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
-                        if (match) {
-                            return match[1];
-                        } else {
-                            throw new Error(`组件${pg_com.name}的wrapper不存在，因该组件及其子组件没有data`)
-                        }
-                    } else if (modifier === 'last') {
-                        if (!varName) throw new Error('请指定vue数据名称')
-                        if (!isData && !isMethod && !isComputed) throw new Error(`${pg_com.name}组件的变量${renamedVarName}不存在`)
-                        return renamedVarName;
-                    } else {
-                        throw new Error(pg_com.name + '：' + modifier + ' 修饰符不存在')
-                    }
-                } else {
-                    if (isData) { //data
-                        return pg_com.wrapper + renamedVarName;
-                    } else if (isComputed || isMethod) {
-                        return renamedVarName;
-                    } else {
-                        if (!varName) throw new Error('请指定vue数据名称')
-                        throw new Error(`${pg_com.name}组件的变量${renamedVarName}不存在`)
-                    }
-                }
-
-
-            })
-            pg_com.replaced = replaced;
-            doReplace(pg_com.children)
+            return resolveMatch(referCom, varName, modifier)
         })
+
+        let replaced = referReplaced.replace(regExp, (match, varName, modifier) => {
+
+            modifier && (modifier = modifier.slice(1))
+
+            return resolveMatch(pg_com, varName, modifier)
+        })
+        pg_com.replaced = replaced;
+    }, pg_map.components)
+
+    function resolveMatch(pg_com, varName, modifier) {
+        let renamedVarName = varName;
+
+        //匹配
+        let isData = pg_com.initDataKeys.includes(varName)
+        let isMethod = pg_com.initMethodsKeys.includes(varName);
+        let isComputed = pg_com.initComputedKeys.includes(varName);
+
+        if (varName) {
+            isComputed && pg_map.renameMap.computed && (renamedVarName = getRenamed(pg_map.renameMap.computed, varName, pg_com))
+            isMethod && pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, pg_com))
+            isData && pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, pg_com))
+        }
+
+        function getRenamed(renameMap, varName, comObj) {
+            let idx = renameMap.findIndex(toRename => {
+                return toRename.node === comObj && toRename.raw === varName
+            })
+            if (~idx) {
+                return renameMap[idx].value
+            }
+            return varName;
+        }
+
+        if (modifier) {
+            if (modifier === 'wrapper') {
+                let match = pg_com.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
+                if (match) {
+                    return match[1];
+                } else {
+                    throw new Error(`组件${pg_com.name}的包裹对象不存在，因该组件及其子组件没有任何data属性`)
+                }
+            } else if (modifier === 'last') {
+                if (!varName) throw new Error('请指定vue选项数据名称')
+                if (!isData && !isMethod && !isComputed) throw new Error(`${pg_com.name}组件的vue选项数据${varName}不存在`)
+                return renamedVarName;
+            } else {
+                throw new Error(modifier + ' 修饰符不存在')
+            }
+        } else {
+            if (!varName) throw new Error('请指定vue选项数据名称')
+            if (isData) { //data
+                return pg_com.wrapper + renamedVarName;
+            } else if (isComputed || isMethod) {
+                return renamedVarName;
+            } else {
+                throw new Error(`${pg_com.name}组件的变量${varName}不存在`)
+            }
+        }
     }
-    doReplace(pg_map.components);
+
     logger('after replaceIdentifier', pg_map)
 }
 
@@ -204,24 +167,31 @@ function beautify(vue) {
 
     logger('before beautify', vue)
 
-    let idxStart = vue.indexOf('<template>');
-    let idxEnd = vue.lastIndexOf('</template>');
-    let html = vue.slice(idxStart, idxEnd + '</template>'.length);
+    // let idxStart = vue.indexOf('<template>');
+    // let idxEnd = vue.lastIndexOf('</template>');
+    // let html = vue.slice(idxStart, idxEnd + '</template>'.length);
+    let html = getHtml(vue);
+    let script = getScript(vue);
+    let style = getStyle(vue);
+    if (html) {
+        html = beautify_html(html, {
+            preserve_newlines: false,
+            max_preserve_newlines: 1,
+            "unformatted": ["a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite", "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "map", "mark", "math", "meter", "noscript", "object", "output", "progress", "q", "ruby", "s", "samp", "select", "small", "span", "strong", "sub", "sup", "svg", "textarea", "time", "u", "var", "video", "wbr", "text", "acronym", "address", "big", "dt", "ins", "small", "strike", "tt", "pre", "h1", "h2", "h3", "h4", "h5", "h6"],
+            "indent_scripts": "keep"
+        });
+    }
 
-    let formattedHtml = beautify_html(html, {
-        preserve_newlines: false,
-        max_preserve_newlines: 1,
-        "unformatted": ["a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite", "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "map", "mark", "math", "meter", "noscript", "object", "output", "progress", "q", "ruby", "s", "samp", "select", "small", "span", "strong", "sub", "sup", "svg", "textarea", "time", "u", "var", "video", "wbr", "text", "acronym", "address", "big", "dt", "ins", "small", "strike", "tt", "pre", "h1", "h2", "h3", "h4", "h5", "h6"],
-        "indent_scripts": "keep"
-    });
+    // idxStart = vue.indexOf('<script>');
+    // idxEnd = vue.lastIndexOf('</script>');
+    // let script = vue.slice(idxStart + '<script>'.length, idxEnd);
 
-    idxStart = vue.indexOf('<script>');
-    idxEnd = vue.lastIndexOf('</script>');
-    let script = vue.slice(idxStart + '<script>'.length, idxEnd);
-
-    let formattedScript = esformatter.format(script, require('./esformatter-pg.json'));
-
-    let vueText = `${formattedHtml}\n<script>${formattedScript}\n</script>${vue.slice(idxEnd + '</script>'.length)}`
+    if (script) {
+        script = esformatter.format(script, require('./esformatter-pg.json'));
+    }
+    let vueText = `<template>\n${html}\n</template>\n<script>\n${script}\n</script>\n`;
+    console.log(style)
+    style && (vueText += `<style>\n${style}\n</style>`)
     return vueText;
 }
 
@@ -231,71 +201,70 @@ function merge() {
     renameComputed(allKeys)
     replaceIdentifier();
 
+    let styleCom = [];
+
     /**
      * 合并组件
      * @param {} list 
      */
     function doMerge(list) {
-        let html = '';
-        let data = '';
-        let methods = '';
-        let watch = '';
-        let computed = '';
-        let hooks = {};
-        list.forEach(pg_com => {
+        return list.reduce((target, pg_com) => {
             let parsed = parse(pg_com);
 
-            //子组件
+            //收集子组件数据
             let children = pg_com.children.filter(e => {
                 return !e.comObj.__pg_slot__;
             })
 
-            //slot组件
-            //  { [slotId]:[pg_com1,pg_com2,...] }
-            let slots = pg_com.slots || {};
-
             if (children && children.length) {
                 let childParsed = doMerge(children);
                 parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER, childParsed.html);
+                parsed.style = mergeStyle(parsed.style, childParsed.style)
                 parsed.data = mergeData(parsed.data, childParsed.data)
-                parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
                 parsed.hooks = mergeHook(parsed.hooks, childParsed.hooks)
+                parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
                 parsed.computed = mergeMethod(parsed.computed, childParsed.computed)
                 parsed.watch = mergeMethod(parsed.watch, childParsed.watch)
             }
 
+            //收集slot组件数据
+            //  { [slotId]:[pg_com1,pg_com2,...] }
+            let slots = pg_com.slots || {};
             Object.keys(slots).forEach(slotId => {
                 let slotList = slots[slotId];
                 let childParsed = doMerge(slotList);
                 parsed.html = parsed.html.replace(SLOT_PLACEHOLDER + slotId, childParsed.html);
+                parsed.style = mergeStyle(parsed.style, childParsed.style)
                 parsed.data = mergeData(parsed.data, childParsed.data)
-                parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
                 parsed.hooks = mergeHook(parsed.hooks, childParsed.hooks)
+                parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
                 parsed.computed = mergeMethod(parsed.computed, childParsed.computed)
                 parsed.watch = mergeMethod(parsed.watch, childParsed.watch)
             })
 
-            html = mergeHtml(html, parsed.html)
+            //向上级交付
+            target.html = mergeHtml(target.html, parsed.html)
             if (pg_com.setDataWrapper) {
                 parsed.data.trimRight().slice(-1) == ',' && (parsed.data = parsed.data.trimRight().slice(0, -1)) //去除内部多余的逗号
-                data = mergeData(data, `${pg_com.comObj.name}:{${parsed.data}}`)
+                target.data = mergeData(target.data, `${pg_com.comObj.name}:{${parsed.data}}`)
             } else { //单属性data 或 无属性data
-                data = mergeData(data, parsed.data)
+                target.data = mergeData(target.data, parsed.data)
             }
-            methods = mergeMethod(methods, parsed.methods)
-            hooks = mergeHook(hooks, parsed.hooks)
-            computed = mergeMethod(computed, parsed.computed)
-            watch = mergeMethod(watch, parsed.watch)
+            target.methods = mergeMethod(target.methods, parsed.methods)
+            target.style = mergeStyle(target.style, parsed.style)
+            target.hooks = mergeHook(target.hooks, parsed.hooks)
+            target.computed = mergeMethod(target.computed, parsed.computed)
+            target.watch = mergeMethod(target.watch, parsed.watch)
+            return target;
+        }, {
+            html: '',
+            style: '',
+            data: '',
+            methods: '',
+            hooks: {},
+            computed: '',
+            watch: ''
         })
-
-        return {
-            html,
-            data,
-            methods,
-            hooks,
-            computed,
-            watch
-        }
     }
 
     function mergeHtml(a, b) {
@@ -310,6 +279,7 @@ function merge() {
         }
     }
 
+    //=mergeComputed =mergeWatch
     function mergeMethod(a, b) {
         if (a.trimRight() && a.trimRight().slice(-1) !== ',') {
             return a.trim() + ',' + b.trim();
@@ -326,6 +296,18 @@ function merge() {
         }, a)
     }
 
+    function mergeStyle(a, b) {
+        a = a.trim();
+        b = b.trim();
+        if (a && b) {
+            return a + '\n' + b
+        } else if (a || b) {
+            return a || b
+        } else {
+            return ''
+        }
+    }
+
     function parse(pg_com) {
         //生成产出的数据结构
         //templace
@@ -337,6 +319,7 @@ function merge() {
 
         return {
             html: getHtml(replaced),
+            style: pg_com.ignoreStyle ? '' : getStyle(replaced),
             data: scriptData.data.body,
             methods: scriptData.methods.body,
             hooks: Object.keys(scriptData.hooks).reduce((target, hook) => {
@@ -359,6 +342,7 @@ function merge() {
 
     return {
         html: ret.html,
+        style: ret.style,
         data: ret.data,
         methods: ret.methods,
         hooks: ret.hooks,
@@ -407,7 +391,8 @@ function render(data, vueTemplate) {
     let templPath = vueTemplate || path.join(__dirname, 'App.vue.art');
     let output = template(templPath, {
         template: html,
-        options
+        options,
+        style: data.style
     })
     return beautify(output);
 }
@@ -418,12 +403,11 @@ function render(data, vueTemplate) {
  * @param {comObj} comObj 
  * @param {Function} imports 
  * @param {name:Path} comPaths 组件路径 
- * @param {String} root 本地组件文件夹路径
  */
-function compile(comObj, imports, comPaths, root) {
+function compile(comObj, imports, comPaths) {
     Object.assign(template.defaults.imports, imports)
-
     let comPath = comPaths[comObj.type]
+    let root = path.dirname(comPath)
     let config = require(path.join(comPath, 'config.js'));
     let art = fs.readFileSync(path.join(comPath, comObj.type + '.vue.art'), 'utf-8');
     return template.render(art, comObj.props, {
@@ -447,6 +431,15 @@ function getScript(vue) {
     }).script;
     return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
 }
+
+function getStyle(vue) {
+    let sfc = vueCompiler.parse({
+        source: vue,
+        needMap: false
+    }).styles[0];
+    return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
+}
+
 
 function renameComputed(allKeys) {
     let renameList = []
@@ -504,7 +497,7 @@ function renameComputed(allKeys) {
         keys
     }) => {
         let script = getScript(node.compiled);
-        if(!script) return;
+        if (!script) return;
         //替换掉@@为合法标识符
         let cleared = clearControlChar(script);
         script = cleared.text;
@@ -603,7 +596,7 @@ function renameMethods() {
         keys
     }) => {
         let script = getScript(node.compiled);
-        if(!script) return;
+        if (!script) return;
 
         //替换掉@@为合法标识符
         let cleared = clearControlChar(script);
@@ -767,7 +760,7 @@ function renameData() {
         }
 
         let script = getScript(node.compiled);
-        if(!script) return;
+        if (!script) return;
 
         let startIdx = node.compiled.indexOf(script);
         let scriptLength = script.length
@@ -854,8 +847,8 @@ function getScriptData(vue) {
             body: ''
         }
     }
-    if(!script) return ret;
-    
+    if (!script) return ret;
+
     let cleared = clearControlChar(script);
     script = cleared.text
 
@@ -863,8 +856,6 @@ function getScriptData(vue) {
         sourceType: 'module'
     });
 
-
-    
     function trimAndReplaceObjectExpression(value) {
         return value.match(/^\s*\{([\s\S]*)\}\s*$/)[1].trim().replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
     }
@@ -993,7 +984,7 @@ function clearControlChar(text) {
     }
 }
 
-function initMap(components, comPaths, root) {
+function initMap(components, comPaths) {
     pg_map.components = [];
     pg_map.renameMap = {};
 
@@ -1003,6 +994,7 @@ function initMap(components, comPaths, root) {
             comObj: comObj,
             children: []
         }
+        //编译子组件，加入父组件列表
         comObj.children && comObj.children.forEach(subComObj => {
             doCompile(subComObj, pg_com.children)
         })
@@ -1064,7 +1056,10 @@ function initMap(components, comPaths, root) {
             }
         }
 
-        pg_com.compiled = compile(comObj, imports, comPaths, root);
+        //编译模板
+        pg_com.compiled = compile(comObj, imports, comPaths);
+
+        //抽取需重命名的vue选项数据
         let scriptData;
         try {
             scriptData = getScriptData(pg_com.compiled);
@@ -1082,8 +1077,8 @@ function initMap(components, comPaths, root) {
     logger('initMap', pg_map)
 }
 
-module.exports = async function (components, comPaths, root, vueTemplate) {
-    initMap(components, comPaths, root);
+module.exports = async function (components, comPaths, vueTemplate) {
+    initMap(components, comPaths);
     let output = render(merge(), vueTemplate);
     return output
 }

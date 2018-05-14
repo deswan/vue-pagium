@@ -1,10 +1,11 @@
 {
-  "name": "pg",
+  "name": "vue-pagium",
   "version": "1.0.0",
-  "description": "vue-element-page-generator",
-  "author": "xingzi.wang <xingzi.wang@vipshop.com>",
+  "description": "A block system for Vue Single File Component",
+  "author": "xingzi.wang <stephaniewang299@gmail.com>",
   "private": true,
   "bin": "src/bin/pager.js",
+  "main": "src/lib/compile.js",
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config src/gui/build/webpack.dev.conf.js",
     "start": "npm run dev",
@@ -22,25 +23,18 @@
     "babylon": "^6.18.0",
     "beautify-vue": "0.0.11",
     "caporal": "^0.10.0",
-    "d": "^1.0.0",
     "dayjs": "^1.5.23",
-    "ejs": "^2.5.7",
     "element-ui": "^2.3.3",
     "esformatter": "^0.10.0",
-    "fecs": "^1.5.5",
     "fs-extra": "^5.0.0",
-    "htmlcs": "^0.4.1",
+    "http-vue-loader": "^1.3.4",
     "inquirer": "^5.2.0",
     "js-beautify": "^1.7.5",
-    "ncp": "^2.0.0",
     "node-cleanup": "^2.1.2",
     "opn": "^5.3.0",
-    "pagium": "^1.0.7",
-    "sortablejs": "^1.7.0",
     "vue": "^2.5.16",
-    "vue-beautify": "^1.1.3",
-    "vue-drag-tree": "^1.0.11",
     "vue-router": "^3.0.1",
+    "vueinbrowserloader": "^18.3.9",
     "vuex": "^3.0.1"
   },
   "devDependencies": {
@@ -55,7 +49,6 @@
     "babel-plugin-transform-es2015-spread": "^6.22.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-runtime": "^6.22.0",
-    "babel-plugin-transform-vue-jsx": "^3.5.0",
     "babel-preset-env": "^1.3.2",
     "babel-preset-stage-2": "^6.22.0",
     "chalk": "^2.3.2",
@@ -69,7 +62,6 @@
     "jest": "^22.0.4",
     "jest-serializer-vue": "^0.3.0",
     "less-loader": "^4.0.6",
-    "log": "^1.4.0",
     "log4js": "^2.5.3",
     "mockjs": "^1.0.1-beta3",
     "node-notifier": "^5.1.2",
@@ -96,7 +88,7 @@
     "webpack-merge": "^4.1.0"
   },
   "engines": {
-    "node": ">= 6.0.0",
+    "node": ">= 8.0.0",
     "npm": ">= 3.0.0"
   },
   "browserslist": [

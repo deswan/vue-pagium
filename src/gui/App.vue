@@ -89,14 +89,14 @@ export default {
         .then(({ data }) => {
           if (data.code === 0) {
             this.saving = false;
-            this.$message.success("保存成功");
+            this.$message.success(`${data.data} 生成成功`);
           } else {
             throw new Error(data.data);
           }
         })
         .catch(err => {
           this.saving = false;
-          this.$message.error("保存失败：" + err.message);
+          this.$message.error("生成失败：" + err.message);
         });
     },
     preview() {
@@ -106,7 +106,7 @@ export default {
         .then(({ data }) => {
           if (data.code === 0) {
             this.previewing = false;
-            window.open("/preview", "_blank");
+            window.open("/preview", "_blank",'',true);
           } else {
             throw new Error(data.data);
           }
@@ -181,14 +181,14 @@ export default {
         .then(({ data }) => {
           if (data.code === 0) {
             this.savingAsJSON = false;
-            this.$message.success("保存成功");
+            this.$message.success(`${data.data} 生成成功`);
           } else {
             throw new Error(data.data);
           }
         })
         .catch(err => {
           this.savingAsJSON = false;
-          this.$message.success("保存失败 " + data.data);
+          this.$message.success("生成失败 " + data.data);
         });
     }
   },

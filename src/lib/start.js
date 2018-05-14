@@ -15,8 +15,8 @@ const webpackPreviewConfig = require('./webpack/webpack.preview.conf')
 const ora = require('ora');
 const chalk = require('chalk');
 const opn = require('opn');
-const ncp = require('ncp');
 const dayjs = require('dayjs');
+const portfinder = require('portfinder');
 const builder = require('./builder');
 
 const scheme2Default = require('../utils/scheme2Default');
@@ -103,7 +103,7 @@ function startServer(info) {
         let finish = 0;
 
         //将结果写入preview目录下后打包
-        compile(req.body, allComponentPaths, info.temporaryDir).then(output => {
+        compile(req.body, allComponentPaths).then(output => {
             return fs.outputFile(config.previewOutputPath, output)
         }).then(_ => {
             return new Promise((resolve) => {
@@ -135,12 +135,11 @@ function startServer(info) {
 
     //将结果写入用户目录
     app.post('/save', function (req, res) {
-
-        compile(req.body, allComponentPaths, info.temporaryDir, info.vueTemplate).then(output => {
+        compile(req.body, allComponentPaths, info.vueTemplate).then(output => {
             return fs.outputFile(info.target, output)
         }).then(_ => {
             res.json({
-                data: info.target,
+                data: path.basename(info.target),
                 code: 0
             })
         }).catch(err => {
@@ -157,7 +156,7 @@ function startServer(info) {
         let output = builder(req.body)
         fs.outputFile(jsonTarget, JSON.stringify(output, null, 2)).then(_ => {
             res.json({
-                data: jsonTarget,
+                data: path.basename(jsonTarget),
                 code: 0
             })
         }).catch(err => {
@@ -205,6 +204,7 @@ function startServer(info) {
                 if (e.name === data.name) {
                     e.remark = data.remark;
                     e.data = output;
+                    e.date = dayjs().format('YYYY-MM-DD HH:mm:ss')
                     return true;
                 }
             })
@@ -215,15 +215,11 @@ function startServer(info) {
             })
         } else {
             let output = builder(req.body.data)
-            let d = new Date();
-            let date = dayjs().format('YYYY-MM-DD HH:mm:ss');
-
             attachconfigSnapShoot(output, req.body.allComsConfig)
-
             template.push({
                 id: template_uuid++,
                 name: data.name,
-                date,
+                date: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 remark: data.remark,
                 data: output
             });
@@ -255,8 +251,11 @@ function startServer(info) {
      * 获取模板列表（未解析）
      */
     app.get('/templates', function (req, res) {
+        let sortedTemplate = template.slice().sort((a, b) => {
+            return new Date(b.date) - new Date(a.date);
+        })
         res.json({
-            data: template,
+            data: sortedTemplate,
             code: 0
         })
     });
@@ -276,6 +275,12 @@ function startServer(info) {
             jsonSavePath: jsonTarget
         })
     });
+    // app.get('/', function (req, res) {
+    //     res.json({
+    //         savePath: info.target,
+    //         jsonSavePath: jsonTarget
+    //     })
+    // });
 
     /**
      * 删除模板
@@ -291,13 +296,12 @@ function startServer(info) {
             code: 0
         })
     });
-
-
-    var server = app.listen(info.port, function () {
-        var host = server.address().address;
-        var port = server.address().port;
-        console.log(`server listening at http://127.0.0.1:${port}`);
-        opn(`http://127.0.0.1:${port}/`)
+    portfinder.basePort = info.port;
+    portfinder.getPort(function (err, port) {
+        app.listen(port, function () {
+            console.log(`server listening at http://127.0.0.1:${port}`);
+            process.env.NODE_ENV !== 'development' && opn(`http://127.0.0.1:${port}/`)
+        });
     });
 }
 

@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import Vuex from 'vuex'
 
 import scheme2Default from "../../utils/scheme2Default.js";

@@ -5,7 +5,7 @@
       :data="table.items" style="margin-top:10px;">
       <el-table-column
         prop="date"
-        label="创建日期"
+        label="修改日期"
         width="200"
         >
       </el-table-column>

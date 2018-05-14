@@ -17,8 +17,7 @@
     class="tree-node-name" 
     :style="{'padding-left': idx===undefined ? '10px' : level * 14 + 3 + 'px','padding-right':'10px'}" 
     :class="[{'has-name': node.name,'cur-select':node === $store.state.activeComponent}, 'idx_' + idx ]">
-        <span class="el-tree-node__label" :style="{color:idx === undefined ? '#409EFF' : '#000'
-        }">
+        <span class="el-tree-node__label" :style="{color:'#000'}">
           {{ node.name }}
           <el-tag v-if="!!node.__pg_slot__" size="mini" type="info" style="font-size:10px;">
           slot

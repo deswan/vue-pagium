@@ -1,13 +1,10 @@
-import Vue from 'vue'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import App from './App.vue'
 import store from './store'
-import VueDragTree from 'vue-drag-tree'
 import axios from "axios";
 import router from "./router";
-
-Vue.component('vue-drag-tree', VueDragTree)
+Vue.use(httpVueLoader);
 Vue.use(ElementUI)
 Vue.prototype.$http = axios;
 

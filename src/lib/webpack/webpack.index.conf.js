@@ -3,13 +3,13 @@ const path = require('path')
 const webpackConfig = require('./webpack.config');
 const merge = require('webpack-merge')
 const webpack = require('webpack')
-const config = require('../../gui/config')
-const utils = require('../../gui/build/utils')
+const config = require('./config')
+const utils = require('./utils')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const IndexWebpackConfig = merge(webpackConfig, {
   entry: {
-    app: './app.js'
+    app: '../../gui/app.js'
   },
   module: {
     rules: utils.styleLoaders({

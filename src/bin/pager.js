@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs-extra');
 const chalk = require('chalk');
 const ora = require('ora');
-const ncp = require('ncp');
 const logger = require('../logger')('pager.js');
 
 const rm = require('rimraf');

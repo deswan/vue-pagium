@@ -82,7 +82,7 @@ export default {
   font-size: 20px;
 }
 .setting >>> .el-form-item__label {
-  line-height: 1.4;
+  line-height: 1.6;
   padding-top: 10px;
   word-wrap: break-word;
 }

@@ -3,12 +3,12 @@ const path = require('path')
 const webpackConfig = require('./webpack.config');
 const merge = require('webpack-merge')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const utils = require('../../gui/build/utils')
-const config = require('../../gui/config')
+const utils = require('./utils')
+const config = require('./config')
 
 const previewWebpackConfig = merge(webpackConfig, {
   entry: {
-    preview: './preview.js'
+    preview: '../../gui/preview.js'
   },
   module: {
     rules: utils.styleLoaders({
