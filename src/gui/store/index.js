@@ -2,14 +2,9 @@ import Vuex from 'vuex'
 
 import scheme2Default from "../../utils/scheme2Default.js";
 import scheme2Input from "../Create/SettingBoard/scheme2Input.js";
-import DefaultLive from "../default.vue";
 import axios from "axios";
-import {
-    stat
-} from 'fs';
 const template2Store = require('../../lib/template2Store');
 const checkTemplateValid = require('../../utils/checkTemplateValid');
-const checkDataValid = require('../../utils/checkDataValid');
 const utils = require('../../utils/utils');
 const {
     SLOT_TYPE,
@@ -25,9 +20,11 @@ const allComsConfig = {}
 Object.keys(COMPONENTS.local).forEach(comName => {
     allComsConfig[comName] = require(`../../Components/${comName}/config.js`)
 })
-Object.keys(COMPONENTS.custom).forEach(comName => {
-    allComsConfig[comName] = require(`${process.ComponentsRoot}/${comName}/config.js`)
-})
+if(process.ComponentsRoot){
+    Object.keys(COMPONENTS.custom).forEach(comName => {
+        allComsConfig[comName] = require(`${process.ComponentsRoot}/${comName}/config.js`)
+    })
+}
 
 console.log(allComsConfig)
 
@@ -37,18 +34,6 @@ function attachUUID(list) {
     utils.traverse(item => {
         item.pg = uuid++;
     }, list);
-}
-
-function props2qs(props) {
-    let qs = [];
-    Object.keys(props).forEach(name => {
-        qs.push(encodeURIComponent(name) + '=' + encodeURIComponent(JSON.stringify(props[name])))
-    })
-    if (qs.length) {
-        return qs.join('&');
-    } else {
-        return '';
-    }
 }
 
 const store = new Vuex.Store({
@@ -131,6 +116,7 @@ const store = new Vuex.Store({
         allComsConfig() {
             return allComsConfig;
         },
+        //编辑器中是否存在组件
         existData(state) {
             return state.components.length || state.dialogs.length;
         }
@@ -160,10 +146,9 @@ const store = new Vuex.Store({
                 dragNode.__pg_slot__ = false;
             }
 
+            //占位符：防止在同一个父组件下交换位置导致index错误
             let [comObj] = drag.p.children.splice(drag.i, 1, placeHolder);
-
             drop.p.children.splice(drop.i, 0, comObj)
-
             drag.p.children.splice(drag.p.children.indexOf(placeHolder), 1);
 
             axios.post('/input', state)
@@ -191,28 +176,9 @@ const store = new Vuex.Store({
             }
             del(parent.children, node);
 
-            //删除组件名引用、slot引用
-            // (function traverse(list) {
-            //     if (!list) return;
-            //     for (let i = 0, len = list.length; i < len; i++) {
-            //         let props = list[i].props;
-            //         list[i].props = JSON.parse(JSON.stringify(props), function (k, v) {
-            //             if (this.type === SLOT_TYPE) {
-            //                 this.value = this.value.filter(e => {
-            //                     return e !== node.name
-            //                 })
-            //             } else if (this.type === REFER_TYPE) {
-            //                 if (this.value === node.name) {
-            //                     this.value = ''
-            //                 }
-            //             }
-            //             return v;
-            //         })
-            //         traverse(list[i].children)
-            //     }
-            // })(this.getters.data)
             utils.traverse((node) => {
                 for (let key in node.props) {
+                    //清空refer/slot引用
                     node.props[key] = utils.parseSlot(key, node.props[key], node, (name) => {
                         return utils.getComponentByName(this.getters.data, name)
                     }, (name) => {
@@ -343,6 +309,8 @@ const store = new Vuex.Store({
                     })
             }
         },
+
+        //部署模板
         employTemplate(state, {
             template,
             vm
@@ -418,6 +386,8 @@ const store = new Vuex.Store({
                 }
             }
         },
+
+        //清空编辑器
         clearData(state) {
             state.curTemplate = null;
             state.curHover = null;
@@ -426,12 +396,15 @@ const store = new Vuex.Store({
             state.dialogs.splice(0)
             axios.post('/input', state)
         },
+
+        //鼠标hover菜单项
         hoverMenuItem(state, {
             comObj
         }) {
-            if (comObj && comObj.isDialog) return;
             state.curHover = comObj || null;
         },
+
+        //getLastestInput之后赋值
         assign(state, data) {
             attachUUID([...data.components,...data.dialogs]);
             utils.traverse(item=>{

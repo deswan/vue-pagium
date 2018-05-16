@@ -16,6 +16,7 @@ const {
 const start = require('../lib/start');
 const create = require('../lib/create');
 const eject = require('../lib/eject');
+const add = require('../lib/add');
 const {
     checkConfig
 } = require('../utils/checkConfigValid');
@@ -72,12 +73,27 @@ prog
     .command('eject', 'eject components')
     .argument('[names]', 'choose component/art to eject', prog.LIST, [])
     .option('-c, --config <dir>', 'config dir')
-    .action(wrapCommand(beforeEject));
+    .action(wrapCommand(beforeEject))
+
+    .command('add', 'add component')
+    .argument('<name>', 'component name')
+    .option('-c, --config <dir>', 'config dir')
+    .action(wrapCommand(beforeAdd));
 
 prog.parse(process.argv);
 
+async function beforeAdd(args, options) {
+    let info = {}
+    info.configDir = resolveConfigDir(options.config)
+    info.comName = args.name;
+    console.log(chalk.white('----------------------'))
+    console.log(chalk.white(`配置目录: ${info.configDir}`))
+    console.log(chalk.white('----------------------'))
+    return await add(info);
+}
+
 async function beforeEject(args, options) {
-    let describe = {}
+    let info = {}
 
     let dirs = fs.readdirSync(config.componentDir).filter(e => {
         return !e.startsWith('.');
@@ -92,26 +108,31 @@ async function beforeEject(args, options) {
         args.names = dirs
     }
 
-    describe.names = args.names;
-    describe.configDir = resolveConfigDir(options.config)
-    console.log(chalk.white(`config dir: ${describe.configDir}`))
+    info.names = args.names;
+    info.configDir = resolveConfigDir(options.config)
+    console.log(chalk.white('----------------------'))
+    console.log(chalk.white(`配置目录: ${info.configDir}`))
+    console.log(chalk.white('----------------------'))
 
-    return await eject(describe);
+    return await eject(info);
 }
 
 async function beforeStart(args, options) {
     let info = {}
 
     info.configDir = resolveConfigDir(options.config)
-    console.log(chalk.white(`config dir: ${info.configDir}`))
+
+    console.log(chalk.white('----------------------'))
+    console.log(chalk.white(`配置目录: ${info.configDir}`))
 
     if (fs.existsSync(path.join(info.configDir, 'Page.art'))) {
         info.vueTemplate = path.join(info.configDir, 'Page.art')
-        console.log(chalk.white(`template file: ${info.vueTemplate}`))
+        console.log(chalk.white(`输出模板: ${info.vueTemplate}`))
     }
 
     info.target = resolveTarget(options.target || info.configDir);
-    console.log(chalk.white(`target file: ${info.target}`))
+    console.log(chalk.white(`输出目标位置: ${info.target}`))
+    console.log(chalk.white('----------------------'))
 
     info.port = process.env.PORT || 8001;
     
@@ -142,15 +163,22 @@ async function beforeCreate(args, options) {
             configDir = path.join(configDir, '../../', config.target.dir)
         }
     }
-    console.log(chalk.white(`config dir: ${configDir || 'none'}`))
+    console.log(chalk.white('----------------------'))
+    
+    console.log(chalk.white(`配置目录: ${configDir || 'none'}`))
 
     let vueTemplate;
     if (configDir && fs.existsSync(path.join(configDir, 'Page.art'))) {
         vueTemplate = path.join(configDir, 'Page.art')
-        console.log(chalk.white(`template file: ${vueTemplate}`))
+        console.log(chalk.white(`输出模板: ${vueTemplate}`))
     }
+    let target = resolveTarget(args.target || '.');
 
-    //获取source/target
+    console.log(chalk.white(`输出目标位置: ${target}`))
+    console.log(chalk.white('----------------------'))
+    
+
+    //获取source
     let sourcePath = path.resolve(args.source);
     if (!fs.existsSync(sourcePath)) {
         throw new Error('source file is not exist')
@@ -160,7 +188,7 @@ async function beforeCreate(args, options) {
 
     //验证source是否为json文件
     if (path.extname(sourcePath) !== '.json') {
-        throw new Error('target file must be json')
+        throw new Error('source file must be json')
     }
 
     //是否合法json
@@ -168,12 +196,8 @@ async function beforeCreate(args, options) {
     try {
         source = require(sourcePath);
     } catch (err) {
-        throw new Error('target file must be valid json')
+        throw new Error('source file must be valid json')
     }
-
-    let target = resolveTarget(args.target || '.');
-
-    console.log(chalk.white(`target file: ${target}`))
 
     logger('源文件：' + sourcePath)
     logger('输出文件：' + target)

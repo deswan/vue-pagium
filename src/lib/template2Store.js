@@ -14,8 +14,6 @@ function template2Store(data, allComsConfig) {
     //upgrade
     data = upgradeTemplateData(data, allComsConfig);
 
-    console.log('after upgradeTemplateData', JSON.stringify(data, null, 2))
-
     checkDataValid(data, allComsConfig)
 
     let allComsName = utils.getAllNameInData(data);
@@ -40,7 +38,6 @@ function template2Store(data, allComsConfig) {
 
             node.props = item.props ? utils.patchProps(item.props, config) : {};
 
-            console.log('after patchProps',node.name, JSON.stringify(node.props, null, 2))
 
             //parseSlot
             for (let key in node.props) {
@@ -63,6 +60,10 @@ function template2Store(data, allComsConfig) {
                 ...scheme2Default(config.props),
                 ...node.props
             }
+
+            node.realTimePreview = window.httpVueLoader(`preview.vue?com=${node.type}&props=${ encodeURIComponent(JSON.stringify(node.props)) }`);
+            console.log('after template2Store',node.name, JSON.stringify(node, null, 2))
+            
 
             result.push(node)
         })
