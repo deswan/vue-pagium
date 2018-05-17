@@ -8,14 +8,16 @@ function upgradeTemplateData(data, allComsConfig) {
         return list.filter(item => {
             let config = allComsConfig[item.type];
             if (config) {
-                item.props && (item.props = Object.keys(item.props).reduce((target, propName) => {
-                    let conf = utils.getConfByPropName(propName, config);
-                    if (conf) {
-                        let upgraded = getUpgrade(conf.type).call(conf, item.props[propName]);
-                        upgraded !== undefined && (target[propName] = upgraded);
-                    }
-                    return target;
-                }, {}))
+                if(item.props){
+                    item.props = Object.keys(item.props).reduce((target, propName) => {
+                        let conf = utils.getConfByPropName(propName, config);
+                        if (conf) {
+                            let upgraded = getUpgrade(conf.type).call(conf, item.props[propName]);
+                            upgraded !== undefined && (target[propName] = upgraded);
+                        }
+                        return target;
+                    }, {})
+                }
                 item.children = traverse(item.children || []);
                 return true;
             }

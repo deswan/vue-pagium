@@ -36,20 +36,7 @@ module.exports = {
       },
       {
         test: /\.js$/,
-          loader: 'babel-loader',
-        
-        // use: {
-        //   loader: 'babel-loader',
-        //   // options: {
-        //   //   "presets": ["babel-preset-env"],
-        //   //   "plugins": [
-        //   //     require("babel-plugin-transform-vue-jsx"), 
-        //   //     require("babel-plugin-transform-runtime"),
-        //   //     require("babel-plugin-transform-es2015-spread"),
-        //   //     require("babel-plugin-transform-object-rest-spread")
-        //   //   ]
-        //   // }
-        // },
+        loader: 'babel-loader',
         include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
       },
       {

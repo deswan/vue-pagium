@@ -1,8 +1,8 @@
 <template>
 
 <div class="board-wrapper">
-  <div class="main-board" ref="mainBoard">
-    <div id="board-mask" @click="clickMask" @mouseleave="onLeave" :style="{top:mask.top,left:mask.left,width:mask.width,height:mask.height}">
+  <div class="main-board" ref="mainBoard" @click="clickMask">
+    <div id="board-mask" @mouseleave="onLeave" :style="{top:mask.top,left:mask.left,width:mask.width,height:mask.height}">
       {{mask.comObj ? mask.comObj.name : ''}}
     </div>
     <pg-com
@@ -46,7 +46,6 @@ export default {
   methods: {
     onEnter({ comObj, rect }) {
       let { top, left, width, height } = rect;
-      console.log(top)
       Object.assign(this.mask, {
         top: top - 80 + this.$refs.mainBoard.scrollTop + "px",
         left: left - 270 + "px",
@@ -109,14 +108,16 @@ export default {
   box-shadow: 0 0 20px lightgray;
 }
 #board-mask {
+  box-sizing: border-box;
   position: absolute;
-  z-index: 2000;
+  z-index: 3000;
   background-color: rgba(0, 0, 0, 0.2);
   font-size: 14px;
-  line-height: 25px;
+  line-height: 15px;
   padding-left: 5px;
-  text-align: left;
+  text-align: center;
   max-width: 100%;
   max-height: 100%;
+  overflow: hidden;
 }
 </style>

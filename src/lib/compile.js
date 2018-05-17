@@ -29,7 +29,8 @@ const template = require('./art');
 
 let pg_map = {
     components: [],
-    renameMap: {}
+    renameMap: {},
+    vueTemplate: null
 }
 
 //全局替换标识符 @@varName -> varName
@@ -70,7 +71,7 @@ function replaceIdentifier() {
         let referReplaced = pg_com.compiled.replace(referRegExp, (match, comName, varName, modifier) => {
             let referCom = utils.getComponentByName(pg_map.components, comName)
             if (!referCom) {
-                throw new Error(`${pg_com.name} 引用的 ${comName} 组件不存在`)
+                throw new Error(match + `\n${pg_com.name} 引用的 ${comName} 组件不存在`)
             }
             modifier && (modifier = modifier.slice(1))
 
@@ -116,25 +117,73 @@ function replaceIdentifier() {
                 if (match) {
                     return match[1];
                 } else {
-                    throw new Error(`组件${pg_com.name}的包裹对象不存在，因该组件及其子组件没有任何data属性`)
+                    throw new Error(match + `\n组件${pg_com.name}的包裹对象不存在，因该组件及其子组件没有任何data属性`)
                 }
             } else if (modifier === 'last') {
-                if (!varName) throw new Error('请指定vue选项数据名称')
-                if (!isData && !isMethod && !isComputed) throw new Error(`${pg_com.name}组件的vue选项数据${varName}不存在`)
+                if (!varName) throw new Error(match + '\n请指定vue选项数据名称')
+                if (!isData && !isMethod && !isComputed) throw new Error(match + `\nvue选项数据${varName}不存在`)
                 return renamedVarName;
             } else {
-                throw new Error(modifier + ' 修饰符不存在')
+                throw new Error(match + '\n' + modifier + '修饰符不存在')
             }
         } else {
-            if (!varName) throw new Error('请指定vue选项数据名称')
+            if (!varName) throw new Error(match + '\n请指定vue选项数据名称')
             if (isData) { //data
                 return pg_com.wrapper + renamedVarName;
             } else if (isComputed || isMethod) {
                 return renamedVarName;
             } else {
-                throw new Error(`${pg_com.name}组件的变量${varName}不存在`)
+                throw new Error(match + `\n${pg_com.name}组件的变量${varName}不存在`)
             }
         }
+    }
+
+    if (pg_map.vueTemplate) {
+        pg_map.vueTemplate.replaced = pg_map.vueTemplate.compiled.replace(regExp, (match, varName, modifier) => {
+
+            modifier && (modifier = modifier.slice(1))
+
+            let renamedVarName = varName;
+
+            //匹配
+            let isData = pg_map.vueTemplate.initDataKeys.includes(varName)
+            let isMethod = pg_map.vueTemplate.initMethodsKeys.includes(varName);
+            let isComputed = pg_map.vueTemplate.initComputedKeys.includes(varName);
+
+            if (varName) {
+                isComputed && pg_map.renameMap.computed && (renamedVarName = getRenamed(pg_map.renameMap.computed, varName, pg_map.vueTemplate))
+                isMethod && pg_map.renameMap.methods && (renamedVarName = getRenamed(pg_map.renameMap.methods, varName, pg_map.vueTemplate))
+                isData && pg_map.renameMap.data && (renamedVarName = getRenamed(pg_map.renameMap.data, varName, pg_map.vueTemplate))
+            }
+
+            function getRenamed(renameMap, varName, comObj) {
+                let idx = renameMap.findIndex(toRename => {
+                    return toRename.node === comObj && toRename.raw === varName
+                })
+                if (~idx) {
+                    return renameMap[idx].value
+                }
+                return varName;
+            }
+
+            if (modifier) {
+                if (modifier === 'wrapper') {
+                    throw new Error(match + `\n根组件不允许设置wrapper修饰符`)
+                } else if (modifier === 'last') {
+                    throw new Error(match + `\n根组件不允许设置last修饰符`)
+                } else {
+                    throw new Error(match + '\n' + modifier + ' 修饰符不存在')
+                }
+            } else {
+                if (!varName) throw new Error(match + '\n请指定vue选项数据名称')
+                if (isData || isComputed || isMethod) { //data
+                    return renamedVarName;
+                } else {
+                    throw new Error(match + `\n根组件的变量${varName}不存在`)
+                }
+            }
+        })
+
     }
 
     logger('after replaceIdentifier', pg_map)
@@ -145,41 +194,31 @@ function replaceIdentifier() {
  * @param {String} vue .vue组件文本
  */
 function beautify(vue) {
-
-    logger('before beautify', vue)
-
-    // let idxStart = vue.indexOf('<template>');
-    // let idxEnd = vue.lastIndexOf('</template>');
-    // let html = vue.slice(idxStart, idxEnd + '</template>'.length);
-    let html = getHtml(vue);
-    let script = getScript(vue);
-    let style = getStyle(vue);
-    if (html) {
-        html = beautify_html(html, {
-            preserve_newlines: false,
-            max_preserve_newlines: 1,
-            "unformatted": ["a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite", "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "map", "mark", "math", "meter", "noscript", "object", "output", "progress", "q", "ruby", "s", "samp", "select", "small", "span", "strong", "sub", "sup", "svg", "textarea", "time", "u", "var", "video", "wbr", "text", "acronym", "address", "big", "dt", "ins", "small", "strike", "tt", "pre", "h1", "h2", "h3", "h4", "h5", "h6"],
-            "indent_scripts": "keep"
-        });
+    let vueArr = vue.split('');
+    let htmlSFC = getHtml(vue);
+    if (htmlSFC) {
+        vueArr.splice(htmlSFC.start, htmlSFC.end - htmlSFC.start, '\n',
+            ...beautify_html(vue.slice(htmlSFC.start, htmlSFC.end), {
+                preserve_newlines: false,
+                max_preserve_newlines: 1,
+                "unformatted": ["a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite", "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "map", "mark", "math", "meter", "noscript", "object", "output", "progress", "q", "ruby", "s", "samp", "select", "small", "span", "strong", "sub", "sup", "svg", "textarea", "time", "u", "var", "video", "wbr", "text", "acronym", "address", "big", "dt", "ins", "small", "strike", "tt", "pre", "h1", "h2", "h3", "h4", "h5", "h6"],
+                "indent_scripts": "keep"
+            }), '\n')
     }
-
-    // idxStart = vue.indexOf('<script>');
-    // idxEnd = vue.lastIndexOf('</script>');
-    // let script = vue.slice(idxStart + '<script>'.length, idxEnd);
-
-    if (script) {
-        script = esformatter.format(script, require('./esformatter-pg.json'));
+    vue = vueArr.join('');
+    let scriptSFC = getScript(vue);
+    if (scriptSFC) {
+        vueArr.splice(scriptSFC.start, scriptSFC.end - scriptSFC.start,
+            ...esformatter.format(vue.slice(scriptSFC.start, scriptSFC.end), require('./esformatter-pg.json')))
     }
-    let vueText = `<template>\n${html}\n</template>\n<script>\n${script}\n</script>\n`;
-    console.log(style)
-    style && (vueText += `<style>\n${style}\n</style>`)
-    return vueText;
+    return vueArr.join('');
 }
 
 function merge() {
     renameData();
     let allKeys = renameMethods();
     renameComputed(allKeys)
+    renameVueOptions();
     replaceIdentifier();
 
     let styleCom = [];
@@ -248,6 +287,7 @@ function merge() {
         })
     }
 
+    //合并块策略（a组件位于b组件的前面，a和b是兄弟节点）
     function mergeHtml(a, b) {
         return a.trim() + b.trim();
     }
@@ -293,14 +333,13 @@ function merge() {
         //生成产出的数据结构
         //templace
         let replaced = pg_com.replaced;
-        html = getHtml(replaced);
 
         //data
         let scriptData = getScriptData(replaced);
 
-        return {
-            html: getHtml(replaced),
-            style: pg_com.ignoreStyle ? '' : getStyle(replaced),
+        let data = {
+            html: '',
+            style: '',
             data: scriptData.data.body,
             methods: scriptData.methods.body,
             hooks: Object.keys(scriptData.hooks).reduce((target, hook) => {
@@ -311,8 +350,30 @@ function merge() {
             watch: scriptData.watch.body,
             computed: scriptData.computed.body
         }
+
+        let htmlSFC = getHtml(replaced);
+        htmlSFC && (data.html = replaced.slice(htmlSFC.start, htmlSFC.end));
+
+        let singleStyleSFC = getStyles(replaced)[0];
+        singleStyleSFC && (data.style = pg_com.ignoreStyle ? '' : replaced.slice(singleStyleSFC.start, singleStyleSFC.end));
+
+        return data;
     }
     let ret = doMerge(pg_map.components)
+
+    if (pg_map.vueTemplate) {
+
+        pg_map.vueTemplate.replaced = pg_map.vueTemplate.replaced.replace('____pg_template____', ret.html)
+            .replace('____pg_style____', ret.style)
+
+        let parsed = parse(pg_map.vueTemplate);
+
+        ret.data = mergeData(parsed.data, ret.data)
+        ret.methods = mergeMethod(parsed.methods, ret.methods)
+        ret.hooks = mergeHook(parsed.hooks, ret.hooks)
+        ret.computed = mergeMethod(parsed.computed, ret.computed)
+        ret.watch = mergeMethod(parsed.watch, ret.watch)
+    }
 
     //删除末尾逗号
     ret.html.slice(-1) === ',' && (ret.html = ret.html.slice(0, -1))
@@ -337,44 +398,90 @@ function merge() {
  * 
  * @param {html,data,methods,hooks} data 输出信息
  */
-function render(data, vueTemplate) {
+function render(data) {
     logger('render', data)
-    let options = template.render(`
-        data() {
-            return {
-                {{{data}}}
-            };
-        },
-        {{{each hooks}}}
-            {{{$index}}}() {
-                {{{$value}}}
+    let output;
+    if (pg_map.vueTemplate) {
+        let vue = pg_map.vueTemplate.replaced;
+        let scriptSFC = getScript(vue)
+        let script = vue.slice(scriptSFC.start, scriptSFC.end);
+        let vueArr = vue.split('')
+        let t = `data() {
+                return {
+                    {{{data}}}
+                };
             },
-        {{{/each}}}
-        {{{if computed.trim()}}}
-        computed:{
-            {{{computed}}}
-        },
-        {{{/if}}}
-        {{{if watch.trim()}}}
-        watch:{
-            {{{watch}}}
-        },
-        {{{/if}}}
-        methods: {
-            {{{methods}}}
+            {{{each hooks}}}
+                {{{if $value.trim()}}}
+                {{{$index}}}() {
+                    {{{$value}}}
+                },
+                {{{/if}}}
+            {{{/each}}}
+            {{{if computed.trim()}}}
+            computed:{
+                {{{computed}}}
+            },
+            {{{/if}}}
+            {{{if watch.trim()}}}
+            watch:{
+                {{{watch}}}
+            },
+            {{{/if}}}
+            methods: {
+                {{{methods}}}
+            }`;
+        let tt = template.render(t, data);
+
+        //删除相关选项
+        var ast = babylon.parse(script, {
+            sourceType: 'module'
+        });
+        let p = ast.program.body;
+        let i;
+        for (i = 0; i < p.length; i++) {
+            if (p[i].type === 'ExportDefaultDeclaration') {
+                let pp = p[i].declaration.properties;
+                for (let i = 0; i < pp.length; i++) {
+                    let block = pp[i];
+                    if (block.key.name == 'data' ||
+                        block.key.name == 'methods' ||
+                        HOOKS_NAME.includes(block.key.name) ||
+                        block.key.name == 'watch' ||
+                        block.key.name == 'computed'
+                    ) {
+                        pp[i] = null //删除属性
+                    }
+                }
+                break;
+            }
         }
-    `, data)
-    let html = template.render(`
-        <div>
-            {{{html}}}
-        </div>
-    `, data)
-    let templPath = vueTemplate || path.join(__dirname, 'App.vue.art');
-    let output = template(templPath, {
-        template: html,
-        options,
-        style: data.style
-    })
+        console.log(i, p.length)
+        if (i >= p.length) {
+            throw new Error('根组件必须含有一个export default块')
+        }
+        //添加选项
+        let newScript = babel_generator(ast).code;
+        ast = babylon.parse(newScript, {
+            sourceType: 'module'
+        });
+        let out = '';
+        p = ast.program.body;
+        for (let i = 0; i < p.length; i++) {
+            if (p[i].type === 'ExportDefaultDeclaration') {
+                p = p[i].declaration;
+                out += newScript.slice(0, p.end - 1);
+                out += (out.trim().slice(-1) !== ',' ? ',' : '') + tt + newScript.slice(p.end - 1);
+            }
+        }
+        vueArr.splice(scriptSFC.start, scriptSFC.end - scriptSFC.start, ...out);
+        output = vueArr.join('')
+    } else {
+        output = template(path.join(__dirname, 'App.vue.art'), data)
+        console.log('====================================');
+        console.log(output, data);
+        console.log('====================================');
+    }
     return beautify(output);
 }
 
@@ -389,38 +496,37 @@ function compile(comObj, imports, comPaths) {
     Object.assign(template.defaults.imports, imports)
     let comPath = comPaths[comObj.type]
     let root = path.dirname(comPath)
-    let config = require(path.join(comPath, 'config.js'));
+
+    //I/O
     let art = fs.readFileSync(path.join(comPath, comObj.type + '.vue.art'), 'utf-8');
+
     return template.render(art, comObj.props, {
         ...template.defaults,
         root
     })
 }
 
+//获取vue单文件组件的template/script/style块，不包括标签本身（可以包含不合法标识符）
 function getHtml(vue) {
-    let sfc = vueCompiler.parse({
+    return vueCompiler.parse({
         source: vue,
         needMap: false
     }).template
-    return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
 }
 
 function getScript(vue) {
-    let sfc = vueCompiler.parse({
+    return vueCompiler.parse({
         source: vue,
         needMap: false
     }).script;
-    return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
 }
 
-function getStyle(vue) {
-    let sfc = vueCompiler.parse({
+function getStyles(vue) {
+    return vueCompiler.parse({
         source: vue,
         needMap: false
-    }).styles[0];
-    return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
+    }).styles;
 }
-
 
 function renameComputed(allKeys) {
     let renameList = []
@@ -431,7 +537,7 @@ function renameComputed(allKeys) {
             e.initComputedKeys.forEach(key => {
                 let newKey = key;
                 if (allKeys.includes(key)) {
-                    newKey = prefixComName(e.comObj, key)
+                    if (e.comObj) newKey = prefixComName(e.comObj, key)
                     while (allKeys.includes(newKey)) {
                         newKey = newKey + '$'
                     }
@@ -441,86 +547,32 @@ function renameComputed(allKeys) {
                         raw: key
                     });
                 }
-                newKeys.push(newKey)
+                newKeys.push(newKey);
+                allKeys.push(newKey);
             })
             e.computedKeys = newKeys; //修改pg_map中的methodsKey
-            allKeys = allKeys.concat(newKeys);
-            traverse(e.children);
+            traverse(e.children || []);
         })
     }
-    traverse(pg_map.components);
+    if (pg_map.vueTemplate) {
+        traverse([pg_map.vueTemplate, ...pg_map.components]);
+    } else {
+        traverse(pg_map.components);
+    }
     logger('renameComputed: renameList', renameList)
 
     if (!renameList.length) return;
 
     pg_map.renameMap.computed = renameList
-
-    let toRename = renameList.reduce((target, item) => {
-        let idx = target.findIndex(e => {
-            return e.node === item.node
-        })
-        if (~idx) {
-            target[idx].keys[item.raw] = item.value;
-        } else {
-            target.push({
-                node: item.node,
-                keys: {
-                    [item.raw]: item.value
-                }
-            })
-        }
-        return target;
-    }, [])
-
-    //compiled -> methodRenamed
-    toRename.forEach(({
-        node,
-        keys
-    }) => {
-        let script = getScript(node.compiled);
-        if (!script) return;
-        //替换掉@@为合法标识符
-        let cleared = clearControlChar(script);
-        script = cleared.text;
-
-        var ast = babylon.parse(script, {
-            sourceType: 'module'
-        });
-
-        let p = ast.program.body; //找出export语句
-        for (let i = 0; i < p.length; i++) {
-            if (p[i].type == 'ExportDefaultDeclaration') {
-                p = p[i].declaration.properties; //属性遍历找出methods
-                for (let i = 0; i < p.length; i++) {
-                    if (p[i].key.name == 'computed') {
-                        list = p[i].value.properties;
-                        list.forEach(val => {
-                            if (keys[val.key.name]) {
-                                val.key.name = keys[val.key.name];
-                            }
-                        })
-                        break;
-                    };
-                }
-                break;
-            }
-        }
-        script = script.replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':');
-
-        let newScript = babel_generator(ast).code;
-        newScript = newScript.replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
-
-        //替换compiled
-        node.compiled = node.compiled.replace(script, newScript)
-    })
 }
 
+//generate renameMap/pg_com.methodsKey
 function renameMethods() {
-    let AllMethodsKey = pg_map.components.filter(e => {
+    let AllMethodsKey = pg_map.components.filter(e => { //获取首层data
         return e.setDataWrapper;
     }).map(pg_com => {
         return pg_com.name;
-    });
+    }).concat(pg_map.vueTemplate ? pg_map.vueTemplate.dataKeys : []);
     let renameList = []
 
     function traverse(list) {
@@ -529,7 +581,7 @@ function renameMethods() {
             e.initMethodsKeys.forEach(key => {
                 let newKey = key;
                 if (AllMethodsKey.includes(key)) {
-                    newKey = prefixComName(e.comObj, key)
+                    if (e.comObj) newKey = suffixComName(e.comObj, key);
                     while (AllMethodsKey.includes(newKey)) {
                         newKey = newKey + '$'
                     }
@@ -540,79 +592,24 @@ function renameMethods() {
                     });
                 }
                 newMethodsKey.push(newKey)
+                AllMethodsKey.push(newKey);
             })
             e.methodsKeys = newMethodsKey; //修改pg_map中的methodsKey
-            AllMethodsKey = AllMethodsKey.concat(newMethodsKey);
-            traverse(e.children);
+            traverse(e.children || []);
         })
     }
-    traverse(pg_map.components);
+    if (pg_map.vueTemplate) {
+        traverse([pg_map.vueTemplate, ...pg_map.components]);
+    } else {
+        traverse(pg_map.components);
+    }
     logger('renameMethods: AllMethodsKey', AllMethodsKey)
     logger('renameMethods: renameList', renameList)
+
 
     if (!renameList.length) return AllMethodsKey;
 
     pg_map.renameMap.methods = renameList
-
-    let toRename = renameList.reduce((target, item) => {
-        let idx = target.findIndex(e => {
-            return e.node === item.node
-        })
-        if (~idx) {
-            target[idx].keys[item.raw] = item.value;
-        } else {
-            target.push({
-                node: item.node,
-                keys: {
-                    [item.raw]: item.value
-                }
-            })
-        }
-        return target;
-    }, [])
-
-    //compiled -> methodRenamed
-    toRename.forEach(({
-        node,
-        keys
-    }) => {
-        let script = getScript(node.compiled);
-        if (!script) return;
-
-        //替换掉@@为合法标识符
-        let cleared = clearControlChar(script);
-        script = cleared.text;
-
-        var ast = babylon.parse(script, {
-            sourceType: 'module'
-        });
-
-        let p = ast.program.body; //找出export语句
-        for (let i = 0; i < p.length; i++) {
-            if (p[i].type == 'ExportDefaultDeclaration') {
-                p = p[i].declaration.properties; //属性遍历找出methods
-                for (let i = 0; i < p.length; i++) {
-                    if (p[i].key.name == 'methods') {
-                        list = p[i].value.properties;
-                        list.forEach(val => {
-                            if (keys[val.key.name]) {
-                                val.key.name = keys[val.key.name];
-                            }
-                        })
-                        break;
-                    };
-                }
-                break;
-            }
-        }
-        script = script.replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
-
-        let newScript = babel_generator(ast).code;
-        newScript = newScript.replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
-
-        //替换compiled
-        node.compiled = node.compiled.replace(script, newScript);
-    })
 
     return AllMethodsKey;
 }
@@ -621,6 +618,11 @@ function prefixComName(comObj, key) {
     return comObj.name + key[0].toUpperCase() + key.slice(1);
 }
 
+function suffixComName(comObj, key) {
+    return key + comObj.name[0].toUpperCase() + comObj.name.slice(1);
+}
+
+//generate renameMap/pg_com.dataKeys
 function renameData() {
     let toRename = []
 
@@ -630,12 +632,13 @@ function renameData() {
             let children = traverse(e.children);
             let local = e.initDataKeys.map(key => {
                 return {
-                    node: e,
-                    value: key,
-                    raw: key
+                    node: e, // pg_com对象
+                    value: key, // 更改后的变量值
+                    raw: key // 原变量值
                 }
             })
 
+            // set dataKeys
             e.dataKeys = e.initDataKeys.slice();
 
             let nodes = local.concat(children);
@@ -646,8 +649,7 @@ function renameData() {
                 return node.value
             })
 
-            if (children.length) { //push to toRename
-                //去重
+            if (children.length) {
                 for (let i = local.length; i < nodes.length; i++) {
                     if (nodes[i].raw === '') { //以组件名称命名的key
                         let t = keys[i];
@@ -673,7 +675,7 @@ function renameData() {
                     if (key !== keys[idx]) {
                         toRename.push({
                             node: nodes[idx].node,
-                            value: keys[idx],
+                            value: keys[idx], //新值
                             raw: nodes[idx].raw
                         })
                     }
@@ -706,87 +708,159 @@ function renameData() {
                 }
             } else {
                 if (nodes.length > 0) {
+                    result.push(e.comObj.name)
                     e.setDataWrapper = true;
                 }
             }
         })
         return result;
     }
-    traverse(pg_map.components, true);
-    logger('renameData: toRename', toRename)
+    let dataKeys = traverse(pg_map.components, true);
+    if (pg_map.vueTemplate) {
+        pg_map.vueTemplate.dataKeys = pg_map.vueTemplate.initDataKeys.slice();
+        for (let i = 0; i < pg_map.vueTemplate.dataKeys.length; i++) {
+            let key = pg_map.vueTemplate.dataKeys[i];
+            let newKey = key;
+            while (
+                dataKeys.includes(newKey) ||
+                ~pg_map.vueTemplate.dataKeys.indexOf(newKey) &&
+                pg_map.vueTemplate.dataKeys.indexOf(newKey) !== i
+            ) {
+                newKey = key + '$';
+            }
+            if (newKey !== key) {
+                toRename.push({
+                    node: pg_map.vueTemplate,
+                    value: newKey,
+                    raw: key
+                })
+            }
+        }
+    }
 
     if (!toRename.length) return;
 
     //TODO:合并raw值相同、node相同的toRename item，较后的覆盖较前的
     toRename = toRename.reverse().filter((e, idx) => {
-        if (toRename.findIndex(t => {
-                return t.node === e.node && t.raw === e.raw;
-            }) != idx) {
-            return false
-        }
-        return true;
+        return toRename.findIndex(t => {
+            return t.node === e.node && t.raw === e.raw;
+        }) === idx
     }).reverse()
 
     pg_map.renameMap.data = toRename
 
-    //修改pg_map && 修改compiled
+    logger('renameData: toRename', toRename)
+
+    //修改pg_map
     toRename.forEach(({
         node,
         value,
         raw
     }) => {
-        //修改pg_map
         if (node.dataKeys.includes(raw)) {
             node.dataKeys[node.dataKeys.indexOf(raw)] = value;
         }
-
-        let script = getScript(node.compiled);
-        if (!script) return;
-
-        let startIdx = node.compiled.indexOf(script);
-        let scriptLength = script.length
-
-        //替换掉@@为合法标识符
-        let cleared = clearControlChar(script)
-        script = cleared.text
-
-        //替换原script部分
-        var ast = babylon.parse(script, {
-            sourceType: 'module'
-        });
-
-        let p = ast.program.body; //找出export语句
-        for (let i = 0; i < p.length; i++) {
-            if (p[i].type == 'ExportDefaultDeclaration') {
-                p = p[i].declaration.properties; //属性遍历找出methods
-                for (let i = 0; i < p.length; i++) {
-                    if (p[i].key.name == 'data') {
-                        p = p[i].body.body; //找出return语句
-                        for (let i = 0; i < p.length; i++) {
-                            if (p[i].type == 'ReturnStatement') {
-                                let properties = p[i].argument.properties;
-                                properties.forEach(val => {
-                                    if (val.key.name === raw) {
-                                        val.key.name = value;
-                                    }
-                                })
-                            };
-                        }
-                        break;
-                    };
-                }
-                break;
-            }
-        }
-
-        let newScript = babel_generator(ast).code.replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':');
-        let arr = node.compiled.split('');
-        arr.splice(startIdx, scriptLength, newScript);
-        let newVue = arr.join('')
-        //替换标识符引用
-        node.compiled = arr.join('')
-        logger('after renameData: compiled', node.compiled)
     })
+}
+
+function renameVueOptions() {
+    //需保证同一个raw不出现两次
+    trav(reduce(pg_map.renameMap.data), 'data')
+    trav(reduce(pg_map.renameMap.methods), 'methods')
+    trav(reduce(pg_map.renameMap.computed), 'computed')
+
+    function reduce(renameMap) {
+        if (!renameMap) return;
+        return renameMap.reduce((target, item) => {
+            let idx = target.findIndex(e => {
+                return e.node === item.node;
+            })
+            let map = {
+                raw: item.raw,
+                value: item.value
+            }
+            if (~idx) {
+                target[idx].maps.push(map)
+            } else {
+                target.push({
+                    node: item.node,
+                    maps: [map]
+                })
+            }
+            return target;
+        }, [])
+    }
+
+    function trav(renameMap, type) {
+        if (!renameMap) return;
+        renameMap.forEach(item => {
+            let node = item.node
+            let scriptSFC = getScript(node.compiled);
+            if (!scriptSFC) return;
+            script = node.compiled.slice(scriptSFC.start, scriptSFC.end)
+            //替换掉@@为合法标识符
+            let cleared = clearControlChar(script);
+            script = cleared.text;
+
+            var ast = babylon.parse(script, {
+                sourceType: 'module'
+            });
+            let p = ast.program.body; //找出export语句
+            for (let i = 0; i < p.length; i++) {
+                if (p[i].type == 'ExportDefaultDeclaration') {
+                    p = p[i].declaration.properties; //属性遍历找出methods
+                    for (let i = 0; i < p.length; i++) {
+                        if (type === 'data' && p[i].key.name == 'data') {
+                            p = p[i].body.body; //找出return语句
+                            for (let i = 0; i < p.length; i++) {
+                                if (p[i].type == 'ReturnStatement') {
+                                    let properties = p[i].argument.properties;
+                                    properties.forEach(val => {
+                                        let map = item.maps.find(map => {
+                                            return map.raw === val.key.name;
+                                        })
+                                        if (map) {
+                                            val.key.name = map.value;
+                                        }
+                                    })
+                                };
+                            }
+                            break;
+                        } else if (type === 'methods' && p[i].key.name == 'methods') {
+                            let list = p[i].value.properties;
+                            list.forEach(val => {
+                                let map = item.maps.find(map => {
+                                    return map.raw === val.key.name;
+                                })
+                                if (map) {
+                                    val.key.name = map.value;
+                                }
+                            })
+                            break;
+                        } else if (type === 'computed' && p[i].key.name == 'computed') {
+                            let list = p[i].value.properties;
+                            list.forEach(val => {
+                                let map = item.maps.find(map => {
+                                    return map.raw === val.key.name;
+                                })
+                                if (map) {
+                                    val.key.name = map.value;
+                                }
+                            })
+                            break;
+                        };
+                    }
+                    break;
+                }
+            }
+            let newScript = babel_generator(ast).code;
+            newScript = newScript.replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
+            let vueArr = node.compiled.split('');
+            vueArr.splice(scriptSFC.start, scriptSFC.end - scriptSFC.start, newScript)
+            node.compiled = vueArr.join('')
+        })
+    }
+
 }
 
 /**
@@ -809,7 +883,7 @@ function renameData() {
  * }
  */
 function getScriptData(vue) {
-    let script = getScript(vue);
+    let scriptSFC = getScript(vue);
     let ret = {
         data: {
             keys: [],
@@ -828,7 +902,8 @@ function getScriptData(vue) {
             body: ''
         }
     }
-    if (!script) return ret;
+    if (!scriptSFC) return ret;
+    let script = vue.slice(scriptSFC.start, scriptSFC.end)
 
     let cleared = clearControlChar(script);
     script = cleared.text
@@ -858,7 +933,7 @@ function getScriptData(vue) {
                 if (p[i].type == 'ReturnStatement') {
                     let arg = p[i].argument;
                     if (arg.type !== 'ObjectExpression') throw new Error('data方法必须return一个对象字面量');
-                    let properties = arg.properties;
+                    let properties = arg.properties; //无属性则为[]
                     return {
                         keys: properties.map((property, idx) => {
                             if (properties.findIndex(p => {
@@ -965,9 +1040,10 @@ function clearControlChar(text) {
     }
 }
 
-function initMap(components, comPaths) {
+function initMap(components, comPaths, vueTemplatePath) {
     pg_map.components = [];
     pg_map.renameMap = {};
+    pg_map.vueTemplate = null;
 
     function doCompile(comObj, list) {
         let pg_com = {
@@ -1055,12 +1131,29 @@ function initMap(components, comPaths) {
     components.forEach((comObj) => {
         doCompile(comObj, pg_map.components)
     })
+    if (vueTemplatePath) {
+        pg_map.vueTemplate = {};
+        let art = fs.readFileSync(vueTemplatePath, 'utf-8');
+        pg_map.vueTemplate.compiled = template.render(art, {
+            template: '____pg_template____',
+            style: '____pg_style____'
+        })
+        let scriptData;
+        try {
+            scriptData = getScriptData(pg_map.vueTemplate.compiled);
+        } catch (err) {
+            throw new Error('根组件编译后语法树解析错误：' + err.message)
+        }
+        pg_map.vueTemplate.initDataKeys = scriptData.data.keys;
+        pg_map.vueTemplate.initMethodsKeys = scriptData.methods.keys;
+        pg_map.vueTemplate.initComputedKeys = scriptData.computed.keys;
+    }
     logger('initMap', pg_map)
 }
 
-module.exports = async function (components, comPaths, vueTemplate) {
-    comPaths = Object.assign({},comPaths.custom,comPaths.local)
-    initMap(components, comPaths);
-    let output = render(merge(), vueTemplate);
+module.exports = async function (data, comPaths, pagePaths, supportVueTemplate = true) {
+    let vueTemplatePath = data.page && (pagePaths[data.page] || pagePaths[data.page + '.vue.art'])
+    initMap(data.components, comPaths, supportVueTemplate && vueTemplatePath); //init pg_map tree
+    let output = render(merge());
     return output
 }

@@ -9,14 +9,16 @@ const checkDataValid = require('../utils/checkDataValid');
 const utils = require('../utils/utils');
 
 //checked data valid;
-function template2Store(data, allComsConfig) {
-
+function template2Store(data, allComsConfig, allPages) {
     //upgrade
-    data = upgradeTemplateData(data, allComsConfig);
+    let components = upgradeTemplateData(data.components || [], allComsConfig);
+    let page = allPages[data.page] ? data.page : '';
+    checkDataValid({
+        page,
+        components
+    }, allComsConfig, allPages)
 
-    checkDataValid(data, allComsConfig)
-
-    let allComsName = utils.getAllNameInData(data);
+    let allComsName = utils.getAllComNameInData(components);
 
     function traverse(list) {
         let result = []
@@ -37,7 +39,6 @@ function template2Store(data, allComsConfig) {
             node.children = children;
 
             node.props = item.props ? utils.patchProps(item.props, config) : {};
-
 
             //parseSlot
             for (let key in node.props) {
@@ -62,14 +63,16 @@ function template2Store(data, allComsConfig) {
             }
 
             node.realTimePreview = window.httpVueLoader(`preview.vue?com=${node.type}&props=${ encodeURIComponent(JSON.stringify(node.props)) }`);
-            console.log('after template2Store',node.name, JSON.stringify(node, null, 2))
-            
+            console.log('after template2Store', node.name, JSON.stringify(node, null, 2))
 
             result.push(node)
         })
         return result;
     }
-    return traverse(data)
+    return {
+        page,
+        components: traverse(components)
+    }
 }
 
 

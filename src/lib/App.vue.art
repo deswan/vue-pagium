@@ -1,10 +1,32 @@
 <template>
-    {{{template}}}
+    {{{html}}}
 </template>
 <script>
 export default {
-    name: 'PG-Page',
-    {{{options}}}
+    name: 'Vue-Pagium',
+    data() {
+        return {
+            {{{data}}}
+        };
+    },
+    {{{each hooks}}}
+        {{{$index}}}() {
+            {{{$value}}}
+        },
+    {{{/each}}}
+    {{{if computed.trim()}}}
+    computed:{
+        {{{computed}}}
+    },
+    {{{/if}}}
+    {{{if watch.trim()}}}
+    watch:{
+        {{{watch}}}
+    },
+    {{{/if}}}
+    methods: {
+        {{{methods}}}
+    }
 };
 </script>
 <style>

@@ -1,8 +1,8 @@
 const path = require('path')
 const fs = require('fs-extra')
+const helpers = require('./helper')
 
 const template = require('./art');
-const vueCompiler = require('@vue/component-compiler-utils');
 
 function compile(name, comPath, props) {
     Object.assign(template.defaults.imports, {
@@ -28,36 +28,16 @@ function compile(name, comPath, props) {
         }
     })
 
-    function getHtml(vue) {
-        let sfc = vueCompiler.parse({
-            source: vue,
-            needMap: false
-        }).template
-        return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
-    }
-
-    function getScript(vue) {
-        let sfc = vueCompiler.parse({
-            source: vue,
-            needMap: false
-        }).script;
-        return sfc ? vue.slice(sfc.start, sfc.end).trim() : '';
-    }
-
     //替换export default
-    let script = getScript(replaced);
-    let newScript = script.replace('export default', 'module.exports =');
-    replaced = replaced.replace(script, newScript)
+    let newScript = helpers.getSFCText(replaced, 'script').replace('export default', 'module.exports =');
+    replaced = helpers.replaceSFC(replaced, 'script', newScript)
 
     //替换el-dialog
-    if (config.isDialog) {
-        replaced = replaceSingleDialog(replaced);
-    }
+    replaced = replaceSingleDialog(replaced);
 
     function replaceSingleDialog(vue) {
-        let template = getHtml(vue);
-        let newTemplate = template.replace(/<el-dialog([^>]*)>/g, '<pagium-dialog2018$1>').replace(/<\/el-dialog\s*>/g, '</pagium-dialog2018>')
-        return vue.replace(template, newTemplate);
+        let template = helpers.getSFCText(vue, 'template').replace(/<el-dialog([^>]*)>/g, '<pagium-dialog2018$1>').replace(/<\/el-dialog\s*>/g, '</pagium-dialog2018>')
+        return helpers.replaceSFC(vue, 'template', template);
     }
     return replaced;
 

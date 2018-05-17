@@ -24,7 +24,7 @@ const checkData = require('./checkDataValid')
     }
  */
 
-function checkTemplate(template, allComsConfig) {
+function checkTemplate(template, allComsConfig, allPages) {
     if (!template.name) {
         throw new Error('模板名称缺失')
     }
@@ -37,6 +37,6 @@ function checkTemplate(template, allComsConfig) {
         throw new Error('模板data缺失')
     }
 
-    checkData(template.data, allComsConfig,true)
+    checkData(template.data, allComsConfig, allPages, true)
 }
 module.exports = checkTemplate

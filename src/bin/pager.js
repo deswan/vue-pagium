@@ -56,6 +56,18 @@ function resolveConfigDir(configDir) {
     return p;
 }
 
+function getPages(configDir) {
+    let p = path.join(configDir, config.target.pages);
+    let pages = {};
+    if (fs.existsSync(p)) {
+        fs.readdirSync(p).forEach(file => {
+            if (!file.startsWith('.') && file.endsWith('.vue.art') && fs.statSync(path.join(p, file)).isFile()) {
+                pages[path.basename(file, '.vue.art')] = path.join(p, file)
+            }
+        })
+    }
+    return pages;
+}
 
 prog
     .version('1.0.0')
@@ -125,21 +137,16 @@ async function beforeStart(args, options) {
     console.log(chalk.white('----------------------'))
     console.log(chalk.white(`配置目录: ${info.configDir}`))
 
-    if (fs.existsSync(path.join(info.configDir, 'Page.art'))) {
-        info.vueTemplate = path.join(info.configDir, 'Page.art')
-        console.log(chalk.white(`输出模板: ${info.vueTemplate}`))
-    }
+    info.pages = getPages(info.configDir)
 
     info.target = resolveTarget(options.target || info.configDir);
     console.log(chalk.white(`输出目标位置: ${info.target}`))
     console.log(chalk.white('----------------------'))
 
     info.port = process.env.PORT || 8001;
-    
-    info.componentsRoot = null;
+
     info.componentPaths = {};
     if (fs.existsSync(path.join(info.configDir, config.target.comDir))) {
-        info.componentsRoot = path.join(info.configDir, config.target.comDir);
         info.componentPaths = getComponents(path.join(info.configDir, config.target.comDir))
     } else { //无自定义组件
         info.componentPaths = getComponents(config.componentDir)
@@ -164,19 +171,15 @@ async function beforeCreate(args, options) {
         }
     }
     console.log(chalk.white('----------------------'))
-    
+
     console.log(chalk.white(`配置目录: ${configDir || 'none'}`))
 
-    let vueTemplate;
-    if (configDir && fs.existsSync(path.join(configDir, 'Page.art'))) {
-        vueTemplate = path.join(configDir, 'Page.art')
-        console.log(chalk.white(`输出模板: ${vueTemplate}`))
-    }
+    let pages = getPages(info.configDir)
+
     let target = resolveTarget(args.target || '.');
 
     console.log(chalk.white(`输出目标位置: ${target}`))
     console.log(chalk.white('----------------------'))
-    
 
     //获取source
     let sourcePath = path.resolve(args.source);
@@ -199,15 +202,8 @@ async function beforeCreate(args, options) {
         throw new Error('source file must be valid json')
     }
 
-    logger('源文件：' + sourcePath)
-    logger('输出文件：' + target)
-
-    logger('configDir' + configDir)
-
-    let componentsRoot = null;
     let componentPaths = {};
     if (configDir && fs.existsSync(path.join(configDir, config.target.comDir))) {
-        componentsRoot = path.join(configDir, config.target.comDir);
         componentPaths = getComponents(path.join(configDir, config.target.comDir))
     } else { //无自定义组件
         componentPaths = getComponents(config.componentDir)
@@ -218,8 +214,7 @@ async function beforeCreate(args, options) {
         target,
         source,
         configDir,
-        vueTemplate,
-        componentsRoot
+        pages
     })
 }
 

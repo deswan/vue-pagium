@@ -1,5 +1,5 @@
 /**
- * $store.state.components/$store.state.dialogs -> template.data
+ * $store.state.data -> template.data
  */
 const constant = require('../const')
 
@@ -34,4 +34,11 @@ function traverse(list) {
     return result;
 }
 
-module.exports = traverse;
+function builder(data){
+    return {
+        page:data.page,
+        components:traverse(data.components)
+    }
+}
+
+module.exports = builder;

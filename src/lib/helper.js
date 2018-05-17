@@ -8,6 +8,7 @@ const config = require('../config');
 const {
     checkConfig
 } = require('../utils/checkConfigValid');
+const vueCompiler = require('@vue/component-compiler-utils');
 
 function warn(info) {
     console.warn(chalk.yellow(info))
@@ -19,19 +20,12 @@ function warn(info) {
  * @return {art:{name:Path},dir:{name:Path}}
  */
 function getComponents(root) {
-    let customPaths = {}
-    let localPaths = {}
-    
-    config.componentDir !== root && getComs(config.componentDir,localPaths)
-    getComs(root,customPaths)
+    let paths = {}
     
     let duplicatedComs = [];
-    Object.keys(customPaths).forEach(comName=>{
-        if(localPaths[comName]){
-            delete localPaths[comName];
-            duplicatedComs.push(comName);
-        }
-    })
+    config.componentDir !== root && getComs(config.componentDir,paths)
+    getComs(root,paths)
+    
     if (duplicatedComs.length) {
         warn(`系统自带组件 ${duplicatedComs.join(',')} 将被覆盖`)
     }
@@ -51,6 +45,9 @@ function getComponents(root) {
                     file === 'config.js' && (hasConfig = true);
                 })
                 if (hasConfig && hasArt) {
+                    if(target[dir]){
+                        duplicatedComs.push(dir)
+                    }
                     target[dir] = dirPath
                 } else {
                     warn(`组件文件夹${dir}缺少 ${!hasConfig ? 'config.js' : ''} ${!hasArt ? dir+'.vue.art' : ''}`)
@@ -58,15 +55,35 @@ function getComponents(root) {
             }
         })
     }
-    return {
-        custom:customPaths,
-        local:localPaths
+    return paths
+}
+
+function getSFCText(vue, type) {
+    let sfc = vueCompiler.parse({
+        source: vue,
+        needMap: false
+    })[type];
+    return sfc ? vue.slice(sfc.start, sfc.end) : null
+}
+
+function replaceSFC(vue,type,text){
+    let sfc = vueCompiler.parse({
+        source: vue,
+        needMap: false
+    })[type];
+    if(sfc){
+        let vueArr = vue.split('');
+        vueArr.splice(sfc.start,sfc.end - sfc.start,text);
+        return vueArr.join('');
+    }else{
+        return vue;
     }
 }
 
+
 module.exports = {
     getComponents,
-    // getLocalComponents,
-    // copyComponent,
-    warn
+    warn,
+    getSFCText,
+    replaceSFC
 }

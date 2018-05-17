@@ -2,11 +2,10 @@ const utils = require('../utils/utils')
 const checkDataValid = require('../utils/checkDataValid')
 const scheme2Default = require('../utils/scheme2Default');
 
-module.exports = function (data, allComsConfig) {
+module.exports = function (data, allComsConfig, allPages) {
+    checkDataValid(data, allComsConfig, allPages)
 
-    checkDataValid(data, allComsConfig)
-
-    let allComsName = utils.getAllNameInData(data);
+    let allComsName = utils.getAllComNameInData(data.components || []);
 
     function traverse(list) {
         let result = []
@@ -25,8 +24,6 @@ module.exports = function (data, allComsConfig) {
 
             node.props = item.props ? utils.patchProps(item.props, config) : {};
 
-            console.log('after patchProps',node.name, JSON.stringify(node.props, null, 2))
-
             //parseSlot
             for (let key in node.props) {
                 node.props[key] = utils.parseSlot(key, node.props[key], node, (name) => {
@@ -41,7 +38,7 @@ module.exports = function (data, allComsConfig) {
                         }
                     }, data)
                     return ret;
-                },true)
+                }, true)
             }
 
             node.props = {
@@ -49,12 +46,14 @@ module.exports = function (data, allComsConfig) {
                 ...node.props
             }
 
-            console.log('props',node.props)
-
+            console.log('after json2Compile', node)
 
             result.push(node)
         })
         return result;
     }
-    return traverse(data)
+    return {
+        page: data.page,
+        components: traverse(data.components),
+    }
 }

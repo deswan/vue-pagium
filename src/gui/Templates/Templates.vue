@@ -15,6 +15,12 @@
         width="180">
       </el-table-column>
       <el-table-column
+        prop="page"
+        label="根组件"
+        width="120">
+        <span slot-scope="scope">{{scope.row.data.page || '无'}}</span>
+      </el-table-column>
+      <el-table-column
         prop="remark"
         label="备注">
       </el-table-column>

@@ -15,19 +15,6 @@ Vue.use(Vuex)
 
 const COMPONENTS = process.Components;
 
-const allComsConfig = {}
-
-Object.keys(COMPONENTS.local).forEach(comName => {
-    allComsConfig[comName] = require(`../../Components/${comName}/config.js`)
-})
-if(process.ComponentsRoot){
-    Object.keys(COMPONENTS.custom).forEach(comName => {
-        allComsConfig[comName] = require(`${process.ComponentsRoot}/${comName}/config.js`)
-    })
-}
-
-console.log(allComsConfig)
-
 let uuid = 1;
 
 function attachUUID(list) {
@@ -38,11 +25,14 @@ function attachUUID(list) {
 
 const store = new Vuex.Store({
     state: {
+        allComsConfig: {},
         components: [],
         activeComponent: null,
         dialogs: [],
         curHover: null,
-        curTemplate: null
+        curTemplate: null,
+        page: '',
+        pages: []
     },
     getters: {
         components(state) {
@@ -55,29 +45,29 @@ const store = new Vuex.Store({
             return state.components.concat(state.dialogs)
         },
         activeComponentSetting(state) {
-            return state.activeComponent && scheme2Input(allComsConfig[state.activeComponent.type].props)
+            return state.activeComponent && scheme2Input(state.allComsConfig[state.activeComponent.type].props)
         },
         //for 添加组件
-        allComs() {
+        allComs(state) {
             let target = [];
-            for (let key in allComsConfig) {
-                if (!allComsConfig[key].isDialog) {
+            for (let key in state.allComsConfig) {
+                if (!state.allComsConfig[key].isDialog) {
                     target.push({
                         name: key,
-                        description: allComsConfig[key].description || ''
+                        description: state.allComsConfig[key].description || ''
                     });
                 }
             }
             return target;
         },
         //for 添加对话框
-        allDialogs() {
+        allDialogs(state) {
             let target = [];
-            for (let key in allComsConfig) {
-                if (allComsConfig[key].isDialog) {
+            for (let key in state.allComsConfig) {
+                if (state.allComsConfig[key].isDialog) {
                     target.push({
                         name: key,
-                        description: allComsConfig[key].description || ''
+                        description: state.allComsConfig[key].description || ''
                     });
                 }
             }
@@ -113,8 +103,8 @@ const store = new Vuex.Store({
             })
             return names;
         },
-        allComsConfig() {
-            return allComsConfig;
+        allComsConfig(state) {
+            return state.allComsConfig;
         },
         //编辑器中是否存在组件
         existData(state) {
@@ -186,7 +176,7 @@ const store = new Vuex.Store({
                     }, false)
                 }
             }, this.getters.data)
-
+            state.activeComponent = null;
             axios.post('/input', state)
 
         },
@@ -200,14 +190,14 @@ const store = new Vuex.Store({
             parent,
             comType: type
         }) {
-            const config = allComsConfig[type];
+            const config = state.allComsConfig[type];
 
             let name = config.name;
-            if (utils.isNameExist(this.getters.data, name)) {
-                let nameCounter = 1;
-                while (utils.isNameExist(this.getters.data, name)) {
-                    name = config.name + nameCounter++
-                }
+
+            //重名检测与更改
+            let nameCounter = 1;
+            while (utils.getComponentByName(this.getters.data, name)) {
+                name = config.name + nameCounter++
             }
 
             let comObj = {
@@ -223,9 +213,8 @@ const store = new Vuex.Store({
                 __pg_slot__: false //是否成为slot
             }
             parent.children.push(comObj);
-            window.httpVueLoader(`preview.vue?com=${type}&props=${ encodeURIComponent(JSON.stringify(scheme2Default(config.props))) }`)()
+            utils.loadRealTimePreview(type, scheme2Default(config.props))()
                 .then(data => {
-                    console.log(data);
                     comObj.realTimePreview = data;
                     axios.post('/input', state)
                 })
@@ -247,8 +236,8 @@ const store = new Vuex.Store({
         },
 
         /**
-         * 输入setting参数
-         * @param { String } name 字段名称
+         * 当前激活的组件输入参数
+         * @param { String } name 字段名称 （ _name表示修改组件名称 ）
          * @param { Any } value 字段值
          */
         input(state, {
@@ -260,7 +249,7 @@ const store = new Vuex.Store({
 
                 let oldName = state.activeComponent.name;
 
-                if (utils.isNameExist(this.getters.data, value)) {
+                if (utils.getComponentByName(this.getters.data, value)) {
                     me.$message.warning(`组件名 ${value} 已存在`);
                     value = oldName;
                 } else if (!utils.isValidIdentifier(value)) {
@@ -302,7 +291,7 @@ const store = new Vuex.Store({
                 }, false)
 
                 Vue.set(state.activeComponent.props, name, value);
-                window.httpVueLoader(`preview.vue?com=${state.activeComponent.type}&props=${ encodeURIComponent(JSON.stringify(state.activeComponent.props)) }`)()
+                utils.loadRealTimePreview(state.activeComponent.type, state.activeComponent.props)()
                     .then(data => {
                         state.activeComponent.realTimePreview = data;
                         axios.post('/input', state)
@@ -326,32 +315,34 @@ const store = new Vuex.Store({
             }
 
             function employ() {
-                let comList;
+                let data;
                 try {
-                    checkTemplateValid(template, allComsConfig)
-                    comList = template2Store(template.data, allComsConfig);
+                    checkTemplateValid(template, state.allComsConfig, state.pages)
+                    data = template2Store(template.data, state.allComsConfig, state.pages);
                 } catch (err) {
-                    throw err;
                     vm.$message.error('模板出错：' + err.message);
-                    return;
+                    throw err;
                 }
 
                 let dearthedComName = [];
                 let changedComName = [];
+                let dearthedPage = data.page !== template.data.page ? template.data.page : '';
 
                 utils.traverse((item) => {
-                    if (!allComsConfig[item.type]) {
+                    if (!state.allComsConfig[item.type]) {
                         !dearthedComName.includes(item.type) && dearthedComName.push(item.type);
-                    } else if (item.configSnapShoot !== JSON.stringify(allComsConfig[item.type])) {
+                    } else if (item.configSnapShoot !== JSON.stringify(state.allComsConfig[item.type])) {
                         !changedComName.includes(item.type) && changedComName.push(item.type);
                     }
-                }, template.data)
-                if (dearthedComName.length || changedComName.length) {
+                }, template.data.components)
+                if (dearthedComName.length || changedComName.length || dearthedPage) {
                     vm.$confirm(
                         (dearthedComName.length ?
                             `组件 ${dearthedComName.join(',')} 缺失，将删除组件数据\n` : '') +
                         (changedComName.length ?
-                            `组件 ${changedComName.join(',')} 配置已更变，可能缺失部分数据` : ''),
+                            `组件 ${changedComName.join(',')} 配置已更变，可能缺失部分数据` : '') +
+                        (dearthedPage ?
+                            `根组件文件 ${dearthedPage} 缺失` : ''),
                         "是否继续？", {
                             type: "warning"
                         }).then(_ => {
@@ -363,19 +354,19 @@ const store = new Vuex.Store({
 
                 function apply() {
                     state.curTemplate = template;
+                    state.page = data.page;
                     state.activeComponent = null;
                     state.curHover = null;
-                    
-                    attachUUID(state.components);
-                    attachUUID(state.dialogs);
-                    utils.traverse(item=>{
-                        item.realTimePreview = window.httpVueLoader(`preview.vue?com=${item.type}&props=${ encodeURIComponent(JSON.stringify(item.props)) }`)
-                    },comList)
 
-                    state.components = comList.filter(e => {
+                    attachUUID(data.components);
+                    utils.traverse(item => {
+                        item.realTimePreview = utils.loadRealTimePreview(item.type, item.props)
+                    }, data.components)
+
+                    state.components = data.components.filter(e => {
                         return !e.isDialog
                     })
-                    state.dialogs = comList.filter(e => {
+                    state.dialogs = data.components.filter(e => {
                         return e.isDialog
                     });
 
@@ -406,15 +397,25 @@ const store = new Vuex.Store({
 
         //getLastestInput之后赋值
         assign(state, data) {
-            attachUUID([...data.components,...data.dialogs]);
-            utils.traverse(item=>{
-                item.realTimePreview = window.httpVueLoader(`preview.vue?com=${item.type}&props=${ encodeURIComponent(JSON.stringify(item.props)) }`)
-            },[...data.components,...data.dialogs])
+            attachUUID([...data.components, ...data.dialogs]);
+            utils.traverse(item => {
+                item.realTimePreview = utils.loadRealTimePreview(item.type, item.props)
+            }, [...data.components, ...data.dialogs])
             Object.assign(state, {
-                components:data.components,
-                dialogs:data.dialogs,
-                curTemplate:data.curTemplate
+                components: data.components,
+                dialogs: data.dialogs,
+                curTemplate: data.curTemplate,
+                page: data.page
             })
+        },
+        fillAllComsConfig(state, obj) {
+            state.allComsConfig = obj;
+        },
+        fillPage(state, page) {
+            state.page = page;
+        },
+        fillPages(state, pages) {
+            state.pages = pages;
         }
     },
     actions: {
@@ -425,6 +426,12 @@ const store = new Vuex.Store({
                 if (Object.keys(data.data).length) {
                     this.commit('assign', data.data)
                 }
+            })
+            axios.get('/allComsConfig').then(({
+                data
+            }) => {
+                console.log(data.data)
+                this.commit('fillAllComsConfig', data.data)
             })
         }
     }

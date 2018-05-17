@@ -9,6 +9,15 @@
       </el-menu>
     </div>
     <div class="btn-group" :class="{['btn-group-show']:showBtn}">
+        <el-dropdown @command="selectPage" size="small" trigger="click">
+          <span class="root-dropdown">
+            根组件: {{$store.state.page || '无'}} <i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="">无</el-dropdown-item>
+            <el-dropdown-item v-for="page in Object.keys($store.state.pages)" :key="page" :command="page">{{page}}</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
         <el-popover
           placement="bottom"
           trigger="hover">
@@ -50,6 +59,8 @@ export default {
       defaultActive: "/",
       showBtn: false,
 
+      pages: [],
+
       //按钮加载状态
       saving: false,
       savingAsJSON: false,
@@ -70,11 +81,25 @@ export default {
     };
   },
   created() {
+    //获取所有根组件
+    this.$http
+      .get("/pages")
+      .then(({ data }) => {
+        this.$store.commit("fillPages", data.data);
+      })
+      .catch(err => {});
+
+    //获取编辑器状态信息
     this.$store.dispatch("getLastestInput");
-    this.$http.get("/getSavePath").then(({data}) => {
-      this.savePath = data.savePath;
-      this.jsonSavePath = data.jsonSavePath;
-    }).catch(err=>{});
+
+    //获取保存路径
+    this.$http
+      .get("/getSavePath")
+      .then(({ data }) => {
+        this.savePath = data.savePath;
+        this.jsonSavePath = data.jsonSavePath;
+      })
+      .catch(err => {});
   },
   mounted() {
     if (this.$route.name === "create") {
@@ -85,7 +110,10 @@ export default {
     save() {
       this.saving = true;
       this.$http
-        .post("/save", this.$store.getters.data)
+        .post("/save", {
+          components: this.$store.getters.data,
+          page: this.$store.state.page
+        })
         .then(({ data }) => {
           if (data.code === 0) {
             this.saving = false;
@@ -102,11 +130,14 @@ export default {
     preview() {
       this.previewing = true;
       this.$http
-        .post("/preview", this.$store.getters.data)
+        .post("/preview", {
+          components: this.$store.getters.data,
+          page: this.$store.state.page
+        })
         .then(({ data }) => {
           if (data.code === 0) {
             this.previewing = false;
-            window.open("/preview", "_blank",'',true);
+            window.open("/preview", "_blank", "", true);
           } else {
             throw new Error(data.data);
           }
@@ -130,7 +161,10 @@ export default {
           .post("/saveAsTemplate", {
             name: this.saveAsTemplateDialog.form.name,
             remark: this.saveAsTemplateDialog.form.remark,
-            data: this.$store.getters.data,
+            data: {
+              page: this.$store.state.page,
+              components: this.$store.getters.data
+            },
             isCover: !!isCover,
             allComsConfig: this.$store.getters.allComsConfig
           })
@@ -167,7 +201,7 @@ export default {
       this.saveAsTemplateDialog.commiting = false;
     },
     clear() {
-      this.$confirm("确定清空此页面么", "提示", {
+      this.$confirm("确定清空组件么", "提示", {
         type: "warning"
       })
         .then(_ => {
@@ -177,7 +211,10 @@ export default {
     },
     saveAsJSON() {
       this.$http
-        .post("/saveAsJSON", this.$store.getters.data)
+        .post("/saveAsJSON", {
+          components: this.$store.getters.data,
+          page: this.$store.state.page
+        })
         .then(({ data }) => {
           if (data.code === 0) {
             this.savingAsJSON = false;
@@ -188,8 +225,11 @@ export default {
         })
         .catch(err => {
           this.savingAsJSON = false;
-          this.$message.success("生成失败 " + data.data);
+          this.$message.success("生成JSON失败 " + err.message);
         });
+    },
+    selectPage(page) {
+      this.$store.commit("fillPage", page);
     }
   },
   watch: {
@@ -235,7 +275,12 @@ ul {
   transition-duration: 0.5s;
   opacity: 1;
 }
-.save-path{
+.save-path {
+  font-size: 12px;
+}
+.root-dropdown {
+  color: lightgrey;
+  cursor: pointer;
   font-size: 12px;
 }
 </style>

@@ -13,12 +13,16 @@
   "private": true,
   "bin": "src/bin/pager.js",
   "main": "src/lib/compile.js",
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config src/gui/build/webpack.dev.conf.js",
     "start": "npm run dev",
     "unit": "jest --config test/unit/jest.conf.js --coverage",
     "test": "npm run unit",
-    "build": "node build/build.js",
+    "build": "node src/gui/build/build.js",
     "docs:dev": "vuepress dev src/docs",
     "docs:build": "vuepress build src/docs"
   },
