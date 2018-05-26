@@ -366,8 +366,6 @@
 	httpVueLoader.load = function(url, name) {
 
 		return function() {
-			console.log(url)
-
 			return new Component(name).load(url)
 			.then(function(component) {
 				return component.normalize();

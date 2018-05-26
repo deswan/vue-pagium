@@ -1,15 +1,15 @@
 <template>
   <div id="app">
     <div class="header">
+      
       <el-menu :default-active="$route.path" mode="horizontal" background-color="#545c64"
   text-color="#fff" active-text-color="#ffd04b" router>
-        <el-menu-item index="/">模板</el-menu-item>
-        <el-menu-item index="/create" >编辑页面</el-menu-item>
-        <el-menu-item index="/doc" >关于</el-menu-item>
+        <el-menu-item index="/"><img class="logo" src="./assets/logo.png" alt=""><span class="logo-text">pagium</span></el-menu-item>
+        <el-menu-item index="/create" >编辑器</el-menu-item>
       </el-menu>
     </div>
     <div class="btn-group" :class="{['btn-group-show']:showBtn}">
-        <el-dropdown @command="selectPage" size="small" trigger="click">
+        <el-dropdown @command="selectPage" size="medium" trigger="click">
           <span class="root-dropdown">
             根组件: {{$store.state.page || '无'}} <i class="el-icon-arrow-down el-icon--right"></i>
           </span>
@@ -21,17 +21,17 @@
         <el-popover
           placement="bottom"
           trigger="hover">
-          <span class="save-path">保存路径：{{savePath}}</span>
-            <el-button slot="reference" type="primary" size="small" @click="save" :loading="saving">保存</el-button>
+          <span class="save-path">输出路径：{{savePath}}</span>
+            <el-button slot="reference" type="primary" size="small" @click="save" :loading="saving">生成</el-button>
         </el-popover>
         <el-button type="info" size="small" @click="preview" :loading="previewing">预览</el-button>
          <el-popover
           placement="bottom"
           trigger="hover">
-          <span class="save-path">保存路径：{{jsonSavePath}}</span>
+          <span class="save-path">输出路径：{{jsonSavePath}}</span>
           <el-button slot="reference" size="small" @click="saveAsJSON" :loading="savingAsJSON">生成JSON</el-button>
         </el-popover>
-        <el-button type="success" size="small" @click="openSaveAsTemplate">生成模板</el-button>
+        <el-button type="success" size="small" @click="openSaveAsTemplate">保存为模板</el-button>
         <el-button type="danger" size="small" @click="clear">清空</el-button>
     </div>
     <router-view></router-view>
@@ -137,7 +137,7 @@ export default {
         .then(({ data }) => {
           if (data.code === 0) {
             this.previewing = false;
-            window.open("/preview", "_blank", "", true);
+            window.open("/preview", "_blank")
           } else {
             throw new Error(data.data);
           }
@@ -174,7 +174,7 @@ export default {
               this.saveAsTemplateDialog.show = false;
               this.$message.success("保存模板成功");
             } else if (data.code === 1) {
-              this.$confirm("将覆盖原有模板，是否允许？", "提示", {
+              this.$confirm("将覆盖原有模板，是否修改？", "提示", {
                 type: "info"
               })
                 .then(_ => {
@@ -282,5 +282,12 @@ ul {
   color: lightgrey;
   cursor: pointer;
   font-size: 12px;
+}
+.logo{
+  width: 30px;
+}
+.logo-text{
+  text-shadow:gray 2px 2px 2px;
+  color:#eee;
 }
 </style>

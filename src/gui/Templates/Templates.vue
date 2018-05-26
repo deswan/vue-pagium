@@ -1,5 +1,6 @@
 <template>
   <div class="template-list">
+    <h3>模板列表</h3>
     <el-table
     v-loading="table.loading"
       :data="table.items" style="margin-top:10px;">
@@ -28,8 +29,8 @@
         label="操作"
         width="300">
         <template slot-scope="scope">
-          <el-button size="small" @click="employ(scope.row)">生成页面</el-button>
-          <el-button size="small" type="warning" @click="del(scope.row)">删除模板</el-button>
+          <el-button size="small" @click="employ(scope.row)">应用</el-button>
+          <el-button size="small" type="warning" @click="del(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

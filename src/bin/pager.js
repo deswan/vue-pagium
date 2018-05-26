@@ -17,9 +17,6 @@ const start = require('../lib/start');
 const create = require('../lib/create');
 const eject = require('../lib/eject');
 const add = require('../lib/add');
-const {
-    checkConfig
-} = require('../utils/checkConfigValid');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'production'
 
@@ -174,7 +171,7 @@ async function beforeCreate(args, options) {
 
     console.log(chalk.white(`配置目录: ${configDir || 'none'}`))
 
-    let pages = getPages(info.configDir)
+    let pages = getPages(configDir)
 
     let target = resolveTarget(args.target || '.');
 

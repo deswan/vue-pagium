@@ -18,7 +18,10 @@ function compile(name, comPath, props) {
     })
     template.defaults.root = path.dirname(comPath);
     let config = require(path.join(comPath, 'config.js'));
-    let compiled = template(path.join(comPath, name + '.vue.art'), props)
+    let compiled = template(path.join(comPath, name + '.vue.art'), {
+        _real_time_preview_: true,
+        ...props
+    })
     let replaced = compiled.replace(/@@([$a-zA-Z][$\w]*)?(:[$a-zA-Z][$\w]*)?/g, function (input, varName, modifier) {
         modifier && (modifier = modifier.slice(1))
         if (modifier === 'wrapper') {

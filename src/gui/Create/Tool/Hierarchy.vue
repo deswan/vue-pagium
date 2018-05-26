@@ -24,9 +24,9 @@
           </el-tag>
         </span>
         <span class="tree-node-action" v-if="node.name">
-          <el-popover placement="right-end" trigger="click" v-model="showComlib" popper-class="comlib-popper">  
+          <el-popover placement="right-end" trigger="click" v-model="showComlib" popper-class="pg-comlib-popper">  
             <div class="com-lib" v-if="isDialog && idx === undefined">
-              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allDialogs" max-height="500" size="medium">
+              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allDialogs.slice().reverse()" max-height="500" size="medium">
                 <el-table-column label="添加组件">
                   <template slot-scope="scope">
                       <span>{{scope.row.name}}</span>
@@ -40,7 +40,7 @@
               </el-table>
             </div>
             <div class="com-lib" v-else>
-              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allComs" max-height="500" size="medium">
+              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allComs.slice().reverse()" max-height="500" size="medium">
                 <el-table-column label="添加组件">
                   <template slot-scope="scope">
                       <span>{{scope.row.name}}</span>
@@ -392,10 +392,7 @@ $color-extra-light-black: #999;
 .com-lib {
   width: 300px;
 }
-.comlib-popper{
-  z-index:4000 !important;
-}
 .cur-select {
-  background-color: lightgrey;
+  background-color: whitesmoke;
 }
 </style>

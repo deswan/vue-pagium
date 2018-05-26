@@ -4,7 +4,7 @@ module.exports = {
     previewOutputPath:path.resolve(__dirname, './gui/Preview/App.vue'),
     distPath:path.resolve(__dirname, 'dist'),
     target:{
-        dir:'.pager',
+        dir:'.vue-pagium',
         pages:'Pages',
         comDir:'Components',
         tempName:'.templates.json',

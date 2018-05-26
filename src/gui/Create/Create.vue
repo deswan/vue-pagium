@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="create">
     <my-tool></my-tool>
     <draw-board></draw-board>
     <setting-board></setting-board>
@@ -28,5 +28,12 @@ export default {
 </script>
 
 <style>
-
+#create{
+  width:100vw;
+  height: calc(100vh - 61px);
+  background: white;
+}
+.pg-comlib-popper{
+  z-index:4000 !important;
+}
 </style>

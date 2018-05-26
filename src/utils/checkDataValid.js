@@ -12,9 +12,9 @@ function checkData(data, allComsConfig, allPages, noCheckConfig) {
         if (!noCheckConfig) throw new Error(`不存在根组件 ${page}`)
     }
 
-    checkComponents(data.components || [])
+    if(data.components) checkComponents(data.components || [])
 
-    function checkComponents(components, allComsConfig, allPages, noCheckConfig) {
+    function checkComponents(components, allComsConfig, noCheckConfig) {
         if (!Array.isArray(components)) {
             throw new Error('components字段格式不合法')
         }
@@ -25,7 +25,7 @@ function checkData(data, allComsConfig, allPages, noCheckConfig) {
                 throw new Error(JSON.stringify(item, null, 2) + "\n" + err.message)
             }
             if (item.children) {
-                checkComponents(item.children, allComsConfig, allPages, noCheckConfig)
+                checkComponents(item.children, allComsConfig, noCheckConfig)
             }
         })
     }

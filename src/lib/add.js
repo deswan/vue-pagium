@@ -7,7 +7,7 @@ function configExample(comName) {
     return `
 module.exports = {
     name: '${comName[0].toLowerCase() + comName.slice(1)}',
-    description:''
+    description:'',
     isDialog:false,
     exposeProperty:[],
     props: [{

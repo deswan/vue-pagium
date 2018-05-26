@@ -1,16 +1,17 @@
 <template>
 
-<div class="board-wrapper">
-  <div class="main-board" ref="mainBoard" @click="clickMask">
+<div class="board-wrapper" ref="mainBoard" @click="clickMask">
     <div id="board-mask" @mouseleave="onLeave" :style="{top:mask.top,left:mask.left,width:mask.width,height:mask.height}">
       {{mask.comObj ? mask.comObj.name : ''}}
     </div>
+    
     <pg-com
       :com-obj="comObj" 
       @enter="onEnter" 
       @leave="onLeave" 
       v-for="comObj in $store.getters.components" 
       :key="comObj.pg"></pg-com>
+    
     <!-- Dialogs -->
     <pg-com 
     :com-obj="comObj" 
@@ -18,10 +19,7 @@
     @leave="onLeave" 
     v-for="comObj in $store.getters.dialogs" 
     :key="comObj.pg"></pg-com>
-  </div>
-
 </div>
-
 </template>
 
 <script>
@@ -47,8 +45,8 @@ export default {
     onEnter({ comObj, rect }) {
       let { top, left, width, height } = rect;
       Object.assign(this.mask, {
-        top: top - 80 + this.$refs.mainBoard.scrollTop + "px",
-        left: left - 270 + "px",
+        top: top - 60 + this.$refs.mainBoard.scrollTop + "px",
+        left: left - 251 + this.$refs.mainBoard.scrollLeft + "px",
         width: width + "px",
         height: height + "px",
         comObj
@@ -96,17 +94,18 @@ export default {
   left: 250px;
   right: 600px;
   bottom: 0;
-  background-color: whitesmoke;
   overflow: auto;
+  border:solid 1px #eee;
+  border-top:none;
+  border-bottom:none;
+  padding: 20px;
 }
-.main-board {
+/* .main-board {
   position: relative;
   height: calc(100% - 40px);
   margin: 20px;
   overflow: auto;
-  background-color: white;
-  box-shadow: 0 0 20px lightgray;
-}
+} */
 #board-mask {
   box-sizing: border-box;
   position: absolute;
@@ -116,8 +115,6 @@ export default {
   line-height: 15px;
   padding-left: 5px;
   text-align: center;
-  max-width: 100%;
-  max-height: 100%;
   overflow: hidden;
 }
 </style>

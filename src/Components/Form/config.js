@@ -1,5 +1,6 @@
 module.exports = {
     name:'form',
+    exposeProperty:['clear'],
     description:'表单',
     props: [{
         name: "inline",

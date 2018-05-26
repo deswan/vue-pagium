@@ -12,7 +12,7 @@ module.exports = async function (info) {
         return target;
     }, {})
 
-    let output = json2compile(info.source, allComsConfig)
+    let output = json2compile(info.source, allComsConfig, info.pages)
 
     return compile(output, info.componentPaths, info.pages).then(output => {
         return fs.outputFile(info.target, output)

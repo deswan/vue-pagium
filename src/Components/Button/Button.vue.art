@@ -26,7 +26,7 @@ export default {
         {{{/each}}}
       {{{/if}}}
     } 
-  },
+  }
 };
 </script>
 

@@ -23,7 +23,7 @@
       <el-button plain icon="el-icon-plus" circle type="primary" size="mini" @click="add"></el-button>
     </div>
 
-    <el-dialog :visible.sync="detail.show" append-to-body width="80%" :show-close="false">
+    <el-dialog :visible.sync="detail.show" append-to-body width="80%">
         <el-table 
       :data="input" size="mini" row-key="__id__">
         <el-table-column  width="120px">

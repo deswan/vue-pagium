@@ -1,5 +1,5 @@
 /**
- * browser/node 共用模块
+ * browser模块
  * template.data -> $store.state.components/$store.state.dialogs
  * TODO:检查合法性
  */
@@ -8,7 +8,6 @@ const upgradeTemplateData = require('../utils/upgradeTemplateData');
 const checkDataValid = require('../utils/checkDataValid');
 const utils = require('../utils/utils');
 
-//checked data valid;
 function template2Store(data, allComsConfig, allPages) {
     //upgrade
     let components = upgradeTemplateData(data.components || [], allComsConfig);
@@ -52,18 +51,19 @@ function template2Store(data, allComsConfig, allPages) {
                         if (item.name === name) {
                             ret = allComsConfig[item.type].exposeProperty
                         }
-                    }, data)
+                    }, components)
                     return ret;
                 })
             }
 
             node.props = {
-                ...scheme2Default(config.props),
-                ...node.props
+                ...scheme2Default(config.props,true),
+                ...node.props,
+                _name:node.name
             }
+            console.log(node)
 
-            node.realTimePreview = window.httpVueLoader(`preview.vue?com=${node.type}&props=${ encodeURIComponent(JSON.stringify(node.props)) }`);
-            console.log('after template2Store', node.name, JSON.stringify(node, null, 2))
+            node.realTimePreview = utils.loadRealTimePreview(node.type,node.props)
 
             result.push(node)
         })
@@ -71,7 +71,7 @@ function template2Store(data, allComsConfig, allPages) {
     }
     return {
         page,
-        components: traverse(components)
+        components: traverse(components || [])
     }
 }
 

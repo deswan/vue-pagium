@@ -1,6 +1,7 @@
 <template>
     <el-form
-    :model="@@:wrapper" 
+    ref="{{{_name}}}"
+    {{{if !_real_time_preview_}}} :model="@@:wrapper" {{{/if}}}
     label-suffix=":"
     {{{if labelPosition}}} label-position="{{{labelPosition}}}" {{{/if}}}  
     {{{if labelWidth}}} label-width="{{{labelWidth}}}" {{{/if}}}  
@@ -17,6 +18,11 @@ export default {
     return {
     };
   },
+  methods:{
+    clear(){
+      this.$refs['{{{_name}}}'].resetFields();
+    }
+  }
 };
 </script>
 

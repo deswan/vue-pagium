@@ -3,8 +3,11 @@ const checkDataValid = require('../utils/checkDataValid')
 const scheme2Default = require('../utils/scheme2Default');
 
 module.exports = function (data, allComsConfig, allPages) {
+
+    //严格检查合法性
     checkDataValid(data, allComsConfig, allPages)
 
+    //检测重复组件名
     let allComsName = utils.getAllComNameInData(data.components || []);
 
     function traverse(list) {
@@ -18,13 +21,11 @@ module.exports = function (data, allComsConfig, allPages) {
                 __pg_slot__: false
             }
 
-            let children = item.children ? traverse(item.children) : [];
-
-            node.children = children;
+            node.children = item.children ? traverse(item.children) : [];
 
             node.props = item.props ? utils.patchProps(item.props, config) : {};
 
-            //parseSlot
+            //slot、refer 合法性检查、添加属性
             for (let key in node.props) {
                 node.props[key] = utils.parseSlot(key, node.props[key], node, (name) => {
                     return allComsName.find(e => {
@@ -36,17 +37,16 @@ module.exports = function (data, allComsConfig, allPages) {
                         if (item.name === name) {
                             ret = allComsConfig[item.type].exposeProperty
                         }
-                    }, data)
+                    }, data.components)
                     return ret;
                 }, true)
             }
 
             node.props = {
                 ...scheme2Default(config.props),
-                ...node.props
+                ...node.props,
+                _name:node.name
             }
-
-            console.log('after json2Compile', node)
 
             result.push(node)
         })
@@ -54,6 +54,6 @@ module.exports = function (data, allComsConfig, allPages) {
     }
     return {
         page: data.page,
-        components: traverse(data.components),
+        components: traverse(data.components || []),
     }
 }

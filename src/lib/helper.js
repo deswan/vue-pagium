@@ -21,16 +21,16 @@ function warn(info) {
  */
 function getComponents(root) {
     let paths = {}
-    
+
     let duplicatedComs = [];
-    config.componentDir !== root && getComs(config.componentDir,paths)
-    getComs(root,paths)
-    
+    config.componentDir !== root && getComs(config.componentDir, paths)
+    getComs(root, paths)
+
     if (duplicatedComs.length) {
         warn(`系统自带组件 ${duplicatedComs.join(',')} 将被覆盖`)
     }
 
-    function getComs(root,target) {
+    function getComs(root, target) {
         fs.readdirSync(root).forEach(dir => {
             if (dir.startsWith('.')) return;
 
@@ -45,7 +45,13 @@ function getComponents(root) {
                     file === 'config.js' && (hasConfig = true);
                 })
                 if (hasConfig && hasArt) {
-                    if(target[dir]){
+                    try{
+                        checkConfig(require(path.join(dirPath, 'config.js')));
+                    }catch(err){
+                        throw new Error(`${dir}/config.js 错误：${err.message}`)
+                    }
+                    if (target[dir]) {
+                        delete target[dir]
                         duplicatedComs.push(dir)
                     }
                     target[dir] = dirPath
@@ -66,16 +72,16 @@ function getSFCText(vue, type) {
     return sfc ? vue.slice(sfc.start, sfc.end) : null
 }
 
-function replaceSFC(vue,type,text){
+function replaceSFC(vue, type, text) {
     let sfc = vueCompiler.parse({
         source: vue,
         needMap: false
     })[type];
-    if(sfc){
+    if (sfc) {
         let vueArr = vue.split('');
-        vueArr.splice(sfc.start,sfc.end - sfc.start,text);
+        vueArr.splice(sfc.start, sfc.end - sfc.start, text);
         return vueArr.join('');
-    }else{
+    } else {
         return vue;
     }
 }

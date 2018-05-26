@@ -77,7 +77,6 @@ export default {
 .toolbox {
   position: fixed;
   width: 250px;
-  background: #eeeeee;
   left: 0;
   top: 60px;
   bottom: 0;
@@ -86,9 +85,5 @@ export default {
   z-index: 999;
   box-sizing: border-box;
   word-wrap: break-word;
-}
-
-.add-btn {
-  margin-left: 10px;
 }
 </style>

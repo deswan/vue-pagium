@@ -207,7 +207,10 @@ const store = new Vuex.Store({
                 type,
                 isDialog: config.isDialog,
                 exposeProperty: config.exposeProperty,
-                props: scheme2Default(config.props, true),
+                props: {
+                    ...scheme2Default(config.props, true),
+                    _name:name
+                },
                 children: [],
                 realTimePreview: null,
                 __pg_slot__: false //是否成为slot
@@ -290,13 +293,13 @@ const store = new Vuex.Store({
                     return utils.getComponentByName(this.getters.data, name) && utils.getComponentByName(this.getters.data, name).exposeProperty
                 }, false)
 
-                Vue.set(state.activeComponent.props, name, value);
-                utils.loadRealTimePreview(state.activeComponent.type, state.activeComponent.props)()
-                    .then(data => {
-                        state.activeComponent.realTimePreview = data;
-                        axios.post('/input', state)
-                    })
             }
+            Vue.set(state.activeComponent.props, name, value);
+            utils.loadRealTimePreview(state.activeComponent.type, state.activeComponent.props)()
+                .then(data => {
+                    state.activeComponent.realTimePreview = data;
+                    axios.post('/input', state)
+                })
         },
 
         //部署模板
@@ -335,17 +338,15 @@ const store = new Vuex.Store({
                         !changedComName.includes(item.type) && changedComName.push(item.type);
                     }
                 }, template.data.components)
-                if (dearthedComName.length || changedComName.length || dearthedPage) {
-                    vm.$confirm(
-                        (dearthedComName.length ?
-                            `组件 ${dearthedComName.join(',')} 缺失，将删除组件数据\n` : '') +
-                        (changedComName.length ?
-                            `组件 ${changedComName.join(',')} 配置已更变，可能缺失部分数据` : '') +
-                        (dearthedPage ?
-                            `根组件文件 ${dearthedPage} 缺失` : ''),
-                        "是否继续？", {
-                            type: "warning"
-                        }).then(_ => {
+                let noticeText = [];
+                if (dearthedComName.length) noticeText.push(`组件 ${dearthedComName.join(',')} 缺失，将删除组件数据。`);
+                if (changedComName.length) noticeText.push(`组件 ${changedComName.join(',')} 配置已更变，可能缺失部分数据。`);
+                if (dearthedPage.length) noticeText.push(`根组件文件 ${dearthedPage} 缺失，将删除该根组件。`);
+                if (noticeText.length) {
+                    vm.$confirm(noticeText.join('<br>'), "是否继续？", {
+                        dangerouslyUseHTMLString:true,
+                        type: "warning"
+                    }).then(_ => {
                         apply();
                     }).catch(err => {})
                 } else {
@@ -430,7 +431,6 @@ const store = new Vuex.Store({
             axios.get('/allComsConfig').then(({
                 data
             }) => {
-                console.log(data.data)
                 this.commit('fillAllComsConfig', data.data)
             })
         }

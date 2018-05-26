@@ -2,7 +2,7 @@
 {{{if isFormItem && !_scope}}}
   <el-form-item 
   {{{if label}}} label="{{{label}}}" {{{/if}}}
-  props="@@value:last"
+  prop="@@value:last"
   {{{if required}}} :rules="[{required: true, message: '{{{label || ''}}}不能为空'}]" {{{/if}}}
   >
 {{{/if}}}

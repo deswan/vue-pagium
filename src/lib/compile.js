@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const hash = crypto.createHash('sha256');
 
 const utils = require('../utils/utils')
+const helpers = require('./helper')
 const babylon = require('babylon');
 const vueCompiler = require('@vue/component-compiler-utils');
 const babel_generator = require('babel-generator').default;
@@ -113,27 +114,26 @@ function replaceIdentifier() {
 
         if (modifier) {
             if (modifier === 'wrapper') {
-                let match = pg_com.wrapper.match(/(?:\.|^)([$a-zA-Z][$\w]*)\.$/);
-                if (match) {
-                    return match[1];
-                } else {
-                    throw new Error(match + `\n组件${pg_com.name}的包裹对象不存在，因该组件及其子组件没有任何data属性`)
+                if(pg_com.wrapper){
+                    return pg_com.wrapper.slice(0,-1)
+                }else{
+                    throw new Error(`组件${pg_com.name}的包裹对象不存在，因该组件及其子组件没有任何data属性`)
                 }
             } else if (modifier === 'last') {
-                if (!varName) throw new Error(match + '\n请指定vue选项数据名称')
+                if (!varName) throw new Error(`组件${pg_com.name}:请指定vue选项数据名称`)
                 if (!isData && !isMethod && !isComputed) throw new Error(match + `\nvue选项数据${varName}不存在`)
                 return renamedVarName;
             } else {
-                throw new Error(match + '\n' + modifier + '修饰符不存在')
+                throw new Error(`组件${pg_com.name}:修饰符 ${modifier} 不存在`)
             }
         } else {
-            if (!varName) throw new Error(match + '\n请指定vue选项数据名称')
+            if (!varName) throw new Error(`组件${pg_com.name}:请指定vue选项数据名称`)
             if (isData) { //data
                 return pg_com.wrapper + renamedVarName;
             } else if (isComputed || isMethod) {
                 return renamedVarName;
             } else {
-                throw new Error(match + `\n${pg_com.name}组件的变量${varName}不存在`)
+                throw new Error(`${pg_com.name}组件的变量${varName}不存在`)
             }
         }
     }
@@ -245,6 +245,8 @@ function merge() {
                 parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
                 parsed.computed = mergeMethod(parsed.computed, childParsed.computed)
                 parsed.watch = mergeMethod(parsed.watch, childParsed.watch)
+            }else{
+                parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER, '');
             }
 
             //收集slot组件数据
@@ -361,8 +363,11 @@ function merge() {
     }
     let ret = doMerge(pg_map.components)
 
+    ret.html = `<div>\n${ret.html}\n</div>`;
+
     if (pg_map.vueTemplate) {
 
+        //替换 template/style 占位符
         pg_map.vueTemplate.replaced = pg_map.vueTemplate.replaced.replace('____pg_template____', ret.html)
             .replace('____pg_style____', ret.style)
 
@@ -375,8 +380,8 @@ function merge() {
         ret.watch = mergeMethod(parsed.watch, ret.watch)
     }
 
+
     //删除末尾逗号
-    ret.html.slice(-1) === ',' && (ret.html = ret.html.slice(0, -1))
     ret.data.slice(-1) === ',' && (ret.data = ret.data.slice(0, -1))
     ret.methods.slice(-1) === ',' && (ret.methods = ret.methods.slice(0, -1))
     ret.watch.slice(-1) === ',' && (ret.watch = ret.watch.slice(0, -1))
@@ -403,9 +408,6 @@ function render(data) {
     let output;
     if (pg_map.vueTemplate) {
         let vue = pg_map.vueTemplate.replaced;
-        let scriptSFC = getScript(vue)
-        let script = vue.slice(scriptSFC.start, scriptSFC.end);
-        let vueArr = vue.split('')
         let t = `data() {
                 return {
                     {{{data}}}
@@ -433,8 +435,10 @@ function render(data) {
             }`;
         let tt = template.render(t, data);
 
+        let script = helpers.getSFCText(vue,'script');
+
         //删除相关选项
-        var ast = babylon.parse(script, {
+        let ast = babylon.parse(script, {
             sourceType: 'module'
         });
         let p = ast.program.body;
@@ -456,31 +460,28 @@ function render(data) {
                 break;
             }
         }
-        console.log(i, p.length)
         if (i >= p.length) {
             throw new Error('根组件必须含有一个export default块')
         }
+
+
         //添加选项
-        let newScript = babel_generator(ast).code;
-        ast = babylon.parse(newScript, {
+        let removedOptionScript = babel_generator(ast).code;
+        ast = babylon.parse(removedOptionScript, {
             sourceType: 'module'
         });
-        let out = '';
+        let newScript = '';
         p = ast.program.body;
         for (let i = 0; i < p.length; i++) {
             if (p[i].type === 'ExportDefaultDeclaration') {
                 p = p[i].declaration;
-                out += newScript.slice(0, p.end - 1);
-                out += (out.trim().slice(-1) !== ',' ? ',' : '') + tt + newScript.slice(p.end - 1);
+                newScript += removedOptionScript.slice(0, p.end - 1);
+                newScript += (newScript.trim().slice(-1) !== ',' ? ',' : '') + tt + removedOptionScript.slice(p.end - 1);
             }
         }
-        vueArr.splice(scriptSFC.start, scriptSFC.end - scriptSFC.start, ...out);
-        output = vueArr.join('')
+        output = helpers.replaceSFC(vue,'script',newScript)
     } else {
         output = template(path.join(__dirname, 'App.vue.art'), data)
-        console.log('====================================');
-        console.log(output, data);
-        console.log('====================================');
     }
     return beautify(output);
 }
@@ -1115,6 +1116,8 @@ function initMap(components, comPaths, vueTemplatePath) {
 
         //编译模板
         pg_com.compiled = compile(comObj, imports, comPaths);
+
+        console.log(pg_com.name,pg_com.compiled)
 
         //抽取需重命名的vue选项数据
         let scriptData;

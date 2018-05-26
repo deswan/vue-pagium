@@ -31,13 +31,12 @@ let hasError = (conf) => {
     } else {
         return "必须指定 options"
     }
-    return false;
 }
 
 function isValid(value) {
     return value === '' || this.options.some(e => {
-        if (e.key && e.value) {
-            return value === e.key
+        if (e.label && e.value) {
+            return value === e.value
         } else {
             return value === e
         }

@@ -12,10 +12,6 @@ const opn = require('opn');
 const dayjs = require('dayjs');
 const portfinder = require('portfinder');
 const builder = require('./builder');
-
-const {
-    checkConfig
-} = require('../utils/checkConfigValid');
 const constant = require('../const');
 const compile = require('./compile');
 const compilePreview = require('./compilePreview');
@@ -92,7 +88,7 @@ async function writeTemplatesFile(configDir) {
             page: e.page
         }
     })
-    await fs.outputFile(tempPath, JSON.stringify(templateWithoutId, null, 2));
+    await fs.outputFile(tempPath, JSON.stringify(templateWithoutId));
 }
 
 function startServer(info) {
@@ -136,7 +132,6 @@ function startServer(info) {
     //将结果写入用户目录
     app.post('/save', function (req, res) {
         clearEditorProps(req.body)
-        console.log(JSON.stringify(req.body, null, 2));
         compile(req.body, info.componentPaths, info.pages).then(output => {
             return fs.outputFile(info.target, output)
         }).then(_ => {
@@ -156,11 +151,7 @@ function startServer(info) {
     //将结果写入用户目录
     app.post('/saveAsJSON', function (req, res) {
         let page = req.body.page;
-        let components = builder(req.body.components);
-        let output = {
-            page,
-            components
-        }
+        let output = builder(req.body);
         fs.outputFile(jsonTarget, JSON.stringify(output, null, 2)).then(_ => {
             res.json({
                 data: path.basename(jsonTarget),
