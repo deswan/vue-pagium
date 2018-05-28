@@ -120,14 +120,14 @@ function replaceIdentifier() {
                     throw new Error(`组件${pg_com.name}的包裹对象不存在，因该组件及其子组件没有任何data属性`)
                 }
             } else if (modifier === 'last') {
-                if (!varName) throw new Error(`组件${pg_com.name}:请指定vue选项数据名称`)
-                if (!isData && !isMethod && !isComputed) throw new Error(match + `\nvue选项数据${varName}不存在`)
+                if (!varName) throw new Error(`组件${pg_com.name}：请指定vue选项数据名称`)
+                if (!isData && !isMethod && !isComputed) throw new Error(`组件${pg_com.name}：vue选项数据${varName}不存在`)
                 return renamedVarName;
             } else {
-                throw new Error(`组件${pg_com.name}:修饰符 ${modifier} 不存在`)
+                throw new Error(`组件${pg_com.name}：修饰符 ${modifier} 不存在`)
             }
         } else {
-            if (!varName) throw new Error(`组件${pg_com.name}:请指定vue选项数据名称`)
+            if (!varName) throw new Error(`组件${pg_com.name}：请指定vue选项数据名称`)
             if (isData) { //data
                 return pg_com.wrapper + renamedVarName;
             } else if (isComputed || isMethod) {

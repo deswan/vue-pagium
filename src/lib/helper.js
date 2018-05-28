@@ -56,7 +56,7 @@ function getComponents(root) {
                     }
                     target[dir] = dirPath
                 } else {
-                    warn(`组件文件夹${dir}缺少 ${!hasConfig ? 'config.js' : ''} ${!hasArt ? dir+'.vue.art' : ''}`)
+                    warn(`组件文件夹${dir}缺少${!hasConfig ? 'config.js' : ''} ${!hasArt ? dir+'.vue.art' : ''}`)
                 }
             }
         })

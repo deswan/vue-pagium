@@ -1,24 +1,26 @@
 <template>
-
-<div class="board-wrapper" ref="mainBoard" @click="clickMask">
-    <div id="board-mask" @mouseleave="onLeave" :style="{top:mask.top,left:mask.left,width:mask.width,height:mask.height}">
-      {{mask.comObj ? mask.comObj.name : ''}}
-    </div>
-    
-    <pg-com
+<div>
+  <div class="board-wrapper" ref="mainBoard" @click="clickMask">
+      <div id="board-mask" @mouseleave="onLeave" :style="{top:mask.top,left:mask.left,width:mask.width,height:mask.height}">
+        {{mask.comObj ? mask.comObj.name : ''}}
+      </div>
+      
+      <pg-com
+        :com-obj="comObj" 
+        @enter="onEnter" 
+        @leave="onLeave" 
+        v-for="comObj in $store.getters.components" 
+        :key="comObj.pg"></pg-com>
+      
+      <!-- Dialogs -->
+      <pg-com 
       :com-obj="comObj" 
       @enter="onEnter" 
       @leave="onLeave" 
-      v-for="comObj in $store.getters.components" 
+      v-for="comObj in $store.getters.dialogs" 
       :key="comObj.pg"></pg-com>
-    
-    <!-- Dialogs -->
-    <pg-com 
-    :com-obj="comObj" 
-    @enter="onEnter" 
-    @leave="onLeave" 
-    v-for="comObj in $store.getters.dialogs" 
-    :key="comObj.pg"></pg-com>
+  </div>
+  <div class="board-notice">element-ui@2.3.9 imported</div>
 </div>
 </template>
 
@@ -87,6 +89,18 @@ export default {
 </script>
 
 <style scoped>
+.board-notice{
+  position: absolute;
+  height: 20px;
+  bottom:0;
+  left:251px;  
+  right:601px;
+  line-height: 20px;
+  text-align: center;
+  background: whitesmoke;
+  font-size: 11px;
+  color:#999;
+}
 .board-wrapper {
   box-sizing: border-box;
   position: absolute;
@@ -98,7 +112,7 @@ export default {
   border:solid 1px #eee;
   border-top:none;
   border-bottom:none;
-  padding: 20px;
+  padding: 20px 20px 30px;
 }
 /* .main-board {
   position: relative;

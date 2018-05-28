@@ -8,6 +8,7 @@
       label-width="120px">
         <el-form-item label="组件类型">
           <span class="com-type">{{$store.state.activeComponent.type}}</span>
+          <span class="com-type-description">{{$store.state.activeComponent.description}}</span>
         </el-form-item>
         <el-form-item label="组件名称">
             <component :is="StringInput" @input="handleInput('_name',$event)" :value="$store.state.activeComponent.name"></component>
@@ -65,6 +66,10 @@ export default {
 }
 .com-type {
   font-size: 20px;
+}
+.com-type-description{
+  margin-left:15px;
+  color:#666;
 }
 .setting >>> .el-form-item__label {
   line-height: 1.6;

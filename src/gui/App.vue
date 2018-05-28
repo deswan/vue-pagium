@@ -4,7 +4,10 @@
       
       <el-menu :default-active="$route.path" mode="horizontal" background-color="#545c64"
   text-color="#fff" active-text-color="#ffd04b" router>
-        <el-menu-item index="/"><img class="logo" src="./assets/logo.png" alt=""><span class="logo-text">pagium</span></el-menu-item>
+        <el-menu-item index="/">
+        <img class="logo" src="./assets/logo.png" alt="">
+        <span class="logo-text">pagium</span>
+        </el-menu-item>
         <el-menu-item index="/create" >编辑器</el-menu-item>
       </el-menu>
     </div>

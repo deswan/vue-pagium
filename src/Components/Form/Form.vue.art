@@ -21,6 +21,9 @@ export default {
   methods:{
     clear(){
       this.$refs['{{{_name}}}'].resetFields();
+      {{{each clearFields}}}
+        this.{{{refer($value.com,$value.attr)}}} = '';
+      {{{/each}}}
     }
   }
 };

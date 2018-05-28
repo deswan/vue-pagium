@@ -85,5 +85,10 @@ export default {
   z-index: 999;
   box-sizing: border-box;
   word-wrap: break-word;
+  overflow: auto;
+  
+}
+.toolbox::-webkit-scrollbar {
+  display: none;
 }
 </style>
