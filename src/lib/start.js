@@ -202,41 +202,40 @@ function startServer(info) {
      */
     app.post('/saveAsTemplate', function (req, res) {
         let data = req.body
-        let isNameDuplicate = template.some(e => {
+        let nameDuplicateTemp = template.find(e => {
             return e.name === data.name
         })
-        if (!data.isCover && isNameDuplicate) {
+        if (!data.isCover && nameDuplicateTemp) {
             res.json({
                 code: 1 //前端需确认是否覆盖
             })
-        } else if (data.isCover && isNameDuplicate) {
+        } else if (data.isCover && nameDuplicateTemp) {
             let output = builder(req.body.data)
             attachconfigSnapShoot(output.components, req.body.allComsConfig)
-            template.some(e => {
-                if (e.name === data.name) {
-                    e.remark = data.remark;
-                    e.data = output;
-                    e.date = dayjs().format('YYYY-MM-DD HH:mm:ss')
-                    return true;
-                }
-            })
+            nameDuplicateTemp.remark = data.remark;
+            nameDuplicateTemp.data = output;
+            nameDuplicateTemp.date = dayjs().format('YYYY-MM-DD HH:mm:ss')
+
             writeTemplatesFile(info.configDir).then(_ => {
                 res.json({
+                    data: nameDuplicateTemp,
                     code: 0
                 })
             })
         } else {
             let output = builder(req.body.data)
             attachconfigSnapShoot(output.components, req.body.allComsConfig)
-            template.push({
+            let newTemp = {
                 id: template_uuid++,
                 name: data.name,
                 date: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 remark: data.remark,
                 data: output
-            });
+            }
+            template.push(newTemp);
             writeTemplatesFile(info.configDir).then(_ => {
                 res.json({
+                    data: newTemp,
                     code: 0
                 })
             })

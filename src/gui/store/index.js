@@ -302,6 +302,10 @@ const store = new Vuex.Store({
                 })
         },
 
+        setCurTemplate(state,curTemplate){
+            state.curTemplate = curTemplate;
+        },
+
         //部署模板
         employTemplate(state, {
             template,

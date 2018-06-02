@@ -140,7 +140,7 @@ export default {
         .then(({ data }) => {
           if (data.code === 0) {
             this.previewing = false;
-            window.open("/preview", "_blank")
+            window.open("/preview", "_blank");
           } else {
             throw new Error(data.data);
           }
@@ -151,11 +151,11 @@ export default {
         });
     },
     openSaveAsTemplate() {
+      this.saveAsTemplateDialog.show = true;
       if (this.$store.state.curTemplate) {
         this.saveAsTemplateDialog.form.name = this.$store.state.curTemplate.name;
         this.saveAsTemplateDialog.form.remark = this.$store.state.curTemplate.remark;
       }
-      this.saveAsTemplateDialog.show = true;
     },
     saveAsTemplate() {
       const request = isCover => {
@@ -175,6 +175,8 @@ export default {
             this.saveAsTemplateDialog.commiting = false;
             if (data.code === 0) {
               this.saveAsTemplateDialog.show = false;
+              console.log(data.data)
+              this.$store.commit("setCurTemplate", data.data);
               this.$message.success("保存模板成功");
             } else if (data.code === 1) {
               this.$confirm("将覆盖原有模板，是否修改？", "提示", {
@@ -286,11 +288,11 @@ ul {
   cursor: pointer;
   font-size: 12px;
 }
-.logo{
+.logo {
   width: 30px;
 }
-.logo-text{
-  text-shadow:gray 2px 2px 2px;
-  color:#eee;
+.logo-text {
+  text-shadow: gray 2px 2px 2px;
+  color: #eee;
 }
 </style>
