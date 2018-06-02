@@ -175,7 +175,6 @@ export default {
             this.saveAsTemplateDialog.commiting = false;
             if (data.code === 0) {
               this.saveAsTemplateDialog.show = false;
-              console.log(data.data)
               this.$store.commit("setCurTemplate", data.data);
               this.$message.success("保存模板成功");
             } else if (data.code === 1) {

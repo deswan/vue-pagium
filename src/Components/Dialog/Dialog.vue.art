@@ -13,8 +13,6 @@ export default {
       show:false
     };
   },
-  created(){
-  },
   methods:{
       open(){
         this.@@show = true;

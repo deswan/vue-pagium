@@ -4,7 +4,6 @@ const fs = require('fs-extra');
 const beautify_html = require('js-beautify').html;
 
 const crypto = require('crypto');
-const hash = crypto.createHash('sha256');
 
 const utils = require('../utils/utils')
 const helpers = require('./helper')
@@ -12,8 +11,10 @@ const babylon = require('babylon');
 const vueCompiler = require('@vue/component-compiler-utils');
 const babel_generator = require('babel-generator').default;
 
-const CHILDREN_PLACEHOLDER = '_____pg_chilren_____';
-const SLOT_PLACEHOLDER = '_____pg_slot______';
+const TYPE_CHILDREN = 'children';
+const TYPE_SLOT = 'slot';
+const TYPE_TEMPLATE = 'template';
+const TYPE_STYLE = 'style';
 
 const pgHashPrefix = 'pg______';
 const pgColonHashPrefix = '__pg_colon__';
@@ -33,6 +34,35 @@ let pg_map = {
     renameMap: {},
     vueTemplate: null
 }
+
+function createHash() {
+    const sha256 = crypto.createHash('sha256');
+    return sha256.update('love-vue-pagium').digest('hex');
+}
+
+const placeholder = (() => {
+    let hash = createHash();
+    return {
+        get(name, ...args) {
+            return `_${hash}___pg_${name}${args.length ? '_' + args.join('_') : ''}___${hash}_`
+        },
+        replace(name, text, fn) {
+            return text.replace(new RegExp(`_${hash}___pg_${name}(_\\w+)*___${hash}_`, 'g'), (input, args) => {
+                if(args){
+                    args = args.slice(1).split('_');
+                }else{
+                    args = []
+                }
+                let ret = fn(args);
+                if (ret === undefined) {
+                    return input
+                } else {
+                    return ret;
+                }
+            })
+        }
+    }
+})()
 
 //全局替换标识符 @@varName -> varName
 function replaceIdentifier() {
@@ -66,7 +96,6 @@ function replaceIdentifier() {
     }
 
     calcWrapper(pg_map.components);
-
 
     utils.traverse(pg_com => {
         let referReplaced = pg_com.compiled.replace(referRegExp, (match, comName, varName, modifier) => {
@@ -114,9 +143,9 @@ function replaceIdentifier() {
 
         if (modifier) {
             if (modifier === 'wrapper') {
-                if(pg_com.wrapper){
-                    return pg_com.wrapper.slice(0,-1)
-                }else{
+                if (pg_com.wrapper) {
+                    return pg_com.wrapper.slice(0, -1)
+                } else {
                     throw new Error(`组件${pg_com.name}的包裹对象不存在，因该组件及其子组件没有任何data属性`)
                 }
             } else if (modifier === 'last') {
@@ -194,24 +223,22 @@ function replaceIdentifier() {
  * @param {String} vue .vue组件文本
  */
 function beautify(vue) {
-    let vueArr = vue.split('');
-    let htmlSFC = getHtml(vue);
-    if (htmlSFC) {
-        vueArr.splice(htmlSFC.start, htmlSFC.end - htmlSFC.start, '\n',
-            ...beautify_html(vue.slice(htmlSFC.start, htmlSFC.end), {
-                preserve_newlines: false,
-                max_preserve_newlines: 1,
-                "unformatted": ["a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite", "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "map", "mark", "math", "meter", "noscript", "object", "output", "progress", "q", "ruby", "s", "samp", "select", "small", "span", "strong", "sub", "sup", "svg", "textarea", "time", "u", "var", "video", "wbr", "text", "acronym", "address", "big", "dt", "ins", "small", "strike", "tt", "pre", "h1", "h2", "h3", "h4", "h5", "h6"],
-                "indent_scripts": "keep"
-            }), '\n')
+    let html = helpers.getSFCText(vue, 'template');
+    if (html) {
+        let beautifiedHtml = beautify_html(html, {
+            preserve_newlines: false,
+            max_preserve_newlines: 1,
+            "unformatted": ["a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite", "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "map", "mark", "math", "meter", "noscript", "object", "output", "progress", "q", "ruby", "s", "samp", "select", "small", "span", "strong", "sub", "sup", "svg", "textarea", "time", "u", "var", "video", "wbr", "text", "acronym", "address", "big", "dt", "ins", "small", "strike", "tt", "pre", "h1", "h2", "h3", "h4", "h5", "h6"],
+            "indent_scripts": "keep"
+        })
+        vue = helpers.replaceSFC(vue, 'template', beautifiedHtml)
     }
-    vue = vueArr.join('');
-    let scriptSFC = getScript(vue);
-    if (scriptSFC) {
-        vueArr.splice(scriptSFC.start, scriptSFC.end - scriptSFC.start,
-            ...esformatter.format(vue.slice(scriptSFC.start, scriptSFC.end), require('./esformatter-pg.json')))
+    let script = helpers.getSFCText(vue, 'script');
+    if (script) {
+        let beautifiedScript = esformatter.format(script, require('./esformatter-pg.json'));
+        vue = helpers.replaceSFC(vue, 'script', beautifiedScript)
     }
-    return vueArr.join('');
+    return vue;
 }
 
 function merge() {
@@ -220,8 +247,6 @@ function merge() {
     renameComputed(allKeys)
     renameVueOptions();
     replaceIdentifier();
-
-    let styleCom = [];
 
     /**
      * 合并组件
@@ -238,15 +263,15 @@ function merge() {
 
             if (children && children.length) {
                 let childParsed = doMerge(children);
-                parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER, childParsed.html);
+                parsed.html = placeholder.replace('children', parsed.html, () => {
+                    return childParsed.html;
+                })
                 parsed.style = mergeStyle(parsed.style, childParsed.style)
                 parsed.data = mergeData(parsed.data, childParsed.data)
                 parsed.hooks = mergeHook(parsed.hooks, childParsed.hooks)
                 parsed.methods = mergeMethod(parsed.methods, childParsed.methods)
                 parsed.computed = mergeMethod(parsed.computed, childParsed.computed)
                 parsed.watch = mergeMethod(parsed.watch, childParsed.watch)
-            }else{
-                parsed.html = parsed.html.replace(CHILDREN_PLACEHOLDER, '');
             }
 
             //收集slot组件数据
@@ -255,7 +280,11 @@ function merge() {
             Object.keys(slots).forEach(slotId => {
                 let slotList = slots[slotId];
                 let childParsed = doMerge(slotList);
-                parsed.html = parsed.html.replace(SLOT_PLACEHOLDER + slotId, childParsed.html);
+                parsed.html = placeholder.replace('slot', parsed.html, ([id,argName]) => {
+                    if (slotId === `${id}_${argName}`) {
+                        return childParsed.html;
+                    }
+                })
                 parsed.style = mergeStyle(parsed.style, childParsed.style)
                 parsed.data = mergeData(parsed.data, childParsed.data)
                 parsed.hooks = mergeHook(parsed.hooks, childParsed.hooks)
@@ -331,12 +360,9 @@ function merge() {
         }
     }
 
+    //获取的各个块内容
     function parse(pg_com) {
-        //生成产出的数据结构
-        //templace
         let replaced = pg_com.replaced;
-
-        //data
         let scriptData = getScriptData(replaced);
 
         let data = {
@@ -344,32 +370,35 @@ function merge() {
             style: '',
             data: scriptData.data.body,
             methods: scriptData.methods.body,
-            hooks: Object.keys(scriptData.hooks).reduce((target, hook) => {
-                target[hook] || (target[hook] = '');
-                target[hook] += scriptData.hooks[hook].body
+            hooks: Object.keys(scriptData.hooks).reduce((target, hookName) => {
+                target[hookName] = scriptData.hooks[hookName].body
                 return target;
             }, {}),
             watch: scriptData.watch.body,
             computed: scriptData.computed.body
         }
 
-        let htmlSFC = getHtml(replaced);
-        htmlSFC && (data.html = replaced.slice(htmlSFC.start, htmlSFC.end));
+        let html = helpers.getSFCText(replaced, 'template')
+        if (html) data.html = html;
 
-        let singleStyleSFC = getStyles(replaced)[0];
-        singleStyleSFC && (data.style = pg_com.ignoreStyle ? '' : replaced.slice(singleStyleSFC.start, singleStyleSFC.end));
+        let singleStyle = helpers.getSFCText(replaced, 'style')
+        if (singleStyle && !pg_com.ignoreStyle) data.style = singleStyle;
 
         return data;
     }
     let ret = doMerge(pg_map.components)
 
-    ret.html = `<div>\n${ret.html}\n</div>`;
+    ret.html = `\n<div>\n${ret.html}\n</div>\n`;
 
     if (pg_map.vueTemplate) {
 
         //替换 template/style 占位符
-        pg_map.vueTemplate.replaced = pg_map.vueTemplate.replaced.replace('____pg_template____', ret.html)
-            .replace('____pg_style____', ret.style)
+        pg_map.vueTemplate.replaced = placeholder.replace('template', pg_map.vueTemplate.replaced, () => {
+            return ret.html
+        })
+        pg_map.vueTemplate.replaced = placeholder.replace('style', pg_map.vueTemplate.replaced, () => {
+            return ret.style
+        })
 
         let parsed = parse(pg_map.vueTemplate);
 
@@ -425,17 +454,20 @@ function render(data) {
                 {{{computed}}}
             },
             {{{/if}}}
+            {{{if methods.trim()}}}
+            methods: {
+                {{{methods}}}
+            },
+            {{{/if}}}
             {{{if watch.trim()}}}
             watch:{
                 {{{watch}}}
-            },
+            }
             {{{/if}}}
-            methods: {
-                {{{methods}}}
-            }`;
+            `;
         let tt = template.render(t, data);
 
-        let script = helpers.getSFCText(vue,'script');
+        let script = helpers.getSFCText(vue, 'script');
 
         //删除相关选项
         let ast = babylon.parse(script, {
@@ -464,7 +496,6 @@ function render(data) {
             throw new Error('根组件必须含有一个export default块')
         }
 
-
         //添加选项
         let removedOptionScript = babel_generator(ast).code;
         ast = babylon.parse(removedOptionScript, {
@@ -476,10 +507,17 @@ function render(data) {
             if (p[i].type === 'ExportDefaultDeclaration') {
                 p = p[i].declaration;
                 newScript += removedOptionScript.slice(0, p.end - 1);
-                newScript += (newScript.trim().slice(-1) !== ',' ? ',' : '') + tt + removedOptionScript.slice(p.end - 1);
+                newScript += (newScript.trim().slice(-1) !== ',' && newScript.trim().slice(-1) !== '{' ? ',' : '') + tt;
+                if (removedOptionScript.slice(p.end - 1).trim()[0] === '}') {
+                    if (newScript.trim().slice(-1) === ',') newScript = newScript.trim().slice(0, -1);
+                    newScript += removedOptionScript.slice(p.end - 1);
+                } else {
+                    if (newScript.trim().slice(-1) !== ',') newScript += ',';
+                    newScript += removedOptionScript.slice(p.end - 1);
+                }
             }
         }
-        output = helpers.replaceSFC(vue,'script',newScript)
+        output = helpers.replaceSFC(vue, 'script', newScript)
     } else {
         output = template(path.join(__dirname, 'App.vue.art'), data)
     }
@@ -505,28 +543,6 @@ function compile(comObj, imports, comPaths) {
         ...template.defaults,
         root
     })
-}
-
-//获取vue单文件组件的template/script/style块，不包括标签本身（可以包含不合法标识符）
-function getHtml(vue) {
-    return vueCompiler.parse({
-        source: vue,
-        needMap: false
-    }).template
-}
-
-function getScript(vue) {
-    return vueCompiler.parse({
-        source: vue,
-        needMap: false
-    }).script;
-}
-
-function getStyles(vue) {
-    return vueCompiler.parse({
-        source: vue,
-        needMap: false
-    }).styles;
 }
 
 function renameComputed(allKeys) {
@@ -651,15 +667,16 @@ function renameData() {
             })
 
             if (children.length) {
+                //遍历子组件属性，修改keys数组
                 for (let i = local.length; i < nodes.length; i++) {
-                    if (nodes[i].raw === '') { //以组件名称命名的key
+                    if (nodes[i].raw === '') { //以组件名称命名的key，将其它属性重命名（因每个组件名称唯一，因此不会重命名到其它组件名称属性）
                         let t = keys[i];
                         delete keys[i];
                         while (~keys.indexOf(t)) {
                             keys[keys.indexOf(t)] = keys[keys.indexOf(t)] + '$';
                         }
                         keys[i] = t;
-                    } else {
+                    } else { //以属性名命名的key，将自身重命名
                         let t = keys[i];
                         delete keys[i];
                         while (~keys.indexOf(t)) {
@@ -716,7 +733,10 @@ function renameData() {
         })
         return result;
     }
+
     let dataKeys = traverse(pg_map.components, true);
+
+    //使用积木组件的dataKeys重命名根组件
     if (pg_map.vueTemplate) {
         pg_map.vueTemplate.dataKeys = pg_map.vueTemplate.initDataKeys.slice();
         for (let i = 0; i < pg_map.vueTemplate.dataKeys.length; i++) {
@@ -752,7 +772,7 @@ function renameData() {
 
     logger('renameData: toRename', toRename)
 
-    //修改pg_map
+    //修改pg_map.dataKeys
     toRename.forEach(({
         node,
         value,
@@ -764,8 +784,8 @@ function renameData() {
     })
 }
 
+//根据renameMap替换Vue选项，需保证同一个raw不出现两次
 function renameVueOptions() {
-    //需保证同一个raw不出现两次
     trav(reduce(pg_map.renameMap.data), 'data')
     trav(reduce(pg_map.renameMap.methods), 'methods')
     trav(reduce(pg_map.renameMap.computed), 'computed')
@@ -796,9 +816,8 @@ function renameVueOptions() {
         if (!renameMap) return;
         renameMap.forEach(item => {
             let node = item.node
-            let scriptSFC = getScript(node.compiled);
-            if (!scriptSFC) return;
-            script = node.compiled.slice(scriptSFC.start, scriptSFC.end)
+            let script = helpers.getSFCText(node.compiled, 'script')
+            if (!script) return;
             //替换掉@@为合法标识符
             let cleared = clearControlChar(script);
             script = cleared.text;
@@ -856,9 +875,7 @@ function renameVueOptions() {
             }
             let newScript = babel_generator(ast).code;
             newScript = newScript.replace(new RegExp(cleared.pgHash, 'g'), '@@').replace(new RegExp(cleared.pgColonHash, 'g'), ':')
-            let vueArr = node.compiled.split('');
-            vueArr.splice(scriptSFC.start, scriptSFC.end - scriptSFC.start, newScript)
-            node.compiled = vueArr.join('')
+            node.compiled = helpers.replaceSFC(node.compiled, 'script', newScript)
         })
     }
 
@@ -866,25 +883,11 @@ function renameVueOptions() {
 
 /**
  * 解析Script内容
- * @param {String} vue 组件文本
- * @return {Object} {
- *  data:{
- *      keys:Array,
- *      body:String
- *  },
- *  hooks:{
- *      created:{
- *          body:String
- *      }
- *  },
- *  methods:{
- *      keys:Array,
- *      body:String
- *  }
- * }
+ * @param {String} vue 编译后的vue组件字符串
+ * @return {Object} 
  */
 function getScriptData(vue) {
-    let scriptSFC = getScript(vue);
+    let script = helpers.getSFCText(vue, 'script');
     let ret = {
         data: {
             keys: [],
@@ -903,8 +906,7 @@ function getScriptData(vue) {
             body: ''
         }
     }
-    if (!scriptSFC) return ret;
-    let script = vue.slice(scriptSFC.start, scriptSFC.end)
+    if (!script) return ret;
 
     let cleared = clearControlChar(script);
     script = cleared.text
@@ -966,11 +968,7 @@ function getScriptData(vue) {
             let name = block.key.name;
             if (block.type === 'ObjectMethod') {
                 block = block.body;
-            }
-            // else if (block.type === 'ObjectProperty' && block.value.type === 'FunctionExpression') {
-            //     block = block.value.body;
-            // } 
-            else {
+            } else {
                 throw new Error(name + '块声明格式不正确')
             }
             return {
@@ -1040,8 +1038,12 @@ function clearControlChar(text) {
         pgColonHash
     }
 }
-
-function initMap(components, comPaths, vueTemplatePath) {
+/**
+ * 初始化pg_map
+ * 编译模板、收集初始Vue选项属性名
+ */
+function initMap(components, comPaths, pagePath) {
+    //reset
     pg_map.components = [];
     pg_map.renameMap = {};
     pg_map.vueTemplate = null;
@@ -1066,7 +1068,7 @@ function initMap(components, comPaths, vueTemplatePath) {
                     return !e.__pg_slot__;
                 });
                 if (!children.length) return '';
-                return CHILDREN_PLACEHOLDER;
+                return placeholder.get(TYPE_CHILDREN);
             },
             /**
              * 插入slot
@@ -1076,6 +1078,8 @@ function initMap(components, comPaths, vueTemplatePath) {
                 let nameArr = arg.value;
                 if (!nameArr) throw new Error('\n' + comObj.name + '：insertSlot参数为空');
                 let slotId = '';
+
+                //搜索子组件中符合实例名列表的组件，并记录__pg_slot__
                 let children = pg_com.children.filter((e) => {
                     if (e.comObj.__pg_slot__ && nameArr.includes(e.name)) {
                         slotId = e.comObj.__pg_slot__;
@@ -1083,11 +1087,13 @@ function initMap(components, comPaths, vueTemplatePath) {
                     }
                 });
                 if (!children.length) throw new Error('\n' + comObj.name + '：insertSlot不存在对应的子组件');
+
+                //记录每个slotId所对应的节点
                 pg_com.slots || (pg_com.slots = {});
                 pg_com.slots[slotId] = children.sort((a, b) => {
                     return nameArr.indexOf(a.name) - nameArr.indexOf(b.name)
                 });
-                return SLOT_PLACEHOLDER + slotId;
+                return placeholder.get(TYPE_SLOT, slotId);
             },
             /**
              * 引用其它组件的data/method
@@ -1117,8 +1123,6 @@ function initMap(components, comPaths, vueTemplatePath) {
         //编译模板
         pg_com.compiled = compile(comObj, imports, comPaths);
 
-        console.log(pg_com.name,pg_com.compiled)
-
         //抽取需重命名的vue选项数据
         let scriptData;
         try {
@@ -1134,12 +1138,14 @@ function initMap(components, comPaths, vueTemplatePath) {
     components.forEach((comObj) => {
         doCompile(comObj, pg_map.components)
     })
-    if (vueTemplatePath) {
+
+    //编译根组件
+    if (pagePath) {
         pg_map.vueTemplate = {};
-        let art = fs.readFileSync(vueTemplatePath, 'utf-8');
+        let art = fs.readFileSync(pagePath, 'utf-8');
         pg_map.vueTemplate.compiled = template.render(art, {
-            template: '____pg_template____',
-            style: '____pg_style____'
+            template: placeholder.get('template'),
+            style: placeholder.get('style')
         })
         let scriptData;
         try {
@@ -1153,10 +1159,15 @@ function initMap(components, comPaths, vueTemplatePath) {
     }
     logger('initMap', pg_map)
 }
-
+/**
+ * @param {Object} data 数据结构（根组件+组件实例树）
+ * @param {Object} comPaths 组件路径对象
+ * @param {Object} pagePaths 根组件路径对象
+ * @param {Boolean} supportVueTemplate 是否解析根组件
+ */
 module.exports = async function (data, comPaths, pagePaths, supportVueTemplate = true) {
     let vueTemplatePath = data.page && (pagePaths[data.page] || pagePaths[data.page + '.vue.art'])
-    initMap(data.components, comPaths, supportVueTemplate && vueTemplatePath); //init pg_map tree
+    initMap(data.components, comPaths, supportVueTemplate && vueTemplatePath);
     let output = render(merge());
     return output
 }

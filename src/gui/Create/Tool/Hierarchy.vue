@@ -27,7 +27,7 @@
           <el-popover placement="right-end" trigger="click" v-model="showComlib" popper-class="pg-comlib-popper">  
             <div class="com-lib" v-if="isDialog && idx === undefined">
               <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allDialogs.slice().reverse()" max-height="500" size="medium">
-                <el-table-column label="添加组件">
+                <el-table-column label="组件名">
                   <template slot-scope="scope">
                       <span>{{scope.row.name}}</span>
                   </template> 
@@ -41,7 +41,7 @@
             </div>
             <div class="com-lib" v-else>
               <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allComs.slice().reverse()" max-height="500" size="medium">
-                <el-table-column label="添加组件">
+                <el-table-column label="组件名">
                   <template slot-scope="scope">
                       <span>{{scope.row.name}}</span>
                   </template> 

@@ -24,9 +24,11 @@ export default {
         {{{watch}}}
     },
     {{{/if}}}
+    {{{if methods.trim()}}}
     methods: {
         {{{methods}}}
     }
+    {{{/if}}}
 };
 </script>
 <style>

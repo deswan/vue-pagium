@@ -312,7 +312,7 @@ const store = new Vuex.Store({
             vm
         }) {
             if (this.getters.existData) {
-                vm.$confirm('是否覆盖当前编辑的数据', '提示', {
+                vm.$confirm('是否覆盖当前编辑器数据', '提示', {
                     type: 'warning'
                 }).then(_ => {
                     employ()
@@ -347,15 +347,15 @@ const store = new Vuex.Store({
                 if (changedComName.length) noticeText.push(`组件 ${changedComName.join(',')} 配置已更变，可能缺失部分数据。`);
                 if (dearthedPage.length) noticeText.push(`根组件文件 ${dearthedPage} 缺失，将删除该根组件。`);
                 if (noticeText.length) {
-                    vm.$confirm(noticeText.join('<br>'), "是否继续？", {
+                    vm.$notify.warning({
+                        title: '提醒',
+                        message: noticeText.join('<br>'),
                         dangerouslyUseHTMLString:true,
-                        type: "warning"
-                    }).then(_ => {
-                        apply();
-                    }).catch(err => {})
-                } else {
-                    apply();
+                        duration: 10000,
+                        offset:50
+                    })
                 }
+                apply();
 
                 function apply() {
                     state.curTemplate = template;

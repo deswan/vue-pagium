@@ -13,12 +13,12 @@
       <el-table-column
         prop="name"
         label="模板名称"
-        width="180">
+        width="220">
       </el-table-column>
       <el-table-column
         prop="page"
         label="根组件"
-        width="120">
+        width="100">
         <span slot-scope="scope">{{scope.row.data.page || '无'}}</span>
       </el-table-column>
       <el-table-column
@@ -59,7 +59,7 @@ export default {
       });
     },
     employ(row) {
-      this.$store.commit("employTemplate", { template: row, vm: this });
+      this.$store.commit("employTemplate", { template: row, vm: this.$parent });
     },
     del({ id, name }) {
       this.$confirm(`确认删除模板 ${name} ？`, "提示", {

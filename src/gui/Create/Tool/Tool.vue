@@ -43,7 +43,7 @@ export default {
   computed:{
     data_com(){
       return {
-        name: "组件",
+        name: "普通组件",
         children: this.$store.getters.components,
         isRoot: true
       }

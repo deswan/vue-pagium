@@ -45,9 +45,9 @@ function getComponents(root) {
                     file === 'config.js' && (hasConfig = true);
                 })
                 if (hasConfig && hasArt) {
-                    try{
+                    try {
                         checkConfig(require(path.join(dirPath, 'config.js')));
-                    }catch(err){
+                    } catch (err) {
                         throw new Error(`${dir}/config.js 错误：${err.message}`)
                     }
                     if (target[dir]) {
@@ -64,11 +64,13 @@ function getComponents(root) {
     return paths
 }
 
+//不包括标签本身（可以包含不合法标识符）
 function getSFCText(vue, type) {
     let sfc = vueCompiler.parse({
         source: vue,
         needMap: false
-    })[type];
+    })[type === 'style' ? 'styles' : type];
+    if(type === 'style') sfc = sfc[0];
     return sfc ? vue.slice(sfc.start, sfc.end) : null
 }
 

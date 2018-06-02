@@ -61,7 +61,6 @@ function template2Store(data, allComsConfig, allPages) {
                 ...node.props,
                 _name:node.name
             }
-            console.log(node)
 
             node.realTimePreview = utils.loadRealTimePreview(node.type,node.props)
 
