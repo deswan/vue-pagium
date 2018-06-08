@@ -1,6 +1,6 @@
 {
   "name": "vue-pagium",
-  "version": "1.0.0-rc1",
+  "version": "1.0.0-rc2",
   "description": "A block system for automatic generation of Vue Single File Component",
   "author": "xingzi.wang <stephaniewang299@gmail.com>",
   "keywords": [
