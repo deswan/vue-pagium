@@ -248,7 +248,7 @@ function startServer(info) {
         }
     });
 
-    app.get('/mock/table', function (req, res) {
+    app.get('/mock', function (req, res) {
         res.json(Mock.mock({
             'total': 60,
             'items|60': [{

@@ -249,9 +249,6 @@ export default {
 </script>
 
 <style>
-#app {
-  font-family: Consolas, Menlo;
-}
 body {
   margin: 0;
   background: #f3f3f3;

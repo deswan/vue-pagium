@@ -11,9 +11,9 @@
       type="components"
       >
       </hierarchy-tree>      
-
+      
       <hierarchy-tree  
-      :style="{marginTop:'14px'}"
+      :style="{paddingTop:'14px',borderTop:'1px rgb(238, 238, 238) solid'}"
       @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
