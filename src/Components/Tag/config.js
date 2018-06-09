@@ -1,4 +1,4 @@
-//Table
+//Tag
 module.exports = {
     name: "tag",
     description:'标签',

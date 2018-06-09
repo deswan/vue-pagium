@@ -1,16 +1,15 @@
 <template>
-      <components
-      :is="$store.getters.type2Com[comObj.type]"
+      <component
+      :is="comObj.realTimePreview"
       v-bind="comObj.props" 
       :pg-active="$store.state.activeComponent && $store.state.activeComponent.pg === comObj.pg || subActive"
       :id="`pg-com-${comObj.name}`" 
       @mouseenter.native="onMouseenter"
       @mouseleave.native="onMouseleave">
           <template v-if="comObj.children && comObj.children.length">
-            <pg-com  @enter="onEnter" @leave="onLeave" :com-obj="subCom" v-for="subCom in comObj.children" :key="subCom.pg"></pg-com>
+            <pg-com @enter="onEnter" @leave="onLeave" :com-obj="subCom" v-for="subCom in comObj.children" :key="subCom.pg"></pg-com>
           </template>
-      </components>
-
+      </component>
 </template>
 
 <script>
@@ -20,6 +19,9 @@ export default {
     comObj: {
       required: true
     }
+  },
+  errorCaptured(err,vm,info){
+    return false;
   },
   computed: {
     subActive() {
@@ -37,7 +39,6 @@ export default {
       }
     }
   },
-  created() {},
   data() {
     return {};
   },
@@ -49,7 +50,6 @@ export default {
       this.$emit('leave',e)
     },
     onMouseenter(e){
-      if(this.comObj.isDialog) return;
       if(e.currentTarget.id === 'board-mask') return;
       let $el = e.currentTarget;
       this.$emit('enter',{
@@ -58,7 +58,6 @@ export default {
       })
     },
     onMouseleave(e){
-      if(this.comObj.isDialog) return;
       if(e.currentTarget.id === 'board-mask') return;
       if(e.relatedTarget.id === 'board-mask') return;
       let $el = e.currentTarget;

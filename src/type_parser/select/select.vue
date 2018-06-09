@@ -2,7 +2,7 @@
     <el-select 
     v-model="input" 
     :size="size" 
-    :placeholder="conf.default || ''"
+    placeholder=""
     clearable
     @change="valChange">
       <el-option v-for="option in options" :key="option.key" :value="option.value" :label="option.label"></el-option>

@@ -1,22 +1,33 @@
 <template>
-
-<div class="board-wrapper">
-  <div class="main-board">
-    <div id="board-mask" @click="clickMask" @mouseleave="onLeave" :style="{top:mask.top,left:mask.left,width:mask.width,height:mask.height,lineHeight:mask.height}">
-      {{mask.comObj ? mask.comObj.name : ''}}
-    </div>
+<div>
+  <div class="board-wrapper" ref="mainBoard" @click="clickMask">
+      <div id="board-mask" @mouseleave="onLeave" :style="{top:mask.top,left:mask.left,width:mask.width,height:mask.height}">
+        {{mask.comObj ? mask.comObj.name : ''}}
+      </div>
+      
       <pg-com
-       :com-obj="comObj" @enter="onEnter" @leave="onLeave" v-for="comObj in $store.getters.components" :key="comObj.pg"></pg-com>
+        :com-obj="comObj" 
+        @enter="onEnter" 
+        @leave="onLeave" 
+        v-for="comObj in $store.getters.components" 
+        :key="comObj.pg"></pg-com>
+      
+      <!-- Dialogs -->
+      <pg-com 
+      :com-obj="comObj" 
+      @enter="onEnter" 
+      @leave="onLeave" 
+      v-for="comObj in $store.getters.dialogs" 
+      :key="comObj.pg"></pg-com>
   </div>
-
-  <!-- Dialogs -->
-  <pg-com :com-obj="comObj" @enter="onEnter" @leave="onLeave" v-for="comObj in $store.getters.dialogs" :key="comObj.pg"></pg-com>
+  <div class="board-notice">element-ui@2.3.9 imported</div>
 </div>
-
 </template>
 
 <script>
 import COM from "./COM.vue";
+import Dialog from "./Dialog.vue";
+Vue.component("pagium-dialog2018", Dialog);
 export default {
   components: {
     pgCom: COM
@@ -32,16 +43,12 @@ export default {
       }
     };
   },
-  // errorCaptured(err,vm,info){
-  //   console.log(err);
-  //   return false;
-  // },
   methods: {
     onEnter({ comObj, rect }) {
       let { top, left, width, height } = rect;
       Object.assign(this.mask, {
-        top: top - 60 + "px",
-        left: left - 270 + "px",
+        top: top - 60 + this.$refs.mainBoard.scrollTop + "px",
+        left: left - 251 + this.$refs.mainBoard.scrollLeft + "px",
         width: width + "px",
         height: height + "px",
         comObj
@@ -82,14 +89,17 @@ export default {
 </script>
 
 <style scoped>
-.pg-dialog-wrapper {
-  left: 270px;
-  right: 620px;
-  top: 150px;
-}
-.pg-dialog-wrapper >>> .pg-dialog {
-  width: 95%;
-  margin-top: 5vh !important;
+.board-notice{
+  position: absolute;
+  height: 20px;
+  bottom:0;
+  left:251px;  
+  right:601px;
+  line-height: 20px;
+  text-align: center;
+  background: whitesmoke;
+  font-size: 11px;
+  color:#999;
 }
 .board-wrapper {
   box-sizing: border-box;
@@ -98,23 +108,27 @@ export default {
   left: 250px;
   right: 600px;
   bottom: 0;
-  background-color: whitesmoke;
   overflow: auto;
+  border:solid 1px #eee;
+  border-top:none;
+  border-bottom:none;
+  padding: 20px 20px 30px;
 }
-.main-board {
+/* .main-board {
   position: relative;
-  height: 100%;
-  margin: 0 20px;
-  background-color: white;
-  box-shadow: 0 0 20px lightgray;
-}
+  height: calc(100% - 40px);
+  margin: 20px;
+  overflow: auto;
+} */
 #board-mask {
+  box-sizing: border-box;
   position: absolute;
-  z-index: 2000;
+  z-index: 3000;
   background-color: rgba(0, 0, 0, 0.2);
   font-size: 14px;
+  line-height: 15px;
+  padding-left: 5px;
   text-align: center;
-  max-width: 100%;
-  max-height: 100%;
+  overflow: hidden;
 }
 </style>

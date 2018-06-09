@@ -1,28 +1,40 @@
 <template>
   <div id="app">
     <div class="header">
+      
       <el-menu :default-active="$route.path" mode="horizontal" background-color="#545c64"
   text-color="#fff" active-text-color="#ffd04b" router>
-        <el-menu-item index="/">模板</el-menu-item>
-        <el-menu-item index="/create" >编辑页面</el-menu-item>
-        <el-menu-item index="/doc" >关于</el-menu-item>
+        <el-menu-item index="/">
+        <img class="logo" src="./assets/logo.png" alt="">
+        <span class="logo-text">pagium</span>
+        </el-menu-item>
+        <el-menu-item index="/create" >编辑器</el-menu-item>
       </el-menu>
     </div>
     <div class="btn-group" :class="{['btn-group-show']:showBtn}">
+        <el-dropdown @command="selectPage" size="medium" trigger="click">
+          <span class="root-dropdown">
+            根组件: {{$store.state.page || '无'}} <i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="">无</el-dropdown-item>
+            <el-dropdown-item v-for="page in Object.keys($store.state.pages)" :key="page" :command="page">{{page}}</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
         <el-popover
           placement="bottom"
           trigger="hover">
-          <span class="save-path">保存路径：{{savePath}}</span>
-            <el-button slot="reference" type="primary" size="small" @click="save" :loading="saving">保存</el-button>
+          <span class="save-path">输出路径：{{savePath}}</span>
+            <el-button slot="reference" type="primary" size="small" @click="save" :loading="saving">生成</el-button>
         </el-popover>
         <el-button type="info" size="small" @click="preview" :loading="previewing">预览</el-button>
          <el-popover
           placement="bottom"
           trigger="hover">
-          <span class="save-path">保存路径：{{jsonSavePath}}</span>
+          <span class="save-path">输出路径：{{jsonSavePath}}</span>
           <el-button slot="reference" size="small" @click="saveAsJSON" :loading="savingAsJSON">生成JSON</el-button>
         </el-popover>
-        <el-button type="success" size="small" @click="openSaveAsTemplate">生成模板</el-button>
+        <el-button type="success" size="small" @click="openSaveAsTemplate">保存为模板</el-button>
         <el-button type="danger" size="small" @click="clear">清空</el-button>
     </div>
     <router-view></router-view>
@@ -50,6 +62,8 @@ export default {
       defaultActive: "/",
       showBtn: false,
 
+      pages: [],
+
       //按钮加载状态
       saving: false,
       savingAsJSON: false,
@@ -70,11 +84,25 @@ export default {
     };
   },
   created() {
+    //获取所有根组件
+    this.$http
+      .get("/pages")
+      .then(({ data }) => {
+        this.$store.commit("fillPages", data.data);
+      })
+      .catch(err => {});
+
+    //获取编辑器状态信息
     this.$store.dispatch("getLastestInput");
-    this.$http.get("/getSavePath").then(({data}) => {
-      this.savePath = data.savePath;
-      this.jsonSavePath = data.jsonSavePath;
-    }).catch(err=>{});
+
+    //获取保存路径
+    this.$http
+      .get("/getSavePath")
+      .then(({ data }) => {
+        this.savePath = data.savePath;
+        this.jsonSavePath = data.jsonSavePath;
+      })
+      .catch(err => {});
   },
   mounted() {
     if (this.$route.name === "create") {
@@ -85,7 +113,10 @@ export default {
     save() {
       this.saving = true;
       this.$http
-        .post("/save", this.$store.getters.data)
+        .post("/save", {
+          components: this.$store.getters.data,
+          page: this.$store.state.page
+        })
         .then(({ data }) => {
           if (data.code === 0) {
             this.saving = false;
@@ -102,11 +133,14 @@ export default {
     preview() {
       this.previewing = true;
       this.$http
-        .post("/preview", this.$store.getters.data)
+        .post("/preview", {
+          components: this.$store.getters.data,
+          page: this.$store.state.page
+        })
         .then(({ data }) => {
           if (data.code === 0) {
             this.previewing = false;
-            window.open("/preview", "_blank",'',true);
+            window.open("/preview", "_blank");
           } else {
             throw new Error(data.data);
           }
@@ -117,11 +151,11 @@ export default {
         });
     },
     openSaveAsTemplate() {
+      this.saveAsTemplateDialog.show = true;
       if (this.$store.state.curTemplate) {
         this.saveAsTemplateDialog.form.name = this.$store.state.curTemplate.name;
         this.saveAsTemplateDialog.form.remark = this.$store.state.curTemplate.remark;
       }
-      this.saveAsTemplateDialog.show = true;
     },
     saveAsTemplate() {
       const request = isCover => {
@@ -130,7 +164,10 @@ export default {
           .post("/saveAsTemplate", {
             name: this.saveAsTemplateDialog.form.name,
             remark: this.saveAsTemplateDialog.form.remark,
-            data: this.$store.getters.data,
+            data: {
+              page: this.$store.state.page,
+              components: this.$store.getters.data
+            },
             isCover: !!isCover,
             allComsConfig: this.$store.getters.allComsConfig
           })
@@ -138,9 +175,10 @@ export default {
             this.saveAsTemplateDialog.commiting = false;
             if (data.code === 0) {
               this.saveAsTemplateDialog.show = false;
+              this.$store.commit("setCurTemplate", data.data);
               this.$message.success("保存模板成功");
             } else if (data.code === 1) {
-              this.$confirm("将覆盖原有模板，是否允许？", "提示", {
+              this.$confirm("将覆盖原有模板，是否修改？", "提示", {
                 type: "info"
               })
                 .then(_ => {
@@ -167,7 +205,7 @@ export default {
       this.saveAsTemplateDialog.commiting = false;
     },
     clear() {
-      this.$confirm("确定清空此页面么", "提示", {
+      this.$confirm("确定清空组件么", "提示", {
         type: "warning"
       })
         .then(_ => {
@@ -177,7 +215,10 @@ export default {
     },
     saveAsJSON() {
       this.$http
-        .post("/saveAsJSON", this.$store.getters.data)
+        .post("/saveAsJSON", {
+          components: this.$store.getters.data,
+          page: this.$store.state.page
+        })
         .then(({ data }) => {
           if (data.code === 0) {
             this.savingAsJSON = false;
@@ -188,8 +229,11 @@ export default {
         })
         .catch(err => {
           this.savingAsJSON = false;
-          this.$message.success("生成失败 " + data.data);
+          this.$message.success("生成JSON失败 " + err.message);
         });
+    },
+    selectPage(page) {
+      this.$store.commit("fillPage", page);
     }
   },
   watch: {
@@ -205,9 +249,6 @@ export default {
 </script>
 
 <style>
-#app {
-  font-family: Consolas, Menlo;
-}
 body {
   margin: 0;
   background: #f3f3f3;
@@ -235,7 +276,19 @@ ul {
   transition-duration: 0.5s;
   opacity: 1;
 }
-.save-path{
+.save-path {
   font-size: 12px;
+}
+.root-dropdown {
+  color: lightgrey;
+  cursor: pointer;
+  font-size: 12px;
+}
+.logo {
+  width: 30px;
+}
+.logo-text {
+  text-shadow: gray 2px 2px 2px;
+  color: #eee;
 }
 </style>

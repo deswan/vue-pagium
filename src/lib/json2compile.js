@@ -2,11 +2,13 @@ const utils = require('../utils/utils')
 const checkDataValid = require('../utils/checkDataValid')
 const scheme2Default = require('../utils/scheme2Default');
 
-module.exports = function (data, allComsConfig) {
+module.exports = function (data, allComsConfig, allPages) {
 
-    checkDataValid(data, allComsConfig)
+    //严格检查合法性
+    checkDataValid(data, allComsConfig, allPages)
 
-    let allComsName = utils.getAllNameInData(data);
+    //检测重复组件名
+    let allComsName = utils.getAllComNameInData(data.components || []);
 
     function traverse(list) {
         let result = []
@@ -19,15 +21,11 @@ module.exports = function (data, allComsConfig) {
                 __pg_slot__: false
             }
 
-            let children = item.children ? traverse(item.children) : [];
-
-            node.children = children;
+            node.children = item.children ? traverse(item.children) : [];
 
             node.props = item.props ? utils.patchProps(item.props, config) : {};
 
-            console.log('after patchProps',node.name, JSON.stringify(node.props, null, 2))
-
-            //parseSlot
+            //slot、refer 合法性检查、添加属性
             for (let key in node.props) {
                 node.props[key] = utils.parseSlot(key, node.props[key], node, (name) => {
                     return allComsName.find(e => {
@@ -39,22 +37,23 @@ module.exports = function (data, allComsConfig) {
                         if (item.name === name) {
                             ret = allComsConfig[item.type].exposeProperty
                         }
-                    }, data)
+                    }, data.components)
                     return ret;
-                },true)
+                }, true)
             }
 
             node.props = {
                 ...scheme2Default(config.props),
-                ...node.props
+                ...node.props,
+                _name:node.name
             }
-
-            console.log('props',node.props)
-
 
             result.push(node)
         })
         return result;
     }
-    return traverse(data)
+    return {
+        page: data.page,
+        components: traverse(data.components || []),
+    }
 }

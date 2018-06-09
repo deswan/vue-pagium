@@ -1,5 +1,6 @@
 module.exports = {
     name:'form',
+    exposeProperty:['clear'],
     description:'表单',
     props: [{
         name: "inline",
@@ -9,11 +10,11 @@ module.exports = {
         name: "labelPosition",
         label: "标签位置",
         type: "select",
-        default: "",
+        default: "left",
         options: ["left", "right", "top"]
     }, {
         name: "labelWidth",
-        label: "标签宽度",
+        label: "标签宽度（px）",
         type: "string",
         default: "80px"
     }, {
@@ -23,6 +24,20 @@ module.exports = {
     }, {
         name: "size",
         label: "表单内组件尺寸",
-        type: "string"
+        type: "select",
+        options: ["medium", "small", "mini"]
+    },{
+        name: "clearFields",
+        label: "特殊清空值",
+        type: ['object'],
+        format:[{
+            name:'com',
+            label:'组件',
+            type:'refer'
+        },{
+            name:'attr',
+            label:'属性',
+            type:'string'
+        }]
     }]
 }

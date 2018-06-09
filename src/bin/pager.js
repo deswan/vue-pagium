@@ -11,14 +11,14 @@ const rm = require('rimraf');
 const nodeCleanup = require('node-cleanup');
 const config = require('../config');
 const {
-    copyComponent
+    getComponents
 } = require('../lib/helper');
 const start = require('../lib/start');
 const create = require('../lib/create');
 const eject = require('../lib/eject');
-const {
-    checkConfig
-} = require('../utils/checkConfigValid');
+const add = require('../lib/add');
+
+process.env.NODE_ENV = process.env.NODE_ENV || 'production'
 
 function resolveTarget(target) {
     let p = path.resolve(target)
@@ -46,49 +46,24 @@ function resolveConfigDir(configDir) {
     //若文件不存在则创建文件夹，存在则检验是否文件夹
     if (!fs.existsSync(p)) {
         fs.mkdirsSync(p)
-        console.log(chalk.cyan(`${p} created`))
+        console.log(chalk.cyan(`配置目录 ${p} 已创建`))
     } else if (!fs.statSync(p).isDirectory()) {
         throw new Error(`${p} 不是文件夹`)
     }
     return p;
 }
 
-function createTemporaryDir() {
-    //确定临时目录路径
-    let tempDirSuffix = Date.now();
-    while (fs.existsSync(config.tempComponentDir + '_' + tempDirSuffix)) {
-        tempDirSuffix = tempDirSuffix + 1;
-    }
-    let uniqueTempDir = config.tempComponentDir + '_' + tempDirSuffix;
-
-    if (process.env.NODE_ENV === 'development') uniqueTempDir = config.devTempComponentDir;
-
-    fs.mkdirsSync(uniqueTempDir)
-
-    nodeCleanup((code) => {
-        if (fs.existsSync(uniqueTempDir)) {
-            logger('删除' + uniqueTempDir)
-
-            rm.sync(uniqueTempDir);
-        }
-    })
-
-    //将原生组件拷贝至临时目录
-    fs.copySync(config.componentDir, uniqueTempDir);
-
-    if (process.env.NODE_ENV === 'development') {
-        let dirs = fs.readdirSync(config.componentDir);
-        dirs.forEach(filename => {
-            if (!fs.statSync(path.join(config.componentDir, filename)).isDirectory()) return;
-            try {
-                checkConfig(require(path.join(config.componentDir, filename, 'config.js')));
-            } catch (err) {
-                throw new Error(`${filename} 组件 config.js 格式错误:\n${err.message}`);
+function getPages(configDir) {
+    let p = path.join(configDir, config.target.pages);
+    let pages = {};
+    if (fs.existsSync(p)) {
+        fs.readdirSync(p).forEach(file => {
+            if (!file.startsWith('.') && file.endsWith('.vue.art') && fs.statSync(path.join(p, file)).isFile()) {
+                pages[path.basename(file, '.vue.art')] = path.join(p, file)
             }
         })
     }
-
-    return uniqueTempDir;
+    return pages;
 }
 
 prog
@@ -107,19 +82,34 @@ prog
     .command('eject', 'eject components')
     .argument('[names]', 'choose component/art to eject', prog.LIST, [])
     .option('-c, --config <dir>', 'config dir')
-    .action(wrapCommand(beforeEject));
+    .action(wrapCommand(beforeEject))
+
+    .command('add', 'add component')
+    .argument('<name>', 'component name')
+    .option('-c, --config <dir>', 'config dir')
+    .action(wrapCommand(beforeAdd));
 
 prog.parse(process.argv);
 
+async function beforeAdd(args, options) {
+    let info = {}
+    info.configDir = resolveConfigDir(options.config)
+    info.comName = args.name;
+    console.log(chalk.white('----------------------'))
+    console.log(chalk.white(`配置目录: ${info.configDir}`))
+    console.log(chalk.white('----------------------'))
+    return await add(info);
+}
+
 async function beforeEject(args, options) {
-    let describe = {}
+    let info = {}
 
     let dirs = fs.readdirSync(config.componentDir).filter(e => {
         return !e.startsWith('.');
     });
     args.names.forEach(name => {
         if (!dirs.includes(name)) {
-            console.log(chalk.red(`eject fail: 组件/公用文件 ${name} 不存在`))
+            console.log(chalk.red(`eject fail: 系统自带组件 ${name} 不存在`))
             process.exit(1);
         }
     })
@@ -127,69 +117,68 @@ async function beforeEject(args, options) {
         args.names = dirs
     }
 
-    describe.names = args.names;
-    describe.configDir = resolveConfigDir(options.config)
-    console.log(chalk.white(`config dir: ${describe.configDir}`))
+    info.names = args.names;
+    info.configDir = resolveConfigDir(options.config)
+    console.log(chalk.white('----------------------'))
+    console.log(chalk.white(`配置目录: ${info.configDir}`))
+    console.log(chalk.white('----------------------'))
 
-    return await eject(describe);
+    return await eject(info);
 }
 
 async function beforeStart(args, options) {
-    let describe = {}
+    let info = {}
 
-    describe.configDir = resolveConfigDir(options.config)
-    console.log(chalk.white(`config dir: ${describe.configDir}`))
+    info.configDir = resolveConfigDir(options.config)
 
-    if (fs.existsSync(path.join(describe.configDir, 'Page.art'))) {
-        describe.vueTemplate = path.join(describe.configDir, 'Page.art')
-        console.log(chalk.white(`template file: ${describe.vueTemplate}`))
+    console.log(chalk.white('----------------------'))
+    console.log(chalk.white(`配置目录: ${info.configDir}`))
+
+    info.pages = getPages(info.configDir)
+
+    info.target = resolveTarget(options.target || info.configDir);
+    console.log(chalk.white(`输出目标位置: ${info.target}`))
+    console.log(chalk.white('----------------------'))
+
+    info.port = process.env.PORT || 8001;
+
+    info.componentPaths = {};
+    if (fs.existsSync(path.join(info.configDir, config.target.comDir))) {
+        info.componentPaths = getComponents(path.join(info.configDir, config.target.comDir))
+    } else { //无自定义组件
+        info.componentPaths = getComponents(config.componentDir)
     }
 
-    describe.target = options.target ? resolveTarget(options.target) : path.join(describe.configDir, config.target.pageName)
-    console.log(chalk.white(`target file: ${describe.target}`))
-
-    describe.port = process.env.PORT || 8001;
-
-    describe.temporaryDir = createTemporaryDir();
-
-    return await copyComponent(describe.configDir, describe.temporaryDir).then(_ => {
-        start(describe)
-    })
+    return start(info);
 }
 
 async function beforeCreate(args, options) {
-    // const check = ora({
-    //     text: 'checking format'
-    // }).start();
-
     //验证/获取 pager path（逐级向上查找）
-    let pagerPath = options.config && path.resolve(options.config);
-
-    if (pagerPath) {
-        if (!fs.existsSync(pagerPath)) {
-            throw new Error(pagerPath + ' 不存在')
-        } else if (!fs.statSync(pagerPath).isDirectory()) {
-            throw new Error(pagerPath + ' 不是文件夹')
-        }
+    let configDir = options.config && path.resolve(options.config);
+    if (configDir) {
+        configDir = resolveConfigDir(configDir)
     } else {
-        pagerPath = path.resolve('.', config.target.dir);
-        while (!fs.existsSync(pagerPath) || !fs.statSync(pagerPath).isDirectory()) {
-            if (pagerPath === path.join(pagerPath, '../../', config.target.dir)) {
-                pagerPath = false;
+        configDir = path.resolve('.', config.target.dir);
+        while (!fs.existsSync(configDir) || !fs.statSync(configDir).isDirectory()) {
+            if (configDir === path.join(configDir, '../../', config.target.dir)) {
+                configDir = false;
                 break;
             }
-            pagerPath = path.join(pagerPath, '../../', config.target.dir)
+            configDir = path.join(configDir, '../../', config.target.dir)
         }
     }
-    console.log(chalk.white(`config dir: ${pagerPath || 'none'}`))
+    console.log(chalk.white('----------------------'))
 
-    let vueTemplate;
-    if (pagerPath && fs.existsSync(path.join(pagerPath, 'Page.art'))) {
-        vueTemplate = path.join(pagerPath, 'Page.art')
-        console.log(chalk.white(`template file: ${vueTemplate}`))
-    }
+    console.log(chalk.white(`配置目录: ${configDir || 'none'}`))
 
-    //获取source/target
+    let pages = getPages(configDir)
+
+    let target = resolveTarget(args.target || '.');
+
+    console.log(chalk.white(`输出目标位置: ${target}`))
+    console.log(chalk.white('----------------------'))
+
+    //获取source
     let sourcePath = path.resolve(args.source);
     if (!fs.existsSync(sourcePath)) {
         throw new Error('source file is not exist')
@@ -199,46 +188,31 @@ async function beforeCreate(args, options) {
 
     //验证source是否为json文件
     if (path.extname(sourcePath) !== '.json') {
-        throw new Error('target file must be json')
+        throw new Error('source file must be json')
     }
 
     //是否合法json
     let source;
-    try{
+    try {
         source = require(sourcePath);
-    }catch(err){
-        throw new Error('target file must be valid json')
+    } catch (err) {
+        throw new Error('source file must be valid json')
     }
 
-    let target = resolveTarget(args.target || '.');
-
-    console.log(chalk.white(`target file: ${target}`))
-
-
-    logger('源文件：' + sourcePath)
-    logger('输出文件：' + target)
-
-    logger('pagerPath' + pagerPath)
-
-    let uniqueTempDir = createTemporaryDir()
-
-    if (pagerPath) {
-        return copyComponent(pagerPath, uniqueTempDir).then(_ => {
-            return parse();
-        })
-    } else {
-        return parse(); //无自定义组件
+    let componentPaths = {};
+    if (configDir && fs.existsSync(path.join(configDir, config.target.comDir))) {
+        componentPaths = getComponents(path.join(configDir, config.target.comDir))
+    } else { //无自定义组件
+        componentPaths = getComponents(config.componentDir)
     }
 
-    async function parse() {
-        return create({
-            temporaryDir: uniqueTempDir,
-            target,
-            source,
-            configDir: pagerPath,
-            vueTemplate
-        })
-    }
+    return create({
+        componentPaths,
+        target,
+        source,
+        configDir,
+        pages
+    })
 }
 
 function wrapCommand(fn) {

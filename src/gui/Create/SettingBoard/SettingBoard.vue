@@ -8,6 +8,7 @@
       label-width="120px">
         <el-form-item label="组件类型">
           <span class="com-type">{{$store.state.activeComponent.type}}</span>
+          <span class="com-type-description">{{$store.state.activeComponent.description}}</span>
         </el-form-item>
         <el-form-item label="组件名称">
             <component :is="StringInput" @input="handleInput('_name',$event)" :value="$store.state.activeComponent.name"></component>
@@ -16,31 +17,16 @@
           <el-form-item 
           :label="item.label" 
           :key="idx">
-              <!-- 输入组件
-                arrItem: 数组默认值            
-               -->
+              <!-- arrItem: 数组默认值 -->
               <component 
               :is="item.input" 
               @input="handleInput(item.name,$event)" 
-              :arrItem="$store.state.activeComponent.props['_'+item.name]"
+              :arrItem="$store.state.activeComponent.props['__'+item.name]"
               :value="$store.state.activeComponent.props[item.name]" 
               v-bind="item.props" 
               :conf="item.conf">
               </component>
           </el-form-item>
-          <!-- Boolean.on -->
-          <div class="expand" :key="idx + 'expand'" v-if="item.props.subInput && item.props.subInput.length && $store.state.activeComponent.props[item.name]">
-              <el-form-item v-for="(subInput,idx) in item.props.subInput" :label="subInput.label" :key="idx">
-                <component 
-                :is="subInput.input" 
-                @input="handleInput(subInput.name,$event)" 
-                :arrItem="$store.state.activeComponent.props['_'+subInput.name]" 
-                :value="$store.state.activeComponent.props[subInput.name]" 
-                v-bind="subInput.props" 
-                :conf="subInput.conf">
-                </component>
-              </el-form-item>            
-          </div>
         </template>
       </el-form>
   </div>
@@ -80,6 +66,10 @@ export default {
 }
 .com-type {
   font-size: 20px;
+}
+.com-type-description{
+  margin-left:15px;
+  color:#666;
 }
 .setting >>> .el-form-item__label {
   line-height: 1.6;

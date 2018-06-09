@@ -1,8 +1,0 @@
-{
-    "watch": [
-        "Table/",
-        "http.art",
-        "postProcessor.js",
-        "start.js"
-    ]
-}

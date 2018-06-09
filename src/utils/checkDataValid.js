@@ -3,23 +3,35 @@ const {
     getIsValid
 } = require('../type_parser')
 
-function checkData(data, allComsConfig,noCheckConfig) {
-    if (!Array.isArray(data)) {
-        throw new Error('data 格式不合法')
+function checkData(data, allComsConfig, allPages, noCheckConfig) {
+    let page = data.page;
+    if (page && typeof page !== 'string') {
+        throw new Error('page字段格式不合法')
     }
-    data.forEach(item => {
-        try {
-            checkItem(item);
-        } catch (err) {
-            throw new Error(JSON.stringify(item, null, 2) + "\n" + err.message)
+    if (page && !allPages[page]) {
+        if (!noCheckConfig) throw new Error(`不存在根组件 ${page}`)
+    }
+
+    if(data.components) checkComponents(data.components || [])
+
+    function checkComponents(components, allComsConfig, noCheckConfig) {
+        if (!Array.isArray(components)) {
+            throw new Error('components字段格式不合法')
         }
-        if (item.children) {
-            checkData(item.children, allComsConfig,noCheckConfig)
-        }
-    })
+        components.forEach(item => {
+            try {
+                checkItem(item);
+            } catch (err) {
+                throw new Error(JSON.stringify(item, null, 2) + "\n" + err.message)
+            }
+            if (item.children) {
+                checkComponents(item.children, allComsConfig, noCheckConfig)
+            }
+        })
+    }
 
     function checkItem(item) {
-        
+
         if (!item.type) {
             throw new Error('type 不能为空')
         }
@@ -35,8 +47,8 @@ function checkData(data, allComsConfig,noCheckConfig) {
         }
 
         let config = allComsConfig[item.type];
-        if(!config){
-            if(noCheckConfig) return;
+        if (!config) {
+            if (noCheckConfig) return;
             throw new Error(`组件 ${item.type} 未定义`)
         }
 
@@ -47,7 +59,7 @@ function checkData(data, allComsConfig,noCheckConfig) {
     }
 
     function checkProps(props, config, comName) {
-        if(!utils.isPlainObject(props)){
+        if (!utils.isPlainObject(props)) {
             throw new Error(`props属性不合法`)
         }
         Object.keys(props).forEach(propName => {

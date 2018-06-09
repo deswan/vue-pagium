@@ -24,10 +24,10 @@
           </el-tag>
         </span>
         <span class="tree-node-action" v-if="node.name">
-          <el-popover placement="right-end" trigger="click" v-model="showComlib">  
+          <el-popover placement="right-end" trigger="click" v-model="showComlib" popper-class="pg-comlib-popper">  
             <div class="com-lib" v-if="isDialog && idx === undefined">
-              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allDialogs" max-height="500" size="medium">
-                <el-table-column label="添加组件">
+              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allDialogs.slice().reverse()" max-height="500" size="medium">
+                <el-table-column label="组件名">
                   <template slot-scope="scope">
                       <span>{{scope.row.name}}</span>
                   </template> 
@@ -40,8 +40,8 @@
               </el-table>
             </div>
             <div class="com-lib" v-else>
-              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allComs" max-height="500" size="medium">
-                <el-table-column label="添加组件">
+              <el-table @row-click="emitEvent('addCom',{comType:$event.name,parent:node})" :data="$store.getters.allComs.slice().reverse()" max-height="500" size="medium">
+                <el-table-column label="组件名">
                   <template slot-scope="scope">
                       <span>{{scope.row.name}}</span>
                   </template> 
@@ -392,30 +392,7 @@ $color-extra-light-black: #999;
 .com-lib {
   width: 300px;
 }
-// .com-lib-title {
-//   margin: 0 0 10px 0;
-// }
-// .com-lib-item {
-//   position: relative;
-//   display: inline-block;
-//   width: 75px;
-//   height: 75px;
-//   text-align: center;
-//   border-radius: 10px;
-//   word-wrap: break-word;
-// }
-// .com-lib-item-text {
-//   position: absolute;
-//   top: 0;
-//   left: 0;
-//   width: 100%;
-//   margin-top: 50%;
-//   transform: translateY(-50%);
-// }
-// .com-lib-item:hover {
-//   background-color: whitesmoke;
-// }
 .cur-select {
-  background-color: lightgrey;
+  background-color: whitesmoke;
 }
 </style>

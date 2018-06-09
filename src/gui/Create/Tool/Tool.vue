@@ -11,9 +11,9 @@
       type="components"
       >
       </hierarchy-tree>      
-
+      
       <hierarchy-tree  
-      :style="{marginTop:'14px'}"
+      :style="{paddingTop:'14px',borderTop:'1px rgb(238, 238, 238) solid'}"
       @on-node-row-click="nodeClick"  
       v-model="draggingNode" 
       :node="data_dialog" 
@@ -43,7 +43,7 @@ export default {
   computed:{
     data_com(){
       return {
-        name: "组件",
+        name: "普通组件",
         children: this.$store.getters.components,
         isRoot: true
       }
@@ -77,7 +77,6 @@ export default {
 .toolbox {
   position: fixed;
   width: 250px;
-  background: #eeeeee;
   left: 0;
   top: 60px;
   bottom: 0;
@@ -86,9 +85,10 @@ export default {
   z-index: 999;
   box-sizing: border-box;
   word-wrap: break-word;
+  overflow: auto;
+  
 }
-
-.add-btn {
-  margin-left: 10px;
+.toolbox::-webkit-scrollbar {
+  display: none;
 }
 </style>

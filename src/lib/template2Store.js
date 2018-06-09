@@ -1,5 +1,5 @@
 /**
- * browser/node 共用模块
+ * browser模块
  * template.data -> $store.state.components/$store.state.dialogs
  * TODO:检查合法性
  */
@@ -8,17 +8,16 @@ const upgradeTemplateData = require('../utils/upgradeTemplateData');
 const checkDataValid = require('../utils/checkDataValid');
 const utils = require('../utils/utils');
 
-//checked data valid;
-function template2Store(data, allComsConfig) {
-
+function template2Store(data, allComsConfig, allPages) {
     //upgrade
-    data = upgradeTemplateData(data, allComsConfig);
+    let components = upgradeTemplateData(data.components || [], allComsConfig);
+    let page = allPages[data.page] ? data.page : '';
+    checkDataValid({
+        page,
+        components
+    }, allComsConfig, allPages)
 
-    console.log('after upgradeTemplateData', JSON.stringify(data, null, 2))
-
-    checkDataValid(data, allComsConfig)
-
-    let allComsName = utils.getAllNameInData(data);
+    let allComsName = utils.getAllComNameInData(components);
 
     function traverse(list) {
         let result = []
@@ -40,8 +39,6 @@ function template2Store(data, allComsConfig) {
 
             node.props = item.props ? utils.patchProps(item.props, config) : {};
 
-            console.log('after patchProps',node.name, JSON.stringify(node.props, null, 2))
-
             //parseSlot
             for (let key in node.props) {
                 node.props[key] = utils.parseSlot(key, node.props[key], node, (name) => {
@@ -54,21 +51,27 @@ function template2Store(data, allComsConfig) {
                         if (item.name === name) {
                             ret = allComsConfig[item.type].exposeProperty
                         }
-                    }, data)
+                    }, components)
                     return ret;
                 })
             }
 
             node.props = {
-                ...scheme2Default(config.props),
-                ...node.props
+                ...scheme2Default(config.props,true),
+                ...node.props,
+                _name:node.name
             }
+
+            node.realTimePreview = utils.loadRealTimePreview(node.type,node.props)
 
             result.push(node)
         })
         return result;
     }
-    return traverse(data)
+    return {
+        page,
+        components: traverse(components || [])
+    }
 }
 
 

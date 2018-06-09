@@ -62,16 +62,16 @@ export default {
   methods:{
      load(){
         this.@@loading = true;
-        <% include('http.art',{
-          method:'GET',
-          url:JSON.stringify(url),
-          params:pagination ? {
-            [page_reqField]:'this.@@page',
-            [pageSize_reqField]:'this.@@pageSize'
-          } : {
-
+        this.$http({
+          method: 'GET',
+          url: {{{url || "''"}}},
+          {{{if pagination}}}
+          params: {
+            {{{ page_reqField }}}:this.@@page,
+            {{{ pageSize_reqField }}}:this.@@pageSize
           }
-        }) %> 
+          {{{/if}}}
+        })
         .then(response=>{
           let data = response.data;
           this.@@items = data.{{{items_resField}}};
@@ -111,6 +111,4 @@ export default {
   }
 };
 </script>
-<style scoped>
-</style>
 

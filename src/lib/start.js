@@ -1,31 +1,23 @@
-require('./check-versions')()
-
 const express = require('express');
 var bodyParser = require('body-parser');
 const app = express()
-const merge = require('webpack-merge')
-const webpack = require('webpack')
 const rm = require('rimraf')
 const path = require('path');
 const fs = require('fs-extra');
 const Mock = require('mockjs');
 const logger = require('../logger')('start.js');
-const webpackIndexConfig = require('./webpack/webpack.index.conf')
-const webpackPreviewConfig = require('./webpack/webpack.preview.conf')
 const ora = require('ora');
 const chalk = require('chalk');
 const opn = require('opn');
 const dayjs = require('dayjs');
 const portfinder = require('portfinder');
 const builder = require('./builder');
-
-const scheme2Default = require('../utils/scheme2Default');
-const {
-    checkConfig
-} = require('../utils/checkConfigValid');
 const constant = require('../const');
 const compile = require('./compile');
+const compilePreview = require('./compilePreview');
 const utils = require('../utils/utils');
+const helpers = require('./helper');
+const vueCompiler = require('@vue/component-compiler-utils');
 
 const inquirer = require('inquirer');
 
@@ -48,9 +40,21 @@ let template_uuid = 1;
 
 let template = []
 
-let allComponentPaths = {};
-
 let inputData = [];
+
+const realTimeComs = {}
+
+let previewOutput = ''
+
+function clearEditorProps(data) {
+    utils.traverse(item => {
+        for (let key in item.props) {
+            if (key.startsWith('__')) {
+                delete item.props[key];
+            }
+        }
+    }, data.components)
+}
 
 /**
  * 读取用户目录下的模板数据到template变量中并添加id
@@ -80,47 +84,39 @@ async function writeTemplatesFile(configDir) {
             name: e.name,
             date: e.date,
             remark: e.remark,
-            data: e.data
+            data: e.data,
+            page: e.page
         }
     })
-    await fs.outputFile(tempPath, JSON.stringify(templateWithoutId, null, 2));
+    await fs.outputFile(tempPath, JSON.stringify(templateWithoutId));
 }
 
 function startServer(info) {
     let jsonTarget = path.join(path.dirname(info.target), path.basename(info.target, '.vue') + '.json')
 
-    app.use(express.static(path.resolve(__dirname, './dist')));
+    let allComsConfig = Object.keys(info.componentPaths).reduce((target, name) => {
+        target[name] = require(path.join(info.componentPaths[name], 'config.js'));
+        return target;
+    }, {})
+
+    app.use(express.static(config.distPath));
 
     app.get('/', (req, res) => {
-        return res.sendFile(path.resolve(__dirname, './dist', 'index.html'))
+        return res.sendFile(path.join(config.distPath, 'index.html'))
     })
 
     app.get('/preview', (req, res) => {
-        return res.sendFile(path.resolve(__dirname, './dist', 'preview.html'))
+        return res.sendFile(path.join(config.distPath, 'preview.html'))
     })
 
     app.post('/preview', function (req, res) {
         let finish = 0;
-
+        clearEditorProps(req.body)
         //将结果写入preview目录下后打包
-        compile(req.body, allComponentPaths).then(output => {
-            return fs.outputFile(config.previewOutputPath, output)
-        }).then(_ => {
-            return new Promise((resolve) => {
-                webpack(webpackPreviewConfig, (err, stats) => {
-                    if (err) throw err;
-
-                    process.stdout.write(stats.toString({
-                        colors: true,
-                        modules: false,
-                        children: false,
-                        chunks: false,
-                        chunkModules: false
-                    }) + '\n\n')
-
-                    resolve();
-                })
-            })
+        compile(req.body, info.componentPaths, info.pages, false).then(output => {
+            //替换export default
+            let newScript = helpers.getSFCText(output, 'script').replace('export default', 'module.exports =');
+            previewOutput = helpers.replaceSFC(output, 'script', newScript)
         }).then(_ => {
             res.json({
                 code: 0
@@ -135,7 +131,8 @@ function startServer(info) {
 
     //将结果写入用户目录
     app.post('/save', function (req, res) {
-        compile(req.body, allComponentPaths, info.vueTemplate).then(output => {
+        clearEditorProps(req.body)
+        compile(req.body, info.componentPaths, info.pages).then(output => {
             return fs.outputFile(info.target, output)
         }).then(_ => {
             res.json({
@@ -153,7 +150,8 @@ function startServer(info) {
 
     //将结果写入用户目录
     app.post('/saveAsJSON', function (req, res) {
-        let output = builder(req.body)
+        let page = req.body.page;
+        let output = builder(req.body);
         fs.outputFile(jsonTarget, JSON.stringify(output, null, 2)).then(_ => {
             res.json({
                 data: path.basename(jsonTarget),
@@ -183,6 +181,20 @@ function startServer(info) {
             code: 0
         })
     });
+    //获取组件配置对象
+    app.get('/allComsConfig', function (req, res) {
+        res.json({
+            data: allComsConfig,
+            code: 0
+        })
+    });
+    //获取根组件名称
+    app.get('/pages', function (req, res) {
+        res.json({
+            data: info.pages,
+            code: 0
+        })
+    });
 
     /**
      * 保存为模板
@@ -190,41 +202,40 @@ function startServer(info) {
      */
     app.post('/saveAsTemplate', function (req, res) {
         let data = req.body
-        let isNameDuplicate = template.some(e => {
+        let nameDuplicateTemp = template.find(e => {
             return e.name === data.name
         })
-        if (!data.isCover && isNameDuplicate) {
+        if (!data.isCover && nameDuplicateTemp) {
             res.json({
-                code: 1
+                code: 1 //前端需确认是否覆盖
             })
-        } else if (data.isCover && isNameDuplicate) {
+        } else if (data.isCover && nameDuplicateTemp) {
             let output = builder(req.body.data)
-            attachconfigSnapShoot(output, req.body.allComsConfig)
-            template.some(e => {
-                if (e.name === data.name) {
-                    e.remark = data.remark;
-                    e.data = output;
-                    e.date = dayjs().format('YYYY-MM-DD HH:mm:ss')
-                    return true;
-                }
-            })
+            attachconfigSnapShoot(output.components, req.body.allComsConfig)
+            nameDuplicateTemp.remark = data.remark;
+            nameDuplicateTemp.data = output;
+            nameDuplicateTemp.date = dayjs().format('YYYY-MM-DD HH:mm:ss')
+
             writeTemplatesFile(info.configDir).then(_ => {
                 res.json({
+                    data: nameDuplicateTemp,
                     code: 0
                 })
             })
         } else {
             let output = builder(req.body.data)
-            attachconfigSnapShoot(output, req.body.allComsConfig)
-            template.push({
+            attachconfigSnapShoot(output.components, req.body.allComsConfig)
+            let newTemp = {
                 id: template_uuid++,
                 name: data.name,
                 date: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 remark: data.remark,
                 data: output
-            });
+            }
+            template.push(newTemp);
             writeTemplatesFile(info.configDir).then(_ => {
                 res.json({
+                    data: newTemp,
                     code: 0
                 })
             })
@@ -237,7 +248,7 @@ function startServer(info) {
         }
     });
 
-    app.get('/mock/table', function (req, res) {
+    app.get('/mock', function (req, res) {
         res.json(Mock.mock({
             'total': 60,
             'items|60': [{
@@ -275,12 +286,17 @@ function startServer(info) {
             jsonSavePath: jsonTarget
         })
     });
-    // app.get('/', function (req, res) {
-    //     res.json({
-    //         savePath: info.target,
-    //         jsonSavePath: jsonTarget
-    //     })
-    // });
+
+    app.get('/realTimePreview.vue', function (req, res) {
+        let type = req.query.com;
+        let props = JSON.parse(req.query.props);
+        res.send(compilePreview(type, info.componentPaths[type], props))
+    });
+
+    app.get('/preview.vue', function (req, res) {
+        res.send(previewOutput);
+    });
+
 
     /**
      * 删除模板
@@ -307,42 +323,7 @@ function startServer(info) {
 
 
 module.exports = async function (info) {
-    allComponentPaths = getLocalComponents(info.temporaryDir)
-
     await readTemplatesFile(info.configDir); //读取模板
 
-    //webpack 打包
-    if (process.env.NODE_ENV === 'development') {
-        startServer(info);
-    } else {
-        return new Promise(resolve => {
-            const spinner = ora('building ...')
-            spinner.start()
-            rm(path.join('./dist', 'static'), err => {
-                if (err) throw err
-                webpack(merge(webpackIndexConfig, {
-                    plugins: [
-                        new webpack.DefinePlugin({
-                            'process.ComponentsRoot': JSON.stringify(path.basename(info.temporaryDir))
-                        }),
-                    ]
-                }), (err, stats) => {
-                    spinner.stop()
-                    if (err) throw err;
-
-                    process.stdout.write(stats.toString({
-                        colors: true,
-                        modules: false,
-                        children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
-                        chunks: false,
-                        chunkModules: false
-                    }) + '\n\n')
-
-                    startServer(info);
-
-                    resolve();
-                })
-            })
-        })
-    }
+    startServer(info);
 }
