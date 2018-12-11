@@ -4,19 +4,14 @@ const prog = require('caporal');
 const path = require('path');
 const fs = require('fs-extra');
 const chalk = require('chalk');
-const ora = require('ora');
-const logger = require('../logger')('pager.js');
-
-const rm = require('rimraf');
-const nodeCleanup = require('node-cleanup');
 const config = require('../config');
 const {
     getComponents
-} = require('../lib/helper');
-const start = require('../lib/start');
-const create = require('../lib/create');
-const eject = require('../lib/eject');
-const add = require('../lib/add');
+} = require('../server/helper');
+const start = require('../server/command/start');
+const create = require('../server/command/create');
+const eject = require('../server/command/eject');
+const add = require('../server/command/add');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'production'
 
@@ -140,7 +135,7 @@ async function beforeStart(args, options) {
     console.log(chalk.white(`输出目标位置: ${info.target}`))
     console.log(chalk.white('----------------------'))
 
-    info.port = process.env.PORT || 8001;
+    info.port = process.env.PORT || config.port;
 
     info.componentPaths = {};
     if (fs.existsSync(path.join(info.configDir, config.target.comDir))) {

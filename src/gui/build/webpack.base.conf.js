@@ -1,18 +1,19 @@
 'use strict'
 const path = require('path')
 const utils = require('./utils')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const merge = require('webpack-merge')
 const config = require('../config')
-const vueLoaderConfig = require('./vue-loader.conf')
 
 function resolve(dir) {
   return path.join(__dirname, '../../../', dir)
 }
 
-module.exports = {
+let webpackConfig = {
   context: path.resolve(__dirname, '../'),
   entry: {
-    app: './app.js',
-    preview: './preview.js'
+    app: './App/app.js',
   },
   output: {
     path: config.build.assetsRoot,
@@ -25,14 +26,13 @@ module.exports = {
     extensions: ['.js', '.vue', '.json'],
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
-      '@': resolve('src'),
+      '@': resolve('src')
     }
   },
   module: {
     rules: [{
         test: /\.vue$/,
         loader: 'vue-loader',
-        options: vueLoaderConfig
       },
       {
         test: /\.js$/,
@@ -48,21 +48,13 @@ module.exports = {
         }
       },
       {
-        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,
-        loader: 'url-loader',
-        options: {
-          limit: 10000,
-          name: utils.assetsPath('media/[name].[hash:7].[ext]')
-        }
-      },
-      {
         test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
         loader: 'url-loader',
         options: {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
-      }
+      },
     ]
   },
   node: {
@@ -76,5 +68,43 @@ module.exports = {
     net: 'empty',
     tls: 'empty',
     child_process: 'empty'
-  }
+  },
+  plugins:[
+    new VueLoaderPlugin()
+  ]
 }
+
+if(!process.env.PAGIUM_DEMO){
+  webpackConfig = merge(webpackConfig, {
+    entry: {
+      preview: './preview.js'
+    },  
+    plugins: [
+      new HtmlWebpackPlugin({
+        title: 'vue-pagium',
+        filename: 'index.html',
+        template: 'index.html',
+        chunks: ['vendors~app~preview', 'vendors~app', 'app']
+      }),
+      new HtmlWebpackPlugin({
+        title: 'vue-pagium preview',
+        filename: 'preview.html',
+        template: 'index.html',
+        chunks: ['vendors~app~preview', 'vendors~preview', 'preview']
+      })
+    ]
+  })
+}else{
+  webpackConfig = merge(webpackConfig, {
+    plugins: [
+      new HtmlWebpackPlugin({
+        title: 'vue-pagium demo',
+        filename: 'index.html',
+        template: 'index.html',
+        chunks:['vendors~app', 'app']
+      })
+    ]
+  })
+}
+
+module.exports = webpackConfig;

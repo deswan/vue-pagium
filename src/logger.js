@@ -15,8 +15,5 @@ log4js.configure({
     }
 });
 module.exports = file=>{
-    let logger = log4js.getLogger(file);
-    return (name,e)=>{
-        logger.debug(name + (e ? JSON.stringify(e,null,2) : ''))
-    }
+    return log4js.getLogger(file);
 }

@@ -1,0 +1,10 @@
+version: "3"
+services:
+
+  web:
+    build: 
+      context: "."
+    image: "vue-pagium-demo"
+    ports:
+      - "8001:8001"
+    

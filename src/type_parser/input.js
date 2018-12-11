@@ -7,7 +7,7 @@ import object from './object/object.vue'
 import refer_component from './refer-component/refer-component.vue'
 import slot_component from './slot-component/slot-component.vue'
 
-import scheme2Input from '../gui/Create/SettingBoard/scheme2Input';
+import scheme2Input from '../gui/App/Create/SettingBoard/scheme2Input';
 
 const INPUTS = {
     string,

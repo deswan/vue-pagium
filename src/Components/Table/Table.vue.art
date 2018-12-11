@@ -6,7 +6,7 @@
             border
             {{{if !fit}}} :fit="false" {{{/if}}}  
             {{{if height}}} height="{{{height}}}" {{{/if}}}  
-            {{{if maxHeight}}} maxHeight="{{{maxHeight}}}" {{{/if}}}  
+            {{{if maxHeight}}} max-height="{{{maxHeight}}}" {{{/if}}}  
             {{{if size}}} size="{{{size}}}" {{{/if}}}  
             style="{{{if marginTop}}} margin-top:{{{marginTop}}}px; {{{/if}}}{{{if marginBottom}}} margin-bottom:{{{marginBottom}}}px; {{{/if}}}"  
         >
