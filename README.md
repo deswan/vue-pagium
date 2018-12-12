@@ -4,9 +4,7 @@
 
 ## Demo
 
-``` bash
 [在线演示版demo](http://139.224.233.120:8001)
-```
 
 ## Environment
 
