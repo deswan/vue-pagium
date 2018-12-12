@@ -2,6 +2,12 @@
 
 > source code`s fast generator for Vue Single File Component 
 
+## 在线演示版
+
+``` bash
+http://139.224.233.120:8001
+```
+
 ## Environment
 
 `Node >= 8`
