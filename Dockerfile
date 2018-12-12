@@ -1,19 +1,21 @@
 FROM node:10
 
-ENV NODE_ENV production
-ENV PAGIUM_DEMO true
+RUN npm config set registry https://registry.npm.taobao.org
 
 RUN mkdir -p /home/node/app
 WORKDIR /home/node/app
 
 # cache dependencies
 COPY package.json /home/node/app
-RUN yarn --production=false
+RUN npm install
+
+ENV NODE_ENV production
+ENV PAGIUM_DEMO true
 
 COPY . /home/node/app
 
 EXPOSE 8001
 
-RUN yarn run demo:build && yarn cache clean
+RUN npm run demo:build && npm cache clean
 
-CMD yarn run demo:start
+CMD npm run demo:start
