@@ -170,9 +170,9 @@ this.{{{refer(myRefer,'id')}}}	 //编译结果：this.myReferCom.id
 - 当前组件配置文件config.js中定义的所有参数，变量名为每个参数描述对象的name字段，可作为全局变量或作为变量 $data 的属性访问。
 - 功能函数，包括以下三个函数，作为全局变量或作为 $imports 的属性访问：
 
-  + insertChildren：在函数调用的地方插入所有非slot子组件的<template>块
-  + insertSlot(slotArg)：在函数调用的地方插入slot类型参数指定的子组件的<template>
-  + refer(referArg)：在函数调用的地方插入指定外部组件的Vue选项数据名
+    + insertChildren：在函数调用的地方插入所有非slot子组件的<template>块
+    + insertSlot(slotArg)：在函数调用的地方插入slot类型参数指定的子组件的<template>
+    + refer(referArg)：在函数调用的地方插入指定外部组件的Vue选项数据名
   
 - `_name`变量，值为本组件的实例名称，在当前组件树中唯一。
 
