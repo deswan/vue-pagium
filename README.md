@@ -43,15 +43,15 @@ vue-pagium start
 
 
 
-模板引擎语法
+模板引擎语法：
 
-组件模板使用art-template 4.0模板引擎编译，用户可以查看官方网站http://aui.github.io/art-template/zh-cn/了解基本的模板语法。。
+组件模板使用art-template 4.0模板引擎编译，用户可以查看官方网站http://aui.github.io/art-template/zh-cn/ 了解基本的模板语法。
 
 art-template的标准语法双括号中被修改为三花括号`{{{ }}}`，避免与Vue自身的模板语法冲突。
 
 
 
-在config.js中配置组件参数
+#### 在config.js中配置组件参数
 
 config.js文件应该使用commonJS语法导出一个Config类型的对象
 
@@ -80,10 +80,17 @@ config.js文件应该使用commonJS语法导出一个Config类型的对象
 
 参数可以指定为以下八种数据类型，每种类型都对参数值作出了相应的限制。
 
-- type:"string" 字符串类型，限制参数必须是一个字符串类型值。默认值为空字符串。
-- type:"number" 数值类型，限制参数必须是一个数值类型值。默认值为0。
-- type:"boolean" 布尔类型，限制参数必须是一个JS布尔类型值。默认值为false。
-- type:"select" 选择器类型，限制参数值必须是选择列表中的其中一项或为空字符串。默认值为空字符串。需要一个额外的options选项来指定选择列表。
+- type:"string" 字符串类型
+默认值为空字符串。
+
+- type:"number" 数值类型
+默认值为0。
+
+- type:"boolean" 布尔类型
+默认值为false。
+
+- type:"select" 选择器类型
+限制参数值必须是选择列表中的其中一项或为空字符串。默认值为空字符串。需要一个额外的options选项来指定选择列表。
 
 ```Js
 options: [{
@@ -97,7 +104,7 @@ options: [{
 
 - type:"object" 对象类型，限制参数值为纯对象类型，且该对象拥有format选项指定的属性。
 
-指定为对象类型的参数描述对象必须额外指定一个format选项，用以声明对象中每个属性的数据类型。format选项需是一个对象数组。它的每个元素也都是一个参数描述对象
+参数描述对象必须额外指定一个format选项，用以声明对象中每个属性的数据类型。format选项需是一个对象数组。它的每个元素也都是一个参数描述对象
 
 ```Js
 format: [{
@@ -162,11 +169,12 @@ this.{{{refer(myRefer,'id')}}}	 //编译结果：this.myReferCom.id
 
 - 当前组件配置文件config.js中定义的所有参数，变量名为每个参数描述对象的name字段，可作为全局变量或作为变量 $data 的属性访问。
 - 功能函数，包括以下三个函数，作为全局变量或作为 $imports 的属性访问：
-  - insertChildren：在函数调用的地方插入所有非slot子组件的<template>块
-  - insertSlot(slotArg)：在函数调用的地方插入slot类型参数指定的子组件的<template>
-  - refer(referArg)：在函数调用的地方插入指定外部组件的Vue选项数据名
-- `_name`变量，值为本组件的实例名称，在当前组件树中唯一。
 
+  + insertChildren：在函数调用的地方插入所有非slot子组件的<template>块
+  + insertSlot(slotArg)：在函数调用的地方插入slot类型参数指定的子组件的<template>
+  + refer(referArg)：在函数调用的地方插入指定外部组件的Vue选项数据名
+  
+- `_name`变量，值为本组件的实例名称，在当前组件树中唯一。
 
 
 ### Vue单文件组件的合并
