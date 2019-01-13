@@ -2,8 +2,8 @@ import "@babel/polyfill"
 import Vue from 'vue'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
-import './Preview/preview.scss'
-import App from './Preview/App.vue'
+import './preview.scss'
+import App from './App.vue'
 import axios from 'axios';
 import httpVueLoader from '../assets/httpVueLoader'
 window.Vue = Vue;

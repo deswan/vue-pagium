@@ -77,7 +77,7 @@ let webpackConfig = {
 if(!process.env.PAGIUM_DEMO){
   webpackConfig = merge(webpackConfig, {
     entry: {
-      preview: './preview.js'
+      preview: './Preview/preview.js'
     },  
     plugins: [
       new HtmlWebpackPlugin({
